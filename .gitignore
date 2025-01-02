@@ -7,6 +7,7 @@ qzresearch/
 # Ignore Python compiled files
 __pycache__/
 *.py[cod]
+*.egg-info/
 
 # Ignore virtual environment
 venv/
