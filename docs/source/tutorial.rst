@@ -12,7 +12,7 @@ Getting Started
       cd  "the_repository"
       pip install -e .
 
-2. Create a configuration file named `code_quality_config.YAML` in your project root:
+2. Create a configuration file named `code_quality_config.yaml` in your project root:
 
    .. code-block:: yaml
 
@@ -27,7 +27,7 @@ Getting Started
 
    .. code-block:: bash
 
-      analyze_code_quality sample_project --config code_quality_config.YAML
+      analyze_code_quality sample_project --config code_quality_config.yaml
 
    Where `sample_project` is the directory containing the code you want to analyze.
 
@@ -39,7 +39,7 @@ Advanced Usage
 Custom Thresholds
 ^^^^^^^^^^^^^^^^^
 
-You can customize the thresholds for code smells by editing the `code_quality_config.YAML` file. For example:
+You can customize the thresholds for code smells by editing the `code_quality_config.yaml` file. For example:
 
 .. code-block:: yaml
 
@@ -71,4 +71,4 @@ You can integrate the Code Quality Analyzer into your CI/CD pipeline. Here's an 
            pip install code-quality-analyzer
        - name: Run Code Quality Analyzer
          run: |
-           analyze_code_quality . --config code_quality_config.YAML
+           analyze_code_quality . --config code_quality_config.yaml
