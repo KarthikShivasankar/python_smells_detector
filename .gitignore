@@ -1,9 +1,58 @@
-.vscode
-data*
-.stestr
-captures
-*.log
-code_analysis.log
+# Ignore specific folders
+pyrasbt/
+alpyproj/
+imnofin/
+qzresearch/
+
+# Ignore Python compiled files
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environment
+venv/
+env/
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+chap/
+
+sample_project/
+
+evaluation/
+
+inmotifin/
+
+melodipyi/
+
+pseudohnn/
+
+simapy/
+
+rewts/
+
+rttarr/
+
+sponge/
+
+analysis/
+
+cloned_repositories/
+
+
+visualizations/
+
+
+.pytest_cache/
+
+docs/_build/
+
+*.egg-info/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -101,12 +150,6 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#uv.lock
-
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
@@ -137,7 +180,6 @@ celerybeat.pid
 # Environments
 .env
 .venv
-venv*
 env/
 venv/
 ENV/
@@ -174,6 +216,3 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
-
-# PyPI configuration file
-.pypirc
