@@ -33,11 +33,19 @@ def analyze_code_smells(directory_path, detector):
     errors = []
     files_analyzed = 0
     files_with_errors = 0
-    
+    IGNORE_PATHS = "venv,tox,uml,log,pycache,scripts,test"
     print(f"\nStarting code smell analysis for directory: {directory_path}")
     
     for root, _, files in os.walk(directory_path):
         for file in files:
+            go = True
+            for ignored_path in IGNORE_PATHS.split(","):
+                if ignored_path in os.path.join(root, file):
+                    print(f"Ignored {os.path.join(root, file)}")
+                    go = False
+                    break
+            if not go:
+                continue
             if file.endswith('.py'):
                 file_path = os.path.join(root, file)
                 try:

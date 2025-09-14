@@ -10,6 +10,7 @@ setup(
         "networkx",
         "pyyaml",
         "pytest",
+        "tqdm"
     ],
     entry_points={
         "console_scripts": [

@@ -8,6 +8,7 @@ import sys
 import importlib.util
 import logging
 from .exceptions import CodeAnalysisError
+from tqdm import tqdm
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -90,7 +91,7 @@ class ArchitecturalSmellDetector:
             self.analyze_directory(directory_path)
             
             # Then run each detection method
-            for detect_method, method_name in detection_methods:
+            for detect_method, method_name in tqdm(detection_methods):
                 try:
                     logger.debug(f"Running {method_name}")
                     detect_method()
