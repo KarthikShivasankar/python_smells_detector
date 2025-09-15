@@ -2,6 +2,8 @@ import os
 import argparse
 import csv
 import logging
+
+from code_quality_analyzer.const import IGNORE_PATHS
 from .code_smell_detector import CodeSmellDetector
 from .architectural_smell_detector import ArchitecturalSmellDetector
 from .structural_smell_detector import StructuralSmellDetector
@@ -33,7 +35,7 @@ def analyze_code_smells(directory_path, detector):
     errors = []
     files_analyzed = 0
     files_with_errors = 0
-    IGNORE_PATHS = "venv,tox,uml,log,pycache,scripts,test"
+    
     print(f"\nStarting code smell analysis for directory: {directory_path}")
     
     for root, _, files in os.walk(directory_path):

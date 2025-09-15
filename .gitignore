@@ -1,3 +1,7 @@
+# Ignore code quality reports
+*.csv
+*.txt
+
 # Ignore specific folders
 pyrasbt/
 alpyproj/
