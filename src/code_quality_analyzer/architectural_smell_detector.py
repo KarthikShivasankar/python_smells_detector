@@ -7,7 +7,10 @@ from dataclasses import dataclass
 import sys
 import importlib.util
 import logging
+
+from code_quality_analyzer.const import IGNORE_PATHS
 from .exceptions import CodeAnalysisError
+from tqdm import tqdm
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -90,7 +93,7 @@ class ArchitecturalSmellDetector:
             self.analyze_directory(directory_path)
             
             # Then run each detection method
-            for detect_method, method_name in detection_methods:
+            for detect_method, method_name in tqdm(detection_methods):
                 try:
                     logger.debug(f"Running {method_name}")
                     detect_method()
@@ -118,6 +121,14 @@ class ArchitecturalSmellDetector:
         """
         for root, _, files in os.walk(directory_path):
             for file in files:
+                go = True
+                for ignored_path in IGNORE_PATHS.split(","):
+                    if ignored_path in os.path.join(root, file):
+                        print(f"Ignored {os.path.join(root, file)}")
+                        go = False
+                        break
+                if not go:
+                    continue
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
                     self.analyze_file(file_path)

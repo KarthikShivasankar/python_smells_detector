@@ -39,8 +39,11 @@ A comprehensive Python code quality analysis tool that detects code smells, arch
 
 ### Install from source
 ```bash
-Download the repository
+# Download the repository
 cd  "the_repository"
+# Activate the virtual environment
+python3 -m venv venv
+# Instal the dependencies
 pip install -e .
 ```
 

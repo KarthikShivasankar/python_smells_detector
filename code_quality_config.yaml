@@ -71,6 +71,10 @@ code_smells:
     value: 4
     explanation: "Abstract classes with no concrete implementations may indicate speculative generality."
 
+  UNUSED_PARAMETERS_THRESHOLD:
+    value: 2
+    explanation: "The minimun allowed number of unused parameters"
+
   MIDDLE_MAN_RATIO:
     value: 0.5
     explanation: "Classes where more than this ratio of methods simply delegate to another class may be middle men."

@@ -5,6 +5,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 import yaml
 import logging
+
+from code_quality_analyzer.const import IGNORE_PATHS
 from .exceptions import CodeAnalysisError
 
 # Set up logger
@@ -149,6 +151,14 @@ class StructuralSmellDetector:
         
         for root, _, files in os.walk(directory_path):
             for file in files:
+                go = True
+                for ignored_path in IGNORE_PATHS.split(","):
+                    if ignored_path in os.path.join(root, file):
+                        print(f"Ignored {os.path.join(root, file)}")
+                        go = False
+                        break
+                if not go:
+                    continue
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
                     try:

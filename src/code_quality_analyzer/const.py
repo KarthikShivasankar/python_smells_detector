@@ -1,0 +1,1 @@
+IGNORE_PATHS = "venv,tox,uml,log,pycache,scripts,test,nori"
