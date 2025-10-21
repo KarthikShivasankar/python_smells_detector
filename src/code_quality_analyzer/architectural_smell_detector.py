@@ -116,16 +116,19 @@ class ArchitecturalSmellDetector:
         Args:
             directory_path (str): The path to the directory to be analyzed.
         """
+        # Find the actual project root for consistent module naming
+        project_root = self._find_project_root(directory_path)
+
         for root, _, files in os.walk(directory_path):
             for file in files:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
-                    self.analyze_file(file_path)
+                    self.analyze_file(file_path, project_root=project_root)
 
         # After analyzing all files, resolve external dependencies
-        self.resolve_external_dependencies()
+        self.resolve_external_dependencies(project_root=project_root)
 
-    def analyze_file(self, file_path):
+    def analyze_file(self, file_path, project_root=None):
         """
         Analyze a single Python file for architectural information with improved
         intra-project dependency detection.
@@ -134,8 +137,10 @@ class ArchitecturalSmellDetector:
             with open(file_path, 'r') as file:
                 tree = ast.parse(file.read())
 
-            # Get relative module path
-            module_name = os.path.relpath(file_path, os.path.dirname(os.path.dirname(file_path)))
+            # Get relative module path using the project root for consistency
+            if not project_root:
+                project_root = self._find_project_root(file_path)
+            module_name = os.path.relpath(file_path, project_root)
             module_name = module_name.replace(os.path.sep, '.')[:-3]  # Remove .py extension
             self.module_dependencies.add_node(module_name)
             self.file_paths[module_name] = file_path
@@ -192,12 +197,13 @@ class ArchitecturalSmellDetector:
         except Exception as e:
             print(f"Error analyzing file {file_path}: {str(e)}")
 
-    def resolve_external_dependencies(self):
+    def resolve_external_dependencies(self, project_root=None):
         """
         Resolve external dependencies while preserving intra-project dependencies.
         """
         # Get all project modules
-        project_root = os.path.dirname(os.path.dirname(next(iter(self.file_paths.values()))))
+        if not project_root:
+            project_root = self._find_project_root(next(iter(self.file_paths.values())))
         all_modules = set(self.module_dependencies.nodes())
         standard_lib_modules = set(sys.stdlib_module_names)
 
@@ -530,6 +536,32 @@ class ArchitecturalSmellDetector:
             print("Detected Architectural Smells:")
             for smell in self.architectural_smells:
                 print(f"- {smell}")
+
+    def _find_project_root(self, start_path):
+        """
+        Find the project root by scanning upwards for common project files.
+
+        Args:
+            start_path (str): Starting directory or file to scan from
+
+        Returns:
+            str: Path to project root, or start_path if not found
+        """
+        if os.path.isfile(start_path):
+            current = os.path.dirname(os.path.abspath(start_path))
+        else:
+            current = os.path.abspath(start_path)
+
+        project_indicators = ['pyproject.toml', 'setup.py', 'setup.cfg', 'requirements.txt', 'Pipfile', 'poetry.lock']
+
+        while current != os.path.dirname(current):  # Stop at filesystem root
+            for indicator in project_indicators:
+                if os.path.exists(os.path.join(current, indicator)):
+                    return current
+            current = os.path.dirname(current)
+
+        # Fallback to original directory if no project root found
+        return os.path.dirname(start_path) if os.path.isfile(start_path) else start_path
 
 def analyze_architecture(directory_path, config_path):
     """
