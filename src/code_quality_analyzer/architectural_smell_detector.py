@@ -88,7 +88,7 @@ class ArchitecturalSmellDetector:
             # First analyze the directory structure
             logger.info(f"Analyzing directory structure: {directory_path}")
             self.analyze_directory(directory_path)
-            
+
             # Then run each detection method
             for detect_method, method_name in detection_methods:
                 try:
@@ -101,7 +101,7 @@ class ArchitecturalSmellDetector:
                         file_path=directory_path,
                         function_name=method_name
                     )
-                    
+
         except Exception as e:
             logger.error(f"Error analyzing directory {directory_path}: {str(e)}", exc_info=True)
             raise CodeAnalysisError(
@@ -121,7 +121,7 @@ class ArchitecturalSmellDetector:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
                     self.analyze_file(file_path)
-        
+
         # After analyzing all files, resolve external dependencies
         self.resolve_external_dependencies()
 
@@ -139,7 +139,7 @@ class ArchitecturalSmellDetector:
             module_name = module_name.replace(os.path.sep, '.')[:-3]  # Remove .py extension
             self.module_dependencies.add_node(module_name)
             self.file_paths[module_name] = file_path
-            
+
             # Track local imports and their line numbers
             local_imports = []
 
@@ -149,7 +149,7 @@ class ArchitecturalSmellDetector:
                         import_name = alias.name
                         local_imports.append((import_name, node.lineno))
                         self.module_dependencies.add_edge(module_name, import_name)
-                
+
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         # Handle relative imports
@@ -163,23 +163,23 @@ class ArchitecturalSmellDetector:
                                 import_name = node.module
                         else:
                             import_name = node.module
-                        
+
                         local_imports.append((import_name, node.lineno))
                         self.module_dependencies.add_edge(module_name, import_name)
-                        
                         # Track imported names for more detailed dependency analysis
                         for alias in node.names:
                             if alias.name != '*':
                                 full_import = f"{import_name}.{alias.name}"
                                 self.module_functions[import_name].add(alias.name)
-                
+
+
                 elif isinstance(node, ast.FunctionDef):
                     self.module_functions[module_name].add(node.name)
-                
+
                 elif isinstance(node, ast.Call):
                     if isinstance(node.func, ast.Attribute):
                         self.api_usage[module_name].append(node.func.attr)
-                        
+
                         # Track function calls between modules
                         if isinstance(node.func.value, ast.Name):
                             # Check if this is a call to an imported module
@@ -200,7 +200,7 @@ class ArchitecturalSmellDetector:
         project_root = os.path.dirname(os.path.dirname(next(iter(self.file_paths.values()))))
         all_modules = set(self.module_dependencies.nodes())
         standard_lib_modules = set(sys.stdlib_module_names)
-        
+
         for module in list(self.module_dependencies.nodes()):
             for dependency in list(self.module_dependencies.successors(module)):
                 # Check if it's a project module by looking for the file
@@ -208,29 +208,29 @@ class ArchitecturalSmellDetector:
                     os.path.join(project_root, *dependency.split('.')) + '.py',
                     os.path.join(project_root, dependency.split('.')[0], '__init__.py')
                 ]
-                
+
                 is_project_module = (
                     dependency in all_modules or
                     any(os.path.exists(path) for path in possible_paths)
                 )
-                
+
                 # Keep project dependencies, handle external ones
                 if not is_project_module:
                     is_stdlib = any(dependency.startswith(std_lib) for std_lib in standard_lib_modules)
-                    
+
                     try:
                         spec = importlib.util.find_spec(dependency.split('.')[0])
                         is_third_party = spec is not None and not is_stdlib
                     except (ModuleNotFoundError, ValueError):
                         is_third_party = False
-                    
+
                     self.module_dependencies.remove_edge(module, dependency)
-                    
+
                     if is_stdlib:
                         self.external_dependencies[module].add(('stdlib', dependency))
                     elif is_third_party:
                         self.external_dependencies[module].add(('third_party', dependency))
-                    
+
                     # Remove isolated external nodes
                     if not self.module_dependencies.in_edges(dependency) and \
                        not self.module_dependencies.out_edges(dependency):
@@ -239,7 +239,7 @@ class ArchitecturalSmellDetector:
     def add_smell(self, name, description, file_path, module_class, line_number=None, severity='medium'):
         """
         Add a detected architectural smell to the list.
-        
+
         Args:
             name (str): The name of the smell
             description (str): Description of the smell
@@ -264,34 +264,34 @@ class ArchitecturalSmellDetector:
         total_modules = len(self.module_dependencies.nodes())
         if total_modules < 3:  # Skip analysis for very small projects
             return
-            
+
         threshold = self.thresholds.get('HUB_LIKE_DEPENDENCY_THRESHOLD', 0.5)
         min_connections = self.thresholds.get('MIN_HUB_CONNECTIONS', 5)
-        
+
         for node in self.module_dependencies.nodes():
             # Count both internal and external dependencies
             in_degree = self.module_dependencies.in_degree(node)
             out_degree = self.module_dependencies.out_degree(node)
             external_deps = len(self.external_dependencies[node])
             total_connections = in_degree + out_degree + external_deps
-            
+
             # Calculate fan-in and fan-out ratios
             fan_in_ratio = in_degree / total_modules if total_modules > 0 else 0
             fan_out_ratio = (out_degree + external_deps) / total_modules if total_modules > 0 else 0
-            
+
             # Check for hub-like characteristics
-            is_hub = (total_connections >= min_connections and 
+            is_hub = (total_connections >= min_connections and
                      (total_connections / total_modules) > threshold)
-            
+
             # Additional checks to reduce false positives
             if is_hub:
                 # Exclude common infrastructure modules
                 if any(pattern in node.lower() for pattern in ['util', 'common', 'base', 'core']):
                     continue
-                    
+
                 # Check if the module has balanced dependencies
                 is_balanced = 0.2 <= fan_in_ratio / (fan_out_ratio + 0.0001) <= 5
-                
+
                 if not is_balanced:
                     self.add_smell(
                         "Hub-like Dependency",
@@ -309,15 +309,15 @@ class ArchitecturalSmellDetector:
         function_modules = defaultdict(list)
         min_function_length = 3  # Ignore very short function names
         excluded_names = {'main', 'init', 'setup', 'test'}  # Common function names to exclude
-        
         for module, functions in self.module_functions.items():
+
             for func in functions:
                 # Skip common/utility functions and short names
-                if (len(func) >= min_function_length and 
-                    func.lower() not in excluded_names and 
+                if (len(func) >= min_function_length and
+                    func.lower() not in excluded_names and
                     not func.startswith('_')):  # Skip private functions
                     function_modules[func].append(module)
-        
+
         min_occurrences = self.thresholds.get('MIN_SCATTERED_OCCURRENCES', 3)
         for func, modules in function_modules.items():
             if len(modules) >= min_occurrences:  # Increase minimum occurrences threshold
@@ -334,20 +334,20 @@ class ArchitecturalSmellDetector:
         """
         similar_modules = defaultdict(list)
         min_functions = 3  # Minimum number of functions to consider
-        
+
         for module, functions in self.module_functions.items():
             # Only consider modules with sufficient functions
             if len(functions) >= min_functions:
                 # Filter out private functions and common utility functions
-                public_functions = {f for f in functions 
-                                 if not f.startswith('_') 
-                                 and len(f) > 3 
+                public_functions = {f for f in functions
+                                 if not f.startswith('_')
+                                 and len(f) > 3
                                  and f.lower() not in {'main', 'init', 'setup', 'test'}}
-                
+
                 if public_functions:  # Only proceed if there are public functions
                     signature = frozenset(public_functions)
                     similar_modules[signature].append(module)
-        
+
         similarity_threshold = self.thresholds.get('REDUNDANT_SIMILARITY_THRESHOLD', 0.8)
         for signature, modules in similar_modules.items():
             if len(modules) > 1 and len(signature) >= min_functions:
@@ -357,7 +357,7 @@ class ArchitecturalSmellDetector:
                         module1_funcs = self.module_functions[modules[i]]
                         module2_funcs = self.module_functions[modules[j]]
                         similarity = len(module1_funcs & module2_funcs) / len(module1_funcs | module2_funcs)
-                        
+
                         if similarity >= similarity_threshold:
                             self.add_smell(
                                 "Potential Redundant Abstractions",
@@ -372,18 +372,18 @@ class ArchitecturalSmellDetector:
         """
         min_functions = self.thresholds.get('MIN_GOD_OBJECT_FUNCTIONS', 5)
         excluded_patterns = {'test_', 'setup_', 'config_'}  # Common prefixes to exclude
-        
+
         for module, functions in self.module_functions.items():
             # Filter out private methods and common test/setup functions
-            public_functions = {f for f in functions 
-                              if not f.startswith('_') and 
+            public_functions = {f for f in functions
+                              if not f.startswith('_') and
                               not any(f.startswith(pattern) for pattern in excluded_patterns)}
-            
-            if (len(public_functions) >= min_functions and 
+
+            if (len(public_functions) >= min_functions and
                 len(public_functions) > self.thresholds['GOD_OBJECT_FUNCTIONS']):
                 self.add_smell(
                     "God Object",
-                    f"Module '{module}' has too many public functions ({len(public_functions)})", 
+                    f"Module '{module}' has too many public functions ({len(public_functions)})",
                     self.file_paths.get(module, "Unknown"),
                     module
                 )
@@ -394,19 +394,19 @@ class ArchitecturalSmellDetector:
         """
         min_calls = self.thresholds.get('MIN_API_CALLS', 10)  # Minimum calls to consider
         repetition_threshold = self.thresholds.get('API_REPETITION_THRESHOLD', 0.4)
-        
+
         for module, api_calls in self.api_usage.items():
             if len(api_calls) >= min_calls:
                 # Count frequency of each API call
                 call_frequency = {}
                 for call in api_calls:
                     call_frequency[call] = call_frequency.get(call, 0) + 1
-                
+
                 # Check for highly repetitive calls
-                repetitive_calls = {call: count for call, count in call_frequency.items() 
+                repetitive_calls = {call: count for call, count in call_frequency.items()
                                   if count >= 3}  # Ignore calls repeated less than 3 times
-                
-                if (repetitive_calls and 
+
+                if (repetitive_calls and
                     sum(repetitive_calls.values()) / len(api_calls) > repetition_threshold):
                     self.add_smell(
                         "Potential Improper API Usage",
@@ -422,10 +422,10 @@ class ArchitecturalSmellDetector:
         """
         excluded_modules = {'__init__', 'setup', 'tests', 'utils'}  # Common standalone modules
         min_project_size = self.thresholds.get('MIN_PROJECT_SIZE', 3)
-        
+
         if len(self.module_dependencies.nodes()) < min_project_size:
             return
-            
+
         for node in self.module_dependencies.nodes():
             module_name = node.split('.')[-1]
             # Fix: Check if any excluded module name is in the full node path
@@ -447,20 +447,20 @@ class ArchitecturalSmellDetector:
         min_cycle_size = self.thresholds.get('MIN_CYCLE_SIZE', 2)
         max_cycle_size = self.thresholds.get('MAX_CYCLE_SIZE', 5)
         excluded_modules = {'__init__', 'utils', 'common', 'base', 'core'}
-        
+
         # Find all simple cycles
         cycles = list(nx.simple_cycles(self.module_dependencies))
-        
+
         # Group cycles by their shared nodes to identify related cycles
         cycle_groups = defaultdict(list)
-        
+
         for cycle in cycles:
             if min_cycle_size <= len(cycle) <= max_cycle_size:
                 # Skip cycles containing excluded modules
-                if any(any(excluded in node.lower() for excluded in excluded_modules) 
+                if any(any(excluded in node.lower() for excluded in excluded_modules)
                       for node in cycle):
                     continue
-                
+
                 # Calculate cycle metrics
                 cycle_strength = 0
                 for i in range(len(cycle)):
@@ -469,19 +469,19 @@ class ArchitecturalSmellDetector:
                     # Count mutual dependencies
                     cycle_strength += sum(1 for _ in nx.all_simple_paths(
                         self.module_dependencies, node1, node2))
-                
+
                 # Group related cycles
                 cycle_key = frozenset(cycle)
                 cycle_groups[cycle_key].append((cycle, cycle_strength))
-        
+
         # Report cycles with additional context
         for cycle_group in cycle_groups.values():
             strongest_cycle = max(cycle_group, key=lambda x: x[1])
             cycle, strength = strongest_cycle
-            
+
             # Calculate severity based on cycle size and strength
             severity = 'high' if len(cycle) >= 3 and strength >= 3 else 'medium'
-            
+
             cycle_str = ' -> '.join(cycle + [cycle[0]])
             self.add_smell(
                 "Cyclic Dependency",
@@ -498,15 +498,15 @@ class ArchitecturalSmellDetector:
         """
         min_dependencies = self.thresholds.get('MIN_DEPENDENCIES', 5)  # Minimum dependencies to consider
         excluded_patterns = {'test_', 'setup_', '__init__'}  # Patterns to exclude
-        
+
         for node in self.module_dependencies.nodes():
             if any(pattern in node for pattern in excluded_patterns):
                 continue
-                
+
             in_degree = self.module_dependencies.in_degree(node)
             out_degree = self.module_dependencies.out_degree(node)
             total_dependencies = in_degree + out_degree
-            
+
             if total_dependencies >= min_dependencies:
                 instability = out_degree / total_dependencies
                 if instability > self.thresholds['UNSTABLE_DEPENDENCY_THRESHOLD']:
