@@ -7,6 +7,7 @@ A comprehensive Python static analysis tool that detects **code smells**, **arch
 ## Table of Contents
 
 - [Features](#features)
+- [Use Cases](#use-cases)
 - [Requirements](#requirements)
 - [Installation](#installation)
   - [From PyPI with uv (recommended)](#from-pypi-with-uv-recommended)
@@ -20,6 +21,13 @@ A comprehensive Python static analysis tool that detects **code smells**, **arch
   - [Save a report](#save-a-report)
   - [Full example](#full-example)
   - [CLI reference](#cli-reference)
+- [Ways to Run](#ways-to-run)
+  - [As a CLI command](#as-a-cli-command)
+  - [As a Python module](#as-a-python-module)
+  - [Python API](#python-api)
+  - [Pre-commit hook](#pre-commit-hook)
+  - [GitHub Actions](#github-actions)
+  - [GitLab CI](#gitlab-ci)
 - [Configuration](#configuration)
   - [Code smell thresholds](#code-smell-thresholds)
   - [Architectural smell thresholds](#architectural-smell-thresholds)
@@ -99,6 +107,52 @@ A comprehensive Python static analysis tool that detects **code smells**, **arch
 | High Fan-in | Fan-in | Modules depended upon by too many others |
 | Large File | File length | Files exceeding a line count |
 | Too Many Branches | Branches | Methods with too many conditional branches |
+
+---
+
+## Use Cases
+
+### Auditing a legacy codebase
+
+Before refactoring a large project, get a full picture of its technical debt:
+
+```bash
+analyze_code_quality /path/to/legacy_project \
+    --output reports/initial_audit \
+    --ignore venv .tox build dist
+```
+
+Open `reports/initial_audit.csv` in Excel or a BI tool to sort smells by severity and prioritize which modules to tackle first.
+
+### Enforcing quality gates in CI
+
+Fail a pull request if new smells are introduced. Add the tool to your CI pipeline (see [GitHub Actions](#github-actions) and [GitLab CI](#gitlab-ci) below) and compare reports between the base and head commits.
+
+### Focused structural review
+
+When reviewing a new service or library for object-oriented design issues, run only the structural detector to get OO metric violations (LCOM, CBO, DIT, cyclomatic complexity) without noise from the other categories:
+
+```bash
+analyze_code_quality src/my_service --type structural --output oo_review
+```
+
+### Tracking technical debt over time
+
+Run the tool on every merge to `main`, save the CSV to a time-series store or artifact, and chart smell counts per category over sprints to measure whether debt is being paid down.
+
+### Pre-merge code review assistance
+
+Developers run the tool locally before opening a PR:
+
+```bash
+analyze_code_quality . --ignore tests docs venv --type code
+```
+
+This surfaces code smells (long methods, large classes, dead code, etc.) in the diff before reviewers see it.
+
+### Onboarding onto an unfamiliar codebase
+
+Run all three detectors and read the architectural smells report first — cyclic dependencies, god objects, and hub-like modules give a high-level map of the system's problem areas before diving into individual files.
 
 ---
 
@@ -222,6 +276,160 @@ analyze_code_quality /path/to/project \
 | `--output` | option | Base name for output files — generates `<name>.txt` + `<name>.csv` | print to stdout |
 | `--ignore` | option (repeatable) | Directory names to skip during traversal | none |
 | `--debug` | flag | Enable verbose debug logging to console and `code_analysis.log` | off |
+
+---
+
+## Ways to Run
+
+### As a CLI command
+
+The primary interface. Works after `pip install code-quality-analyzer` or `uv tool install code-quality-analyzer`:
+
+```bash
+analyze_code_quality /path/to/project
+analyze_code_quality /path/to/project --type structural --output report
+```
+
+### As a Python module
+
+If the entry point is not on your `PATH` (e.g., after `uv sync` from source), invoke the module directly:
+
+```bash
+python -m code_quality_analyzer.main /path/to/project
+# or via uv
+uv run python -m code_quality_analyzer.main /path/to/project
+```
+
+### Python API
+
+Use the detectors programmatically inside your own scripts or tooling:
+
+```python
+from code_quality_analyzer.config_handler import ConfigHandler
+from code_quality_analyzer.code_smell_detector import CodeSmellDetector
+from code_quality_analyzer.structural_smell_detector import StructuralSmellDetector
+from code_quality_analyzer.architectural_smell_detector import ArchitecturalSmellDetector
+from code_quality_analyzer.main import (
+    analyze_code_smells,
+    analyze_structural_smells,
+    analyze_architectural_smells,
+    generate_report,
+)
+
+config = ConfigHandler("code_quality_config.yaml")
+
+# Run only code smell detection
+code_detector = CodeSmellDetector(config.get_thresholds("code_smells"))
+code_smells = analyze_code_smells("src/", code_detector, ignore_dirs={"tests", "venv"})
+
+# Run structural detection
+struct_detector = StructuralSmellDetector(config.get_thresholds("structural_smells"))
+structural_smells = analyze_structural_smells("src/", struct_detector)
+
+# Run architectural detection
+arch_detector = ArchitecturalSmellDetector(config.get_thresholds("architectural_smells"))
+architectural_smells = analyze_architectural_smells("src/", arch_detector)
+
+# Generate text + CSV reports
+generate_report(code_smells, architectural_smells, structural_smells,
+                output_txt="report.txt", output_csv="report.csv")
+
+# Or just inspect the results in code
+for smell in code_smells:
+    print(smell.name, smell.file_path, smell.severity)
+```
+
+Each `smell` object is a dataclass with fields: `name`, `description`, `file_path`, `module_class`, `line_number`, `severity`.
+
+### Pre-commit hook
+
+Run the analyzer automatically before every commit. Add this to `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: local
+    hooks:
+      - id: code-quality-analyzer
+        name: Code Quality Analyzer
+        entry: analyze_code_quality
+        args: ['.', '--type', 'code', '--ignore', 'tests', 'venv', 'build']
+        language: system
+        pass_filenames: false
+```
+
+Install the hooks:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+### GitHub Actions
+
+Add this workflow to `.github/workflows/code-quality.yml` to analyze every pull request:
+
+```yaml
+name: Code Quality Analysis
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install code-quality-analyzer
+        run: uv tool install code-quality-analyzer
+
+      - name: Run analysis
+        run: |
+          analyze_code_quality src/ \
+            --output reports/quality \
+            --ignore tests venv build dist \
+            --type code
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-quality-report
+          path: reports/
+```
+
+### GitLab CI
+
+Add to `.gitlab-ci.yml`:
+
+```yaml
+code-quality:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - pip install uv
+    - uv tool install code-quality-analyzer
+  script:
+    - analyze_code_quality src/
+        --output reports/quality
+        --ignore tests venv build
+  artifacts:
+    paths:
+      - reports/
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+```
 
 ---
 
