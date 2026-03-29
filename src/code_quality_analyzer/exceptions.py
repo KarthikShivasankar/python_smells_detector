@@ -4,4 +4,6 @@ class CodeAnalysisError(Exception):
         self.file_path = file_path
         self.line_number = line_number
         self.function_name = function_name
-        super().__init__(f"{message}\nFile: {file_path}\nLine: {line_number}\nFunction: {function_name}") 
+        super().__init__(
+            f"{message}\nFile: {file_path}\nLine: {line_number}\nFunction: {function_name}"
+        )
