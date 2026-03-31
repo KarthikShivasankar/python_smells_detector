@@ -194,8 +194,8 @@ pip install code-quality-analyzer
 ### From source with uv
 
 ```bash
-git clone https://github.com/KarthikShivasankar/code_quality_analyzer
-cd code_quality_analyzer
+git clone https://github.com/KarthikShivasankar/python_smells_detector
+cd python_smells_detector
 uv sync
 ```
 
@@ -208,8 +208,8 @@ uv run analyze_code_quality /path/to/project
 ### From source with pip
 
 ```bash
-git clone https://github.com/KarthikShivasankar/code_quality_analyzer
-cd code_quality_analyzer
+git clone https://github.com/KarthikShivasankar/python_smells_detector
+cd python_smells_detector
 pip install -e .
 analyze_code_quality /path/to/project
 ```
@@ -579,19 +579,50 @@ uv sync --extra dev
 
 ### Running tests
 
-```bash
-# Run all tests
-uv run pytest tests/
+The test suite covers all three detectors (code, structural, architectural), the config handler, and the main orchestration layer. Tests write real Python source files into temporary directories — no mocking.
 
-# Run a single test file
-uv run pytest tests/test_code_smell_detector.py
+```bash
+# Install dev dependencies first (includes pytest)
+uv sync --extra dev
+
+# Run the full test suite (123 tests)
+uv run python -m pytest tests/
+
+# Run a specific test file
+uv run python -m pytest tests/test_code_smell_detector.py
+uv run python -m pytest tests/test_structural_smell_detector.py
+uv run python -m pytest tests/test_architectural_smell_detector.py
+uv run python -m pytest tests/test_config_handler.py
+uv run python -m pytest tests/test_main.py
 
 # Run a single test class
-uv run pytest tests/test_code_smell_detector.py::TestLargeClass
+uv run python -m pytest tests/test_code_smell_detector.py::TestLargeClass
+uv run python -m pytest tests/test_structural_smell_detector.py::TestLOC
+
+# Run a single test by name
+uv run python -m pytest tests/test_code_smell_detector.py::TestLongMethod::test_detects_method_over_threshold
+
+# Run with verbose output
+uv run python -m pytest tests/ -v
 
 # Run with coverage report
-uv run pytest tests/ --cov=src/code_quality_analyzer --cov-report=term-missing
+uv run python -m pytest tests/ --cov=src/code_quality_analyzer --cov-report=term-missing
+
+# Verify all 123 tests pass (exit 0 = success)
+uv run python -m pytest tests/ -q && echo "All tests passed"
 ```
+
+#### Test structure
+
+| File | What it covers |
+|------|---------------|
+| `tests/test_code_smell_detector.py` | 18 per-file detectors + cross-file smells (data clumps, duplicate code, alternative classes, parallel inheritance). Positive and negative cases for each. |
+| `tests/test_structural_smell_detector.py` | 12 metric-based detectors: NOM, LOC, NOC, NOCC, DIT, LCOM, RFC, WAC, SIZE2, cyclomatic complexity, fan-in/out, branches, file length. |
+| `tests/test_architectural_smell_detector.py` | All 8 architectural smell detectors: God Object, Scattered Functionality, Redundant Abstraction, Improper API Usage, Orphan Module, Cyclic Dependency, Unstable Dependency, Hub-like Dependency. |
+| `tests/test_config_handler.py` | Config file loading, threshold validation, unknown-key handling, malformed YAML error handling. |
+| `tests/test_main.py` | CLI parser flags, `analyze_*` functions, `generate_report`, `generate_csv_report` (field names, row contents, empty input). |
+
+> **Note:** `pytest` is blocked by an application control policy on some Windows setups — use `python -m pytest` instead of the bare `pytest` command.
 
 ### Linting
 
