@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tutorial &mdash; Code Quality Analyzer 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>Tutorial &mdash; Code Quality Analyzer 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=2709fde1"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -52,12 +50,14 @@
 <li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#custom-thresholds">Custom Thresholds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ignoring-directories">Ignoring Directories</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#integrating-with-ci-cd">Integrating with CI/CD</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Testing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
 <ul>
@@ -97,15 +97,20 @@
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
 <ol class="arabic">
 <li><p>Install the Code Quality Analyzer:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Download<span class="w"> </span>the<span class="w"> </span>repository
-<span class="nb">cd</span><span class="w">  </span><span class="s2">&quot;the_repository&quot;</span>
+<p>Using uv (recommended):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/KarthikShivasankar/python_smells_detector.git
+<span class="nb">cd</span><span class="w"> </span>python_smells_detector
+uv<span class="w"> </span>sync
+</pre></div>
+</div>
+<p>Using pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/KarthikShivasankar/python_smells_detector.git
+<span class="nb">cd</span><span class="w"> </span>python_smells_detector
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
-</div></blockquote>
 </li>
-<li><p>Create a configuration file named <cite>code_quality_config.YAML</cite> in your project root:</p>
+<li><p>Create a configuration file named <code class="docutils literal notranslate"><span class="pre">code_quality_config.yaml</span></code> in your project root:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">code_smells</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">LONG_METHOD_LINES</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
@@ -116,10 +121,10 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </div>
 </li>
 <li><p>Run the analyzer on your project:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>sample_project<span class="w"> </span>--config<span class="w"> </span>code_quality_config.YAML
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>sample_project<span class="w"> </span>--config<span class="w"> </span>code_quality_config.yaml
 </pre></div>
 </div>
-<p>Where <cite>sample_project</cite> is the directory containing the code you want to analyze.</p>
+<p>Where <code class="docutils literal notranslate"><span class="pre">sample_project</span></code> is the directory containing the code you want to analyze.</p>
 </li>
 <li><p>Review the generated report for code smells and suggestions for improvement.</p></li>
 </ol>
@@ -128,11 +133,18 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Link to this heading"></a></h2>
 <section id="custom-thresholds">
 <h3>Custom Thresholds<a class="headerlink" href="#custom-thresholds" title="Link to this heading"></a></h3>
-<p>You can customize the thresholds for code smells by editing the <cite>code_quality_config.YAML</cite> file. For example:</p>
+<p>You can customize the thresholds for code smells by editing the <code class="docutils literal notranslate"><span class="pre">code_quality_config.yaml</span></code> file. For example:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">code_smells</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">LONG_METHOD_LINES</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
 <span class="w">    </span><span class="nt">explanation</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Our</span><span class="nv"> </span><span class="s">project</span><span class="nv"> </span><span class="s">allows</span><span class="nv"> </span><span class="s">slightly</span><span class="nv"> </span><span class="s">longer</span><span class="nv"> </span><span class="s">methods.&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="ignoring-directories">
+<h3>Ignoring Directories<a class="headerlink" href="#ignoring-directories" title="Link to this heading"></a></h3>
+<p>Skip directories like tests, virtual environments, or generated code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--ignore<span class="w"> </span>tests<span class="w"> </span>docs<span class="w"> </span>venv<span class="w"> </span>.tox
 </pre></div>
 </div>
 </section>
@@ -145,17 +157,15 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <span class="w">  </span><span class="nt">analyze</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
 <span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v2</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v3</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Set up Python</span>
-<span class="w">      </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v2</span>
+<span class="w">      </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
 <span class="w">      </span><span class="nt">with</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.x&#39;</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install dependencies</span>
-<span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">        </span><span class="no">pip install code-quality-analyzer</span>
+<span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install code-quality-analyzer</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run Code Quality Analyzer</span>
-<span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">        </span><span class="no">analyze_code_quality . --config code_quality_config.YAML</span>
+<span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">analyze_code_quality . --config code_quality_config.yaml --ignore tests venv</span>
 </pre></div>
 </div>
 </section>
@@ -173,7 +183,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Your Name.</p>
+    <p>&#169; Copyright 2025, Karthik Shivashankar.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

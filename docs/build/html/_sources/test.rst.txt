@@ -4,51 +4,64 @@ Testing
 Running Tests
 -------------
 
-To run the tests for the Code Quality Analyzer, follow these steps:
+Using uv (recommended):
 
-1. Install the development dependencies:
+.. code-block:: bash
 
-   .. code-block:: bash
+   uv sync --extra dev
+   uv run pytest tests/
 
-      pip install -e .[dev]
+Using pip:
 
-2. Run the tests using pytest:
+.. code-block:: bash
 
-   .. code-block:: bash
+   pip install -e ".[dev]"
+   pytest tests/
 
-      pytest tests/
+Run a specific test file or class:
+
+.. code-block:: bash
+
+   uv run pytest tests/test_code_smell_detector.py
+   uv run pytest tests/test_code_smell_detector.py::TestFoo
+
+Run with coverage:
+
+.. code-block:: bash
+
+   uv run pytest tests/ --cov=code_quality_analyzer
 
 Test Structure
 --------------
 
 The test suite includes:
 
-1. Unit tests for individual smell detectors
-2. Integration tests for the overall analysis process
-3. Performance tests to ensure efficiency on large codebases
+* ``test_code_smell_detector.py`` — unit tests for all per-file and cross-file code smells
+* ``test_architectural_smell_detector.py`` — unit tests for architectural smell detection
+* ``test_structural_smell_detector.py`` — unit tests for OO metrics and structural smells
+* ``test_config_handler.py`` — tests for configuration loading and validation
+* ``test_main.py`` — integration tests for the CLI and overall analysis flow
 
 Example Tests
 -------------
-
-Here are some example tests from the project:
 
 .. code-block:: python
 
    def test_detect_long_method(code_smell_detector, tmp_path):
        test_file = tmp_path / "long_method.py"
-       test_file.write_text("\n".join([f"print('Line {i}')" for i in range(21)]))
+       test_file.write_text("\n".join([f"    x = {i}" for i in range(50)]))
 
        code_smell_detector.detect_smells(str(test_file))
-       assert any("Long Method" in smell for smell in code_smell_detector.code_smells)
+       assert any("Long Method" in smell.smell_type for smell in code_smell_detector.code_smells)
 
    def test_detect_god_object(architectural_smell_detector, tmp_path):
        test_file = tmp_path / "god_object.py"
        test_file.write_text("\n".join([f"def func{i}(): pass" for i in range(26)]))
 
        architectural_smell_detector.detect_smells(str(tmp_path))
-       assert any("God Object" in smell for smell in architectural_smell_detector.architectural_smells)
+       assert any("God Object" in smell.smell_type for smell in architectural_smell_detector.architectural_smells)
 
 Writing New Tests
 -----------------
 
-When adding new features or smell detectors, make sure to add corresponding tests. Follow the existing test structure and use pytest fixtures where appropriate.
+When adding new features or smell detectors, add corresponding tests. Follow the existing test structure and use the pytest fixtures defined in ``conftest.py``.
