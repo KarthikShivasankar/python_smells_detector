@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; Code Quality Analyzer 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>Installation &mdash; Code Quality Analyzer 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=2709fde1"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -49,7 +47,8 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation-methods">Installation Methods</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#from-source">From Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-uv-recommended">Using uv (Recommended)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-pip">Using pip</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#development-installation">Development Installation</a></li>
 </ul>
 </li>
@@ -58,6 +57,7 @@
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Testing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
 <ul>
@@ -97,16 +97,29 @@
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
 <p>Before installing Code Quality Analyzer, ensure you have:</p>
 <ul class="simple">
-<li><p>Python 3.7 or higher</p></li>
-<li><p>pip package manager</p></li>
+<li><p>Python 3.8 or higher</p></li>
+<li><p>pip or <a class="reference external" href="https://docs.astral.sh/uv/">uv</a> package manager</p></li>
 </ul>
 </section>
 <section id="installation-methods">
 <h2>Installation Methods<a class="headerlink" href="#installation-methods" title="Link to this heading"></a></h2>
-<section id="from-source">
-<h3>From Source<a class="headerlink" href="#from-source" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Download<span class="w"> </span>the<span class="w"> </span>repository
-<span class="nb">cd</span><span class="w">  </span><span class="s2">&quot;the_repository&quot;</span>
+<section id="using-uv-recommended">
+<h3>Using uv (Recommended)<a class="headerlink" href="#using-uv-recommended" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://docs.astral.sh/uv/">uv</a> is the recommended way to install and manage the project:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/KarthikShivasankar/python_smells_detector.git
+<span class="nb">cd</span><span class="w"> </span>python_smells_detector
+uv<span class="w"> </span>sync
+</pre></div>
+</div>
+<p>For development (includes sphinx, pytest, and other dev tools):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>dev
+</pre></div>
+</div>
+</section>
+<section id="using-pip">
+<h3>Using pip<a class="headerlink" href="#using-pip" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/KarthikShivasankar/python_smells_detector.git
+<span class="nb">cd</span><span class="w"> </span>python_smells_detector
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
@@ -132,7 +145,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Your Name.</p>
+    <p>&#169; Copyright 2025, Karthik Shivashankar.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -41,6 +41,8 @@ analyze_code_quality = "code_quality_analyzer.main:analyze_project"
 dev = [
     "sphinx",
     "sphinx-rtd-theme",
+    "sphinx-autodoc-typehints",
+    "myst-parser",
     "pytest>=7.0",
     "pytest-cov",
 ]

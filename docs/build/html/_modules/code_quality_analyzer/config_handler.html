@@ -1,22 +1,20 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>code_quality_analyzer.config_handler &mdash; Code Quality Analyzer 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+  <title>code_quality_analyzer.config_handler &mdash; Code Quality Analyzer 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=2709fde1"></script>
-        <script src="../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -81,21 +79,22 @@
            <div itemprop="articleBody">
              
   <h1>Source code for code_quality_analyzer.config_handler</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">yaml</span>
-<span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
+
 <div class="viewcode-block" id="ConfigHandler">
 <a class="viewcode-back" href="../../config_handler.html#code_quality_analyzer.config_handler.ConfigHandler">[docs]</a>
-<span class="k">class</span> <span class="nc">ConfigHandler</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfigHandler</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A class to handle configuration loading and management for code quality analysis.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ConfigHandler.__init__">
 <a class="viewcode-back" href="../../config_handler.html#code_quality_analyzer.config_handler.ConfigHandler.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the ConfigHandler with a given configuration file path.</span>
 
@@ -109,25 +108,25 @@
 
 <div class="viewcode-block" id="ConfigHandler.load_thresholds">
 <a class="viewcode-back" href="../../config_handler.html#code_quality_analyzer.config_handler.ConfigHandler.load_thresholds">[docs]</a>
-    <span class="k">def</span> <span class="nf">load_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load threshold values from the YAML configuration file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
                 <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-                
+
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading configuration from: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            
+
             <span class="n">thresholds</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s1">&#39;code_smells&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code_smells&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
                 <span class="s1">&#39;architectural_smells&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;architectural_smells&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
                 <span class="s1">&#39;structural_smells&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;structural_smells&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
             <span class="p">}</span>
-            
+
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded thresholds: </span><span class="si">{</span><span class="n">thresholds</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">thresholds</span>
-            
+
         <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Configuration file not found: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span>
@@ -141,35 +140,37 @@
 
 <div class="viewcode-block" id="ConfigHandler._validate_thresholds">
 <a class="viewcode-back" href="../../config_handler.html#code_quality_analyzer.config_handler.ConfigHandler._validate_thresholds">[docs]</a>
-    <span class="k">def</span> <span class="nf">_validate_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Validate that all required thresholds are present and have valid values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">required_structural_thresholds</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="s1">&#39;NOM_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;WMPC1_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;WMPC2_THRESHOLD&#39;</span><span class="p">,</span> 
+            <span class="s1">&#39;NOM_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;WMPC1_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;WMPC2_THRESHOLD&#39;</span><span class="p">,</span>
             <span class="s1">&#39;SIZE2_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;WAC_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;LCOM_THRESHOLD&#39;</span><span class="p">,</span>
             <span class="s1">&#39;RFC_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;NOCC_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;DIT_THRESHOLD&#39;</span><span class="p">,</span>
             <span class="s1">&#39;LOC_THRESHOLD&#39;</span><span class="p">,</span> <span class="s1">&#39;CBO_THRESHOLD&#39;</span>
         <span class="p">]</span>
-        
+
         <span class="n">structural_thresholds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;structural_smells&#39;</span><span class="p">,</span> <span class="p">{})</span>
-        
+
         <span class="n">missing_thresholds</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">threshold</span> <span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">required_structural_thresholds</span> 
+            <span class="n">threshold</span> <span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">required_structural_thresholds</span>
             <span class="k">if</span> <span class="n">threshold</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">structural_thresholds</span>
         <span class="p">]</span>
-        
+
         <span class="k">if</span> <span class="n">missing_thresholds</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required structural thresholds: </span><span class="si">{</span><span class="n">missing_thresholds</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Missing required structural thresholds: </span><span class="si">{</span><span class="n">missing_thresholds</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">structural_thresholds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid threshold value for </span><span class="si">{</span><span class="n">threshold</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Invalid threshold value for </span><span class="si">{</span><span class="n">threshold</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ConfigHandler.get_thresholds">
 <a class="viewcode-back" href="../../config_handler.html#code_quality_analyzer.config_handler.ConfigHandler.get_thresholds">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smell_type</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smell_type</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get threshold values for a specific type of code smell.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -187,7 +188,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Your Name.</p>
+    <p>&#169; Copyright 2025, Karthik Shivashankar.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
