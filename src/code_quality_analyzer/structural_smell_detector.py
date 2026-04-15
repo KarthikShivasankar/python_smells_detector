@@ -50,25 +50,29 @@ class StructuralSmellDetector:
         Detect structural smells in the given directory.
 
         This method analyzes all Python files in the given directory and its subdirectories,
-        and runs various smell detection methods.
+        and runs various smell detection methods. If a parse error occurs, it prints the error
+        message and continues with the analysis.
 
         Args:
             directory_path (str): The path to the directory to be analyzed.
         """
-        self.project_root = directory_path
-        self.analyze_directory(directory_path)
-        self.detect_nom()
-        self.detect_wmpc()
-        self.detect_size2()
-        self.detect_wac()
-        self.detect_lcom()
-        self.detect_rfc()
-        self.detect_nocc()
-        self.detect_dit()
-        self.detect_loc()
-        self.detect_mpc()
-        self.detect_cbo()
-        self.detect_noc()
+        try:
+            self.project_root = directory_path
+            self.analyze_directory(directory_path)
+            self.detect_nom()
+            self.detect_wmpc()
+            self.detect_size2()
+            self.detect_wac()
+            self.detect_lcom()
+            self.detect_rfc()
+            self.detect_nocc()
+            self.detect_dit()
+            self.detect_loc()
+            self.detect_mpc()
+            self.detect_cbo()
+            self.detect_noc()
+        except Exception as e:
+            print(f"Error analyzing directory {directory_path}: {str(e)}")
 
     def analyze_directory(self, directory_path):
         """
@@ -87,41 +91,43 @@ class StructuralSmellDetector:
         """
         Analyze a single Python file for structural information.
 
-        This method parses the file and extracts information about classes, methods,
-        attributes, and module dependencies.
-
         Args:
             file_path (str): The path to the Python file to be analyzed.
         """
-        with open(file_path, 'r') as file:
-            tree = ast.parse(file.read())
+        try:
+            with open(file_path, 'r') as file:
+                tree = ast.parse(file.read())
 
-        module_name = os.path.relpath(file_path, self.project_root).replace(os.path.sep, '.')[:-3]
-        self.module_info[module_name]['loc'] = len(tree.body)
-        self.file_paths[module_name] = file_path  # Store the file path
+            module_name = os.path.relpath(file_path, self.project_root).replace(os.path.sep, '.')[:-3]
+            self.module_info[module_name]['loc'] = len(tree.body)
+            self.file_paths[module_name] = file_path
 
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                class_name = f"{module_name}.{node.name}"
-                self.class_info[class_name]['methods'] = []
-                self.class_info[class_name]['attributes'] = []
-                self.class_info[class_name]['loc'] = node.end_lineno - node.lineno + 1
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef):
+                    class_name = f"{module_name}.{node.name}"
+                    self.class_info[class_name]['methods'] = []
+                    self.class_info[class_name]['attributes'] = []
+                    self.class_info[class_name]['loc'] = node.end_lineno - node.lineno + 1
 
-                for child in node.body:
-                    if isinstance(child, ast.FunctionDef):
-                        self.class_info[class_name]['methods'].append(child.name)
-                    elif isinstance(child, ast.Assign):
-                        for target in child.targets:
-                            if isinstance(target, ast.Name):
-                                self.class_info[class_name]['attributes'].append(target.id)
+                    for child in node.body:
+                        if isinstance(child, ast.FunctionDef):
+                            self.class_info[class_name]['methods'].append(child.name)
+                        elif isinstance(child, ast.Assign):
+                            for target in child.targets:
+                                if isinstance(target, ast.Name):
+                                    self.class_info[class_name]['attributes'].append(target.id)
 
-            elif isinstance(node, (ast.Import, ast.ImportFrom)):
-                if isinstance(node, ast.Import):
-                    for alias in node.names:
-                        self.dependency_graph.add_edge(module_name, alias.name)
-                else:
-                    if node.module:
-                        self.dependency_graph.add_edge(module_name, node.module)
+                elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                    if isinstance(node, ast.Import):
+                        for alias in node.names:
+                            self.dependency_graph.add_edge(module_name, alias.name)
+                    else:
+                        if node.module:
+                            self.dependency_graph.add_edge(module_name, node.module)
+        except SyntaxError as e:
+            print(f"Parse error in file {file_path}: {str(e)}")
+        except Exception as e:
+            print(f"Error analyzing file {file_path}: {str(e)}")
 
     def add_smell(self, name, description, file_path, module_class, line_number=None):
         """

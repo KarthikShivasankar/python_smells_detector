@@ -63,20 +63,24 @@ class ArchitecturalSmellDetector:
         Detect architectural smells in the given directory.
 
         This method analyzes all Python files in the given directory and its subdirectories,
-        and runs various smell detection methods.
+        and runs various smell detection methods. If a parse error occurs, it prints the error
+        message and continues with the analysis.
 
         Args:
             directory_path (str): The path to the directory to be analyzed.
         """
-        self.analyze_directory(directory_path)
-        self.detect_hub_like_dependency()
-        self.detect_scattered_functionality()
-        self.detect_redundant_abstractions()
-        self.detect_god_objects()
-        self.detect_improper_api_usage()
-        self.detect_orphan_modules()
-        self.detect_cyclic_dependencies()
-        self.detect_unstable_dependencies()
+        try:
+            self.analyze_directory(directory_path)
+            self.detect_hub_like_dependency()
+            self.detect_scattered_functionality()
+            self.detect_redundant_abstractions()
+            self.detect_god_objects()
+            self.detect_improper_api_usage()
+            self.detect_orphan_modules()
+            self.detect_cyclic_dependencies()
+            self.detect_unstable_dependencies()
+        except Exception as e:
+            print(f"Error analyzing directory {directory_path}: {str(e)}")
 
     def analyze_directory(self, directory_path):
         """
@@ -101,25 +105,30 @@ class ArchitecturalSmellDetector:
         Args:
             file_path (str): The path to the Python file to be analyzed.
         """
-        with open(file_path, 'r') as file:
-            tree = ast.parse(file.read())
+        try:
+            with open(file_path, 'r') as file:
+                tree = ast.parse(file.read())
 
-        module_name = os.path.basename(file_path)[:-3]  # Remove .py extension
-        self.module_dependencies.add_node(module_name)
-        self.file_paths[module_name] = file_path  # Store the file path
+            module_name = os.path.basename(file_path)[:-3]  # Remove .py extension
+            self.module_dependencies.add_node(module_name)
+            self.file_paths[module_name] = file_path
 
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    self.module_dependencies.add_edge(module_name, alias.name)
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    self.module_dependencies.add_edge(module_name, node.module)
-            elif isinstance(node, ast.FunctionDef):
-                self.module_functions[module_name].add(node.name)
-            elif isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Attribute):
-                    self.api_usage[module_name].append(node.func.attr)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        self.module_dependencies.add_edge(module_name, alias.name)
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        self.module_dependencies.add_edge(module_name, node.module)
+                elif isinstance(node, ast.FunctionDef):
+                    self.module_functions[module_name].add(node.name)
+                elif isinstance(node, ast.Call):
+                    if isinstance(node.func, ast.Attribute):
+                        self.api_usage[module_name].append(node.func.attr)
+        except SyntaxError as e:
+            print(f"Parse error in file {file_path}: {str(e)}")
+        except Exception as e:
+            print(f"Error analyzing file {file_path}: {str(e)}")
 
     def add_smell(self, name, description, file_path, module_class, line_number=None):
         self.architectural_smells.append(ArchitecturalSmell(

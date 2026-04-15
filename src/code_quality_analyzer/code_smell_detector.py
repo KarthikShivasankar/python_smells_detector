@@ -1,5 +1,5 @@
 import astroid
-from astroid import nodes
+from astroid import nodes, exceptions as astroid_exceptions
 import os
 from collections import defaultdict
 from dataclasses import dataclass
@@ -41,39 +41,43 @@ class CodeSmellDetector:
         Detect code smells in the given file.
 
         This method reads the file, parses it using astroid, and runs all the smell detection methods.
+        If a parse error occurs, it prints the error message and continues with the analysis.
 
         Args:
             file_path (str): The path to the file to be analyzed.
         """
-        with open(file_path, 'r') as file:
-            content = file.read()
-        
-        module = astroid.parse(content)
-        self.file_content = content.split('\n')
-        
-        # Call all smell detection methods
-        self.detect_long_methods(module, file_path)
-        self.detect_large_classes(module, file_path)
-        self.detect_primitive_obsession(module, file_path)
-        self.detect_long_parameter_lists(module, file_path)
-        self.detect_data_clumps(module, file_path)
-        self.detect_switch_statements(module, file_path)
-        self.detect_temporary_fields(module, file_path)
-        # Remove the call to detect_refused_bequest
-        self.detect_alternative_classes(module, file_path)
-        self.detect_divergent_change(module, file_path)
-        self.detect_parallel_inheritance(module, file_path)
-        self.detect_shotgun_surgery(module, file_path)
-        self.detect_comments(file_path)
-        self.detect_duplicate_code(module, file_path)
-        #self.detect_data_class(module, file_path)
-        self.detect_dead_code(module, file_path)
-        self.detect_lazy_class(module, file_path)
-        self.detect_speculative_generality(module, file_path)
-        self.detect_feature_envy(module, file_path)
-        self.detect_inappropriate_intimacy(module, file_path)
-        self.detect_message_chains(module, file_path)
-        self.detect_middle_man(module, file_path)
+        try:
+            with open(file_path, 'r') as file:
+                content = file.read()
+            
+            module = astroid.parse(content)
+            self.file_content = content.split('\n')
+            
+            # Call all smell detection methods
+            self.detect_long_methods(module, file_path)
+            self.detect_large_classes(module, file_path)
+            self.detect_primitive_obsession(module, file_path)
+            self.detect_long_parameter_lists(module, file_path)
+            self.detect_data_clumps(module, file_path)
+            self.detect_switch_statements(module, file_path)
+            self.detect_temporary_fields(module, file_path)
+            self.detect_alternative_classes(module, file_path)
+            self.detect_divergent_change(module, file_path)
+            self.detect_parallel_inheritance(module, file_path)
+            self.detect_shotgun_surgery(module, file_path)
+            self.detect_comments(file_path)
+            self.detect_duplicate_code(module, file_path)
+            self.detect_dead_code(module, file_path)
+            self.detect_lazy_class(module, file_path)
+            self.detect_speculative_generality(module, file_path)
+            self.detect_feature_envy(module, file_path)
+            self.detect_inappropriate_intimacy(module, file_path)
+            self.detect_message_chains(module, file_path)
+            self.detect_middle_man(module, file_path)
+        except astroid_exceptions.AstroidSyntaxError as e:
+            print(f"Parse error in file {file_path}: {str(e)}")
+        except Exception as e:
+            print(f"Error analyzing file {file_path}: {str(e)}")
 
     def detect_long_methods(self, module, file_path):
         """
