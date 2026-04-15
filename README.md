@@ -1,4 +1,4 @@
-# Code Quality Analyzer
+# Code Quality Analyzer (PyExamine)
 
 A comprehensive Python code quality analysis tool that detects code smells, architectural smells, and structural issues in Python projects. This tool helps developers identify potential maintainability issues and technical debt early in the development process.
 
