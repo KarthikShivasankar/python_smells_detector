@@ -54,12 +54,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#additional-options">Additional Options</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#python-api">Python API</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">Basic Usage</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#analyzing-specific-smells">Analyzing Specific Smells</a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="#output-formats">Output Formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-output">Example Output</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
@@ -106,9 +102,11 @@
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>/path/to/project
 </pre></div>
 </div>
+<p>This will analyze all types of code smells in the specified project directory.</p>
 </section>
 <section id="analyze-specific-smell-types">
 <h3>Analyze Specific Smell Types<a class="headerlink" href="#analyze-specific-smell-types" title="Link to this heading"></a></h3>
+<p>To analyze only specific types of smells:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Analyze only code smells</span>
 analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--type<span class="w"> </span>code
 
@@ -122,45 +120,18 @@ analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </s
 </section>
 <section id="additional-options">
 <h3>Additional Options<a class="headerlink" href="#additional-options" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--config<span class="w"> </span>custom_config.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output<span class="w"> </span>report<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--debug
-</pre></div>
-</div>
-</section>
-</section>
-<section id="python-api">
-<h2>Python API<a class="headerlink" href="#python-api" title="Link to this heading"></a></h2>
-<section id="id1">
-<h3>Basic Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">code_quality_analyzer</span> <span class="kn">import</span> <span class="n">CodeAnalyzer</span>
+<p>Configure analysis with additional options:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use custom configuration file</span>
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--config<span class="w"> </span>custom_config.yaml
 
-<span class="n">analyzer</span> <span class="o">=</span> <span class="n">CodeAnalyzer</span><span class="p">(</span><span class="s1">&#39;/path/to/project&#39;</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="s1">&#39;code_quality_config.yaml&#39;</span><span class="p">)</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="analyzing-specific-smells">
-<h3>Analyzing Specific Smells<a class="headerlink" href="#analyzing-specific-smells" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">code_quality_analyzer</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">CodeSmellDetector</span><span class="p">,</span>
-    <span class="n">ArchitecturalSmellDetector</span><span class="p">,</span>
-    <span class="n">StructuralSmellDetector</span>
-<span class="p">)</span>
+<span class="c1"># Specify output file</span>
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--output<span class="w"> </span>report.txt
 
-<span class="c1"># Analyze code smells</span>
-<span class="n">code_detector</span> <span class="o">=</span> <span class="n">CodeSmellDetector</span><span class="p">(</span><span class="n">thresholds</span><span class="p">)</span>
-<span class="n">code_detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="s1">&#39;/path/to/file.py&#39;</span><span class="p">)</span>
+<span class="c1"># Enable debug logging</span>
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--debug
 
-<span class="c1"># Analyze architectural smells</span>
-<span class="n">arch_detector</span> <span class="o">=</span> <span class="n">ArchitecturalSmellDetector</span><span class="p">(</span><span class="n">thresholds</span><span class="p">)</span>
-<span class="n">arch_detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="s1">&#39;/path/to/project&#39;</span><span class="p">)</span>
-
-<span class="c1"># Analyze structural smells</span>
-<span class="n">struct_detector</span> <span class="o">=</span> <span class="n">StructuralSmellDetector</span><span class="p">(</span><span class="n">thresholds</span><span class="p">)</span>
-<span class="n">struct_detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="s1">&#39;/path/to/project&#39;</span><span class="p">)</span>
+<span class="c1"># Combine multiple options</span>
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--config<span class="w"> </span>custom_config.yaml<span class="w"> </span>--output<span class="w"> </span>report.txt<span class="w"> </span>--debug
 </pre></div>
 </div>
 </section>
@@ -173,6 +144,35 @@ analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </s
 <li><p>CSV report: Structured data for further processing</p></li>
 <li><p>Log file: Detailed analysis process and any errors encountered</p></li>
 </ul>
+</section>
+<section id="example-output">
+<h2>Example Output<a class="headerlink" href="#example-output" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Code Quality Analysis Report
+============================
+
+Structural Smells:
+-------------------
+- High Cyclomatic Complexity: Method &#39;process_data&#39; has complexity of 15
+  Line: 45
+  File: src/processor.py
+  Severity: high
+
+Code Smells:
+------------
+- Large Class: Class &#39;DataManager&#39; has 20 methods
+- Feature Envy: Method &#39;calculate_metrics&#39; makes 5 calls to &#39;Statistics&#39; class
+
+Architectural Smells:
+---------------------
+- Cyclic Dependency: Detected cycle between modules: module_a -&gt; module_b -&gt; module_c -&gt; module_a
+
+Summary:
+--------
+Total Structural Smells: 5
+Total Code Smells: 8
+Total Architectural Smells: 3
+</pre></div>
+</div>
 </section>
 </section>
 

@@ -11,8 +11,12 @@ Basic Usage
 
    analyze_code_quality /path/to/project
 
+This will analyze all types of code smells in the specified project directory.
+
 Analyze Specific Smell Types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To analyze only specific types of smells:
 
 .. code-block:: bash
 
@@ -28,49 +32,21 @@ Analyze Specific Smell Types
 Additional Options
 ^^^^^^^^^^^^^^^
 
+Configure analysis with additional options:
+
 .. code-block:: bash
 
-   analyze_code_quality /path/to/project \
-       --config custom_config.yaml \
-       --output report \
-       --debug
+   # Use custom configuration file
+   analyze_code_quality /path/to/project --config custom_config.yaml
 
-Python API
----------
+   # Specify output file
+   analyze_code_quality /path/to/project --output report.txt
 
-Basic Usage
-^^^^^^^^^^
+   # Enable debug logging
+   analyze_code_quality /path/to/project --debug
 
-.. code-block:: python
-
-   from code_quality_analyzer import CodeAnalyzer
-   
-   analyzer = CodeAnalyzer('/path/to/project', config_file='code_quality_config.yaml')
-   results = analyzer.analyze()
-   print(results)
-
-Analyzing Specific Smells
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from code_quality_analyzer import (
-       CodeSmellDetector,
-       ArchitecturalSmellDetector,
-       StructuralSmellDetector
-   )
-   
-   # Analyze code smells
-   code_detector = CodeSmellDetector(thresholds)
-   code_detector.detect_smells('/path/to/file.py')
-   
-   # Analyze architectural smells
-   arch_detector = ArchitecturalSmellDetector(thresholds)
-   arch_detector.detect_smells('/path/to/project')
-   
-   # Analyze structural smells
-   struct_detector = StructuralSmellDetector(thresholds)
-   struct_detector.detect_smells('/path/to/project')
+   # Combine multiple options
+   analyze_code_quality /path/to/project --config custom_config.yaml --output report.txt --debug
 
 Output Formats
 ------------
@@ -80,3 +56,33 @@ The tool generates reports in multiple formats:
 * Text report (default): Detailed human-readable analysis
 * CSV report: Structured data for further processing
 * Log file: Detailed analysis process and any errors encountered
+
+Example Output
+------------
+
+.. code-block:: text
+
+    Code Quality Analysis Report
+    ============================
+
+    Structural Smells:
+    -------------------
+    - High Cyclomatic Complexity: Method 'process_data' has complexity of 15
+      Line: 45
+      File: src/processor.py
+      Severity: high
+
+    Code Smells:
+    ------------
+    - Large Class: Class 'DataManager' has 20 methods
+    - Feature Envy: Method 'calculate_metrics' makes 5 calls to 'Statistics' class
+
+    Architectural Smells:
+    ---------------------
+    - Cyclic Dependency: Detected cycle between modules: module_a -> module_b -> module_c -> module_a
+
+    Summary:
+    --------
+    Total Structural Smells: 5
+    Total Code Smells: 8
+    Total Architectural Smells: 3

@@ -24,16 +24,7 @@ Command Line
 
    analyze_code_quality /path/to/project --type architectural
 
-Python API
-^^^^^^^^^
 
-.. code-block:: python
-
-   from code_quality_analyzer import ArchitecturalSmellDetector
-   
-   detector = ArchitecturalSmellDetector(thresholds)
-   detector.detect_smells('/path/to/project')
-   detector.print_report()
 
 API Reference
 -----------

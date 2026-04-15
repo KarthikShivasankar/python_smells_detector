@@ -59,7 +59,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#detected-smells">Detected Smells</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#command-line">Command Line</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#python-api">Python API</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#api-reference">API Reference</a><ul>
@@ -162,16 +161,6 @@
 <section id="command-line">
 <h3>Command Line<a class="headerlink" href="#command-line" title="Link to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--type<span class="w"> </span>structural
-</pre></div>
-</div>
-</section>
-<section id="python-api">
-<h3>Python API<a class="headerlink" href="#python-api" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">code_quality_analyzer</span> <span class="kn">import</span> <span class="n">StructuralSmellDetector</span>
-
-<span class="n">detector</span> <span class="o">=</span> <span class="n">StructuralSmellDetector</span><span class="p">(</span><span class="n">thresholds</span><span class="p">)</span>
-<span class="n">detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="s1">&#39;/path/to/project&#39;</span><span class="p">)</span>
-<span class="n">detector</span><span class="o">.</span><span class="n">print_report</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>

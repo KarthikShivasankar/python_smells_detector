@@ -56,7 +56,6 @@
 <li class="toctree-l1"><a class="reference internal" href="architectural_smell_detector.html">Architectural Smell Detection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structural_smell_detector.html">Structural Smell Detection</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration Handler</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#api-reference">API Reference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.config_handler.ConfigHandler"><code class="docutils literal notranslate"><span class="pre">ConfigHandler</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.config_handler.ConfigHandler.__init__"><code class="docutils literal notranslate"><span class="pre">ConfigHandler.__init__()</span></code></a></li>
@@ -98,20 +97,6 @@
   <section id="configuration-handler">
 <h1>Configuration Handler<a class="headerlink" href="#configuration-handler" title="Link to this heading"></a></h1>
 <p>The Configuration Handler manages the loading and validation of smell detection thresholds.</p>
-<section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">code_quality_analyzer</span> <span class="kn">import</span> <span class="n">ConfigHandler</span>
-
-<span class="c1"># Load configuration from file</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">ConfigHandler</span><span class="p">(</span><span class="s1">&#39;code_quality_config.yaml&#39;</span><span class="p">)</span>
-
-<span class="c1"># Get thresholds for specific smell type</span>
-<span class="n">code_thresholds</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_thresholds</span><span class="p">(</span><span class="s1">&#39;code_smells&#39;</span><span class="p">)</span>
-<span class="n">arch_thresholds</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_thresholds</span><span class="p">(</span><span class="s1">&#39;architectural_smells&#39;</span><span class="p">)</span>
-<span class="n">struct_thresholds</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_thresholds</span><span class="p">(</span><span class="s1">&#39;structural_smells&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
 <section id="api-reference">
 <h2>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h2>
 <dl class="py class" id="module-code_quality_analyzer.config_handler">

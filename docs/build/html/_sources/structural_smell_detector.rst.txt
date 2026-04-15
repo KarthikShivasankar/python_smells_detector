@@ -24,16 +24,6 @@ Command Line
 
    analyze_code_quality /path/to/project --type structural
 
-Python API
-^^^^^^^^^
-
-.. code-block:: python
-
-   from code_quality_analyzer import StructuralSmellDetector
-   
-   detector = StructuralSmellDetector(thresholds)
-   detector.detect_smells('/path/to/project')
-   detector.print_report()
 
 API Reference
 -----------

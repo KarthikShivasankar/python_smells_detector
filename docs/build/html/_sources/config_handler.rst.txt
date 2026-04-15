@@ -3,20 +3,6 @@ Configuration Handler
 
 The Configuration Handler manages the loading and validation of smell detection thresholds.
 
-Usage
------
-
-.. code-block:: python
-
-   from code_quality_analyzer import ConfigHandler
-   
-   # Load configuration from file
-   config = ConfigHandler('code_quality_config.yaml')
-   
-   # Get thresholds for specific smell type
-   code_thresholds = config.get_thresholds('code_smells')
-   arch_thresholds = config.get_thresholds('architectural_smells')
-   struct_thresholds = config.get_thresholds('structural_smells')
 
 API Reference
 -----------

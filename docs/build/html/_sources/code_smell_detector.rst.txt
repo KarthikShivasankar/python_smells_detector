@@ -25,16 +25,6 @@ Command Line
 
    analyze_code_quality /path/to/project --type code
 
-Python API
-^^^^^^^^^
-
-.. code-block:: python
-
-   from code_quality_analyzer import CodeSmellDetector
-   
-   detector = CodeSmellDetector(thresholds)
-   detector.detect_smells('path/to/file.py')
-   detector.print_report()
 
 API Reference
 -----------
