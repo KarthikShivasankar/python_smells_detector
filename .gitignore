@@ -51,4 +51,6 @@ visualizations/
 .pytest_cache/
 
 docs/_build/
-docs/build/*
+
+
+

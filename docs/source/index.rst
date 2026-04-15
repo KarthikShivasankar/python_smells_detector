@@ -8,10 +8,10 @@ Welcome to Code Quality Analyzer's documentation!
    usage
    tutorial
    test
-   api/code_smell_detector
-   api/architectural_smell_detector
-   api/structural_smell_detector
-   api/config_handler
+   code_smell_detector
+   architectural_smell_detector
+   structural_smell_detector
+   config_handler
 
 Indices and tables
 ==================
