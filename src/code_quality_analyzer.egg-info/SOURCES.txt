@@ -5,7 +5,6 @@ src/code_quality_analyzer/code_smell_detector.py
 src/code_quality_analyzer/config_handler.py
 src/code_quality_analyzer/main.py
 src/code_quality_analyzer/structural_smell_detector.py
-src/code_quality_analyzer/structural_smells.py
 src/code_quality_analyzer.egg-info/PKG-INFO
 src/code_quality_analyzer.egg-info/SOURCES.txt
 src/code_quality_analyzer.egg-info/dependency_links.txt

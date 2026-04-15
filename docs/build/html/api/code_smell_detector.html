@@ -63,6 +63,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.code_smells"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.code_smells</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.thresholds"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.thresholds</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.file_content"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.file_content</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.add_smell"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.add_smell()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_alternative_classes"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_alternative_classes()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_comments"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_comments()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_class"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_data_class()</span></code></a></li>
@@ -198,253 +199,129 @@ providing a comprehensive report on potential issues in the codebase.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_alternative_classes">
-<span class="sig-name descname"><span class="pre">detect_alternative_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_alternative_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_alternative_classes" title="Link to this definition"></a></dt>
-<dd><p>Detect alternative classes with different interfaces in the given module.</p>
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.add_smell">
+<span class="sig-name descname"><span class="pre">add_smell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">severity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'medium'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.add_smell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.add_smell" title="Link to this definition"></a></dt>
+<dd><p>Add a detected smell to the list of code smells.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – The name of the smell</p></li>
+<li><p><strong>description</strong> (<em>str</em>) – Description of the smell</p></li>
+<li><p><strong>file_path</strong> (<em>str</em>) – Path to the file containing the smell</p></li>
+<li><p><strong>module_class</strong> (<em>str</em>) – The module or class containing the smell</p></li>
+<li><p><strong>line_number</strong> (<em>int</em><em>, </em><em>optional</em>) – The line number where the smell was detected</p></li>
+<li><p><strong>severity</strong> (<em>str</em><em>, </em><em>optional</em>) – The severity level of the smell (default: ‘medium’)</p></li>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_alternative_classes">
+<span class="sig-name descname"><span class="pre">detect_alternative_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_alternative_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_alternative_classes" title="Link to this definition"></a></dt>
+<dd><p>Detect alternative classes with different interfaces in the given module.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_comments">
 <span class="sig-name descname"><span class="pre">detect_comments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_comments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_comments" title="Link to this definition"></a></dt>
 <dd><p>Detect excessive comments in the given file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_class">
 <span class="sig-name descname"><span class="pre">detect_data_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_data_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_class" title="Link to this definition"></a></dt>
 <dd><p>Detect data classes in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_clumps">
 <span class="sig-name descname"><span class="pre">detect_data_clumps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_data_clumps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_clumps" title="Link to this definition"></a></dt>
 <dd><p>Detect data clumps in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_dead_code">
 <span class="sig-name descname"><span class="pre">detect_dead_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_dead_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_dead_code" title="Link to this definition"></a></dt>
 <dd><p>Detect dead code in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_divergent_change">
 <span class="sig-name descname"><span class="pre">detect_divergent_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_divergent_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_divergent_change" title="Link to this definition"></a></dt>
 <dd><p>Detect divergent change in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_duplicate_code">
 <span class="sig-name descname"><span class="pre">detect_duplicate_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_duplicate_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_duplicate_code" title="Link to this definition"></a></dt>
 <dd><p>Detect duplicate code in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_feature_envy">
 <span class="sig-name descname"><span class="pre">detect_feature_envy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_feature_envy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_feature_envy" title="Link to this definition"></a></dt>
 <dd><p>Detect feature envy in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_inappropriate_intimacy">
 <span class="sig-name descname"><span class="pre">detect_inappropriate_intimacy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_inappropriate_intimacy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_inappropriate_intimacy" title="Link to this definition"></a></dt>
 <dd><p>Detect inappropriate intimacy in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_large_classes">
 <span class="sig-name descname"><span class="pre">detect_large_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_large_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_large_classes" title="Link to this definition"></a></dt>
 <dd><p>Detect large classes in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_lazy_class">
 <span class="sig-name descname"><span class="pre">detect_lazy_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_lazy_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_lazy_class" title="Link to this definition"></a></dt>
 <dd><p>Detect lazy classes in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_long_methods">
 <span class="sig-name descname"><span class="pre">detect_long_methods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_long_methods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_long_methods" title="Link to this definition"></a></dt>
 <dd><p>Detect long methods in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_long_parameter_lists">
 <span class="sig-name descname"><span class="pre">detect_long_parameter_lists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_long_parameter_lists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_long_parameter_lists" title="Link to this definition"></a></dt>
 <dd><p>Detect long parameter lists in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_message_chains">
 <span class="sig-name descname"><span class="pre">detect_message_chains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_message_chains"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_message_chains" title="Link to this definition"></a></dt>
 <dd><p>Detect message chains in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_middle_man">
 <span class="sig-name descname"><span class="pre">detect_middle_man</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_middle_man"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_middle_man" title="Link to this definition"></a></dt>
 <dd><p>Detect middle man classes in the given module.</p>
-<p>A middle man class is one where more than half of its methods simply delegate to another class.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_parallel_inheritance">
 <span class="sig-name descname"><span class="pre">detect_parallel_inheritance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_parallel_inheritance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_parallel_inheritance" title="Link to this definition"></a></dt>
 <dd><p>Detect parallel inheritance hierarchies in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_primitive_obsession">
 <span class="sig-name descname"><span class="pre">detect_primitive_obsession</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_primitive_obsession"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_primitive_obsession" title="Link to this definition"></a></dt>
 <dd><p>Detect primitive obsession in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_shotgun_surgery">
 <span class="sig-name descname"><span class="pre">detect_shotgun_surgery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_shotgun_surgery"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_shotgun_surgery" title="Link to this definition"></a></dt>
 <dd><p>Detect potential shotgun surgery in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -464,42 +341,18 @@ If a parse error occurs, it prints the error message and continues with the anal
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_speculative_generality">
 <span class="sig-name descname"><span class="pre">detect_speculative_generality</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_speculative_generality"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_speculative_generality" title="Link to this definition"></a></dt>
 <dd><p>Detect speculative generality in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_switch_statements">
 <span class="sig-name descname"><span class="pre">detect_switch_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_switch_statements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_switch_statements" title="Link to this definition"></a></dt>
 <dd><p>Detect switch statements in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_temporary_fields">
 <span class="sig-name descname"><span class="pre">detect_temporary_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_temporary_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_temporary_fields" title="Link to this definition"></a></dt>
 <dd><p>Detect temporary fields in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">

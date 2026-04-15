@@ -1,15 +1,11 @@
 import yaml
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ConfigHandler:
     """
     A class to handle configuration loading and management for code quality analysis.
-
-    This class is responsible for loading threshold values from a YAML configuration file
-    and providing access to these thresholds for different types of code smells.
-
-    Attributes:
-        config_path (str): The path to the YAML configuration file.
-        thresholds (dict): A dictionary containing threshold values for different types of code smells.
     """
 
     def __init__(self, config_path):
@@ -21,34 +17,66 @@ class ConfigHandler:
         """
         self.config_path = config_path
         self.thresholds = self.load_thresholds()
+        self._validate_thresholds()
 
     def load_thresholds(self):
         """
         Load threshold values from the YAML configuration file.
-
-        This method reads the configuration file and extracts threshold values
-        for different types of code smells.
-
-        Returns:
-            dict: A dictionary containing threshold values for different types of code smells.
         """
-        with open(self.config_path, 'r') as file:
-            config = yaml.safe_load(file)
-        return {
-            'code_smells': {k: v['value'] for k, v in config['code_smells'].items()},
-            'architectural_smells': {k: v['value'] for k, v in config['architectural_smells'].items()},
-            'structural_smells': {k: v['value'] for k, v in config['structural_smells'].items()}
-        }
+        try:
+            with open(self.config_path, 'r') as file:
+                config = yaml.safe_load(file)
+                
+            logger.info(f"Loading configuration from: {self.config_path}")
+            
+            thresholds = {
+                'code_smells': {k: v['value'] for k, v in config.get('code_smells', {}).items()},
+                'architectural_smells': {k: v['value'] for k, v in config.get('architectural_smells', {}).items()},
+                'structural_smells': {k: v['value'] for k, v in config.get('structural_smells', {}).items()}
+            }
+            
+            logger.info(f"Loaded thresholds: {thresholds}")
+            return thresholds
+            
+        except FileNotFoundError:
+            logger.error(f"Configuration file not found: {self.config_path}")
+            raise
+        except yaml.YAMLError as e:
+            logger.error(f"Error parsing YAML configuration: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error loading configuration: {str(e)}")
+            raise
+
+    def _validate_thresholds(self):
+        """
+        Validate that all required thresholds are present and have valid values.
+        """
+        required_structural_thresholds = [
+            'NOM_THRESHOLD', 'WMPC1_THRESHOLD', 'WMPC2_THRESHOLD', 
+            'SIZE2_THRESHOLD', 'WAC_THRESHOLD', 'LCOM_THRESHOLD',
+            'RFC_THRESHOLD', 'NOCC_THRESHOLD', 'DIT_THRESHOLD',
+            'LOC_THRESHOLD', 'CBO_THRESHOLD'
+        ]
+        
+        structural_thresholds = self.thresholds.get('structural_smells', {})
+        
+        missing_thresholds = [
+            threshold for threshold in required_structural_thresholds 
+            if threshold not in structural_thresholds
+        ]
+        
+        if missing_thresholds:
+            logger.warning(f"Missing required structural thresholds: {missing_thresholds}")
+
+        for threshold, value in structural_thresholds.items():
+            if not isinstance(value, (int, float)) or value <= 0:
+                logger.warning(f"Invalid threshold value for {threshold}: {value}")
 
     def get_thresholds(self, smell_type):
         """
         Get threshold values for a specific type of code smell.
-
-        Args:
-            smell_type (str): The type of code smell ('code_smells', 'architectural_smells', or 'structural_smells').
-
-        Returns:
-            dict: A dictionary of threshold values for the specified smell type.
-                  Returns an empty dictionary if the smell type is not found.
         """
-        return self.thresholds.get(smell_type, {})
+        thresholds = self.thresholds.get(smell_type, {})
+        logger.debug(f"Retrieved {smell_type} thresholds: {thresholds}")
+        return thresholds

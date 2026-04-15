@@ -1,10 +1,10 @@
 code_smells:
   LONG_METHOD_LINES:
-    value: 20
+    value: 30
     explanation: "Methods longer than this many lines may be too complex and should be refactored."
 
   LARGE_CLASS_METHODS:
-    value: 10
+    value: 15
     explanation: "Classes with more than this many methods may have too many responsibilities."
 
   PRIMITIVE_OBSESSION_COUNT:
@@ -20,11 +20,11 @@ code_smells:
     explanation: "If-else chains longer than this may indicate a switch statement smell."
 
   DIVERGENT_CHANGE_PREFIXES:
-    value: 6
+    value: 4
     explanation: "Classes with more than this many distinct method name prefixes may be changing for too many reasons."
 
   SHOTGUN_SURGERY_CALLS:
-    value: 6
+    value: 5
     explanation: "Methods called in more than this many places may cause shotgun surgery when changed."
 
   EXCESSIVE_COMMENTS_RATIO:
@@ -32,11 +32,11 @@ code_smells:
     explanation: "Files with more than this ratio of comment lines to total lines may be over-commented."
 
   LAZY_CLASS_METHODS:
-    value: 3
+    value: 4
     explanation: "Classes with this few methods or fewer may not be pulling their weight."
 
   FEATURE_ENVY_CALLS:
-    value: 4
+    value: 3
     explanation: "Methods that call another object's methods/properties more than this many times may belong to that other object."
 
   INAPPROPRIATE_INTIMACY_SHARED:
@@ -44,8 +44,56 @@ code_smells:
     explanation: "Classes that share more than this many fields/methods may be too intimate."
 
   MESSAGE_CHAIN_LENGTH:
-    value: 4
+    value: 3
     explanation: "Method call chains longer than this may indicate tight coupling and violate the Law of Demeter."
+
+  DATA_CLUMPS_THRESHOLD:
+    value: 4
+    explanation: "Groups of parameters appearing together in multiple functions may indicate data clumps."
+
+  TEMPORARY_FIELD_THRESHOLD:
+    value: 3
+    explanation: "Fields initialized but not used in most methods may be temporary fields."
+
+  ALTERNATIVE_CLASSES_THRESHOLD:
+    value: 3
+    explanation: "Classes with identical sets of methods may be alternative classes with different interfaces."
+
+  DUPLICATE_CODE_THRESHOLD:
+    value: 15
+    explanation: "Functions with identical code may indicate duplication that should be refactored."
+
+  DEAD_CODE_THRESHOLD:
+    value: 3
+    explanation: "Functions defined but never called may be dead code."
+
+  SPECULATIVE_GENERALITY_THRESHOLD:
+    value: 4
+    explanation: "Abstract classes with no concrete implementations may indicate speculative generality."
+
+  MIDDLE_MAN_RATIO:
+    value: 0.5
+    explanation: "Classes where more than this ratio of methods simply delegate to another class may be middle men."
+
+  DIVERGENT_CHANGE_METHODS:
+    value: 5
+    explanation: "Classes with more than this many methods changing for different reasons may have divergent change."
+
+  SHOTGUN_SURGERY_CONTEXTS:
+    value: 3
+    explanation: "Methods called in more than this many different contexts may cause shotgun surgery."
+
+  DUPLICATE_CODE_MIN_LINES:
+    value: 5
+    explanation: "Minimum number of lines to consider for duplicate code detection."
+
+  LARGE_COMMENT_BLOCKS:
+    value: 5
+    explanation: "Comment blocks larger than this may indicate code that needs refactoring."
+
+  UNUSED_PARAMETERS_THRESHOLD:
+    value: 3
+    explanation: "Methods with more than this many unused parameters may need refactoring."
 
 architectural_smells:
   GOD_OBJECT_FUNCTIONS:
@@ -53,23 +101,23 @@ architectural_smells:
     explanation: "Modules with more than this many functions may be trying to do too much and should be split."
 
   UNSTABLE_DEPENDENCY_THRESHOLD:
-    value: 0.75
+    value: 0.8
     explanation: "Modules with instability higher than this value may be too dependent on other modules and prone to changes."
 
   HUB_LIKE_DEPENDENCY_RATIO:
-    value: 0.4
+    value: 0.3
     explanation: "Modules connected to more than this ratio of total modules may be hub-like dependencies."
 
   SCATTERED_FUNCTIONALITY_THRESHOLD:
-    value: 4
+    value: 5
     explanation: "Functions appearing in more than this many modules may indicate scattered functionality."
 
   REDUNDANT_ABSTRACTION_SIMILARITY:
-    value: 0.8
+    value: 0.7
     explanation: "Modules with function similarity higher than this value may be redundant abstractions."
 
   IMPROPER_API_USAGE_RATIO:
-    value: 0.6
+    value: 0.7
     explanation: "Modules with more than this ratio of repeated API calls to total calls may have improper API usage."
 
   CYCLIC_DEPENDENCY_MAX_LENGTH:
@@ -82,15 +130,15 @@ structural_smells:
     explanation: "Classes with more than this many methods may be too complex."
 
   WMPC1_THRESHOLD:
-    value: 25
+    value: 20
     explanation: "Classes with Weighted Methods per Class (complexity-based) higher than this may be too complex."
 
   WMPC2_THRESHOLD:
-    value: 25
+    value: 20
     explanation: "Classes with Weighted Methods per Class (parameter-based) higher than this may have too many responsibilities."
 
   SIZE2_THRESHOLD:
-    value: 30
+    value: 15
     explanation: "Classes with more than this many members (methods + fields) may be too large."
 
   WAC_THRESHOLD:
@@ -102,7 +150,7 @@ structural_smells:
     explanation: "Classes with Lack of Cohesion in Methods higher than this may need to be split."
 
   RFC_THRESHOLD:
-    value: 30
+    value: 20
     explanation: "Classes with Response for Class higher than this may be too coupled."
 
   NOCC_THRESHOLD:
@@ -110,11 +158,11 @@ structural_smells:
     explanation: "Modules with more than this many classes may be too complex."
 
   DIT_THRESHOLD:
-    value: 5
+    value: 3
     explanation: "Classes with Depth of Inheritance Tree higher than this may be using inheritance excessively."
 
   LOC_THRESHOLD:
-    value: 200
+    value: 150
     explanation: "Modules with more than this many lines of code may be too large."
 
   MPC_THRESHOLD:
@@ -122,11 +170,11 @@ structural_smells:
     explanation: "Classes with Message Passing Coupling higher than this may be too coupled."
 
   CBO_THRESHOLD:
-    value: 10
+    value: 5
     explanation: "Modules with Coupling Between Object Classes higher than this may be too coupled."
 
   NOC_THRESHOLD:
-    value: 45
+    value: 7
     explanation: "Projects with more than this many classes may be too large or complex."
 
   CYCLOMATIC_COMPLEXITY_THRESHOLD:
@@ -142,20 +190,8 @@ structural_smells:
     explanation: "Modules with more incoming dependencies than this may be too central or have too many responsibilities."
 
   MAX_FILE_LENGTH:
-    value: 500
+    value: 250
     explanation: "Files with more lines than this may be too large and should be split."
-
-  MAX_METHOD_LENGTH:
-    value: 50
-    explanation: "Methods with more lines than this may be too complex and should be refactored."
-
-  MAX_PARAMETERS:
-    value: 5
-    explanation: "Methods with more parameters than this may have too many responsibilities."
-
-  MAX_RETURNS:
-    value: 3
-    explanation: "Methods with more return statements than this may be too complex and hard to follow."
 
   MAX_BRANCHES:
     value: 10
@@ -165,10 +201,4 @@ structural_smells:
     value: 4
     explanation: "Code with nesting depth greater than this may be too complex and hard to read."
 
-  MIN_IDENTIFIER_LENGTH:
-    value: 3
-    explanation: "Identifiers shorter than this may not be descriptive enough."
 
-  MAX_IDENTIFIER_LENGTH:
-    value: 30
-    explanation: "Identifiers longer than this may be too verbose."
