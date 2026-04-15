@@ -1,57 +1,61 @@
-# Ignore specific folders
+# Python compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+*.whl
+*.tar.gz
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation builds
+docs/_build/
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Generated reports and logs
+*.log
+code_quality_report.*
+self_analysis.*
+
+# Project-specific ignored folders
 pyrasbt/
 alpyproj/
 imnofin/
 qzresearch/
-
-# Ignore Python compiled files
-__pycache__/
-*.py[cod]
-
-# Ignore virtual environment
-venv/
-env/
-
-# Ignore IDE-specific files
-.vscode/
-.idea/
-
-# Ignore system files
-.DS_Store
-Thumbs.db
-
 chap/
-
 sample_project/
-
 evaluation/
-
 inmotifin/
-
 melodipyi/
-
 pseudohnn/
-
 simapy/
-
 rewts/
-
 rttarr/
-
 sponge/
-
 analysis/
-
 cloned_repositories/
-
-
 visualizations/
-
-
-.pytest_cache/
-
-docs/_build/
-
-*.egg-info/
-
-
