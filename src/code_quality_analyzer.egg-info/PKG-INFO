@@ -19,7 +19,7 @@ This package provides advanced tools to analyze Python projects for code smells 
 
 
 ```bash
-pip install code-quality-analyzer
+pip install -e .
 ```
 
 ## Usage
@@ -27,9 +27,9 @@ pip install code-quality-analyzer
 You can use the package as a command-line tool:
 
 ```bash
-code-quality-analyzer analyze /path/to/your/project
+analyze_code_quality sample_project --config code_quality_config.YAML --output report.txt  
 ```
-
+Where sample_project is the directory containing the code you want to analyze, and code_quality_config.YAML is your configuration file.
 ### Python API
 
 
@@ -282,3 +282,18 @@ To build the documentation:
    ```
 
 4. Open `docs/build/html/index.html` in your web browser to view the documentation.
+
+
+4. Change to the `docs` directory:
+
+   .. code-block:: console
+
+      cd docs
+
+5. Run the Sphinx build command:
+
+   .. code-block:: console
+
+      sphinx-build -b html source build/html
+
+This will generate the HTML documentation in the `docs/build/html` directory. You can open the `index.html` file in this directory to view the updated documentation.

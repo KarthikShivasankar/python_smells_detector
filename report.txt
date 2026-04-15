@@ -1,0 +1,328 @@
+Code Quality Analysis Report
+============================
+
+Code Smells:
+------------
+- Potential Divergent Change: Class 'LargeClass' at line 1 in sample_project\module1.py
+- Dead Code: Unused function 'data_clumps' in sample_project\module1.py
+- Dead Code: Unused function 'primitive_obsession' in sample_project\module1.py
+- Dead Code: Unused function 'long_parameter_list' in sample_project\module1.py
+- Dead Code: Unused function 'switch_statements' in sample_project\module1.py
+- Dead Code: Unused function 'long_method' in sample_project\module1.py
+- Speculative Generality: Abstract class 'LargeClass' at line 1 in sample_project\module1.py
+- Large Class: 'DataClassWithManyFields' in sample_project\module10.py at line 1
+- Temporary Field: self in class 'DataClassWithManyFields' at line 1 in sample_project\module10.py
+- Temporary Field: self, y in class 'CyclicDependencyX' at line 1 in sample_project\module11.py
+- Temporary Field: self, x in class 'CyclicDependencyY' at line 5 in sample_project\module11.py
+- Temporary Field: self in class 'UnstableDependencyClass' at line 9 in sample_project\module11.py
+- Alternative Classes with Different Interfaces: CyclicDependencyX, CyclicDependencyY in sample_project\module11.py
+- Lazy Class: 'CyclicDependencyX' at line 1 in sample_project\module11.py
+- Lazy Class: 'CyclicDependencyY' at line 5 in sample_project\module11.py
+- Lazy Class: 'UnstableDependencyClass' at line 9 in sample_project\module11.py
+- Large Class: 'HighNumberOfMethods' in sample_project\module12.py at line 1
+- Potential Divergent Change: Class 'HighNumberOfMethods' at line 1 in sample_project\module12.py
+- Speculative Generality: Abstract class 'HighNumberOfMethods' at line 1 in sample_project\module12.py
+- Temporary Field: self in class 'TemporaryField' at line 1 in sample_project\module2.py
+- Temporary Field: self in class 'FeatureEnvy' at line 59 in sample_project\module2.py
+- Temporary Field: self in class 'DataClass' at line 66 in sample_project\module2.py
+- Temporary Field: self in class 'MiddleMan' at line 87 in sample_project\module2.py
+- Alternative Classes with Different Interfaces: TemporaryField, MiddleMan in sample_project\module2.py
+- Alternative Classes with Different Interfaces: RefusedBequestChild, LazyClass in sample_project\module2.py
+- Dead Code: Unused function 'shotgun_surgery' in sample_project\module2.py
+- Lazy Class: 'TemporaryField' at line 1 in sample_project\module2.py
+- Lazy Class: 'RefusedBequestParent' at line 11 in sample_project\module2.py
+- Lazy Class: 'RefusedBequestChild' at line 21 in sample_project\module2.py
+- Lazy Class: 'AlternativeClass1' at line 25 in sample_project\module2.py
+- Lazy Class: 'AlternativeClass2' at line 32 in sample_project\module2.py
+- Lazy Class: 'FeatureEnvy' at line 59 in sample_project\module2.py
+- Lazy Class: 'LazyClass' at line 83 in sample_project\module2.py
+- Lazy Class: 'MiddleMan' at line 87 in sample_project\module2.py
+- Speculative Generality: Abstract class 'RefusedBequestParent' at line 11 in sample_project\module2.py
+- Speculative Generality: Abstract class 'RefusedBequestChild' at line 21 in sample_project\module2.py
+- Speculative Generality: Abstract class 'AlternativeClass1' at line 25 in sample_project\module2.py
+- Speculative Generality: Abstract class 'AlternativeClass2' at line 32 in sample_project\module2.py
+- Speculative Generality: Abstract class 'DivergentChange' at line 39 in sample_project\module2.py
+- Speculative Generality: Abstract class 'LazyClass' at line 83 in sample_project\module2.py
+- Middle Man: Class 'MiddleMan' at line 87 in sample_project\module2.py
+- Large Class: 'GodObject' in sample_project\module3.py at line 19
+- Temporary Field: self, dep1, dep3, dep2 in class 'HubLikeDependency' at line 1 in sample_project\module3.py
+- Temporary Field: self, b in class 'CyclicDependencyA' at line 90 in sample_project\module3.py
+- Temporary Field: self, a in class 'CyclicDependencyB' at line 94 in sample_project\module3.py
+- Temporary Field: self, dep in class 'UnstableDependency' at line 98 in sample_project\module3.py
+- Alternative Classes with Different Interfaces: HubLikeDependency, CyclicDependencyA, CyclicDependencyB, UnstableDependency in sample_project\module3.py
+- Potential Divergent Change: Class 'GodObject' at line 19 in sample_project\module3.py
+- Dead Code: Unused function 'redundant_abstraction1' in sample_project\module3.py
+- Dead Code: Unused function 'redundant_abstraction2' in sample_project\module3.py
+- Dead Code: Unused function 'scattered_functionality1' in sample_project\module3.py
+- Dead Code: Unused function 'scattered_functionality2' in sample_project\module3.py
+- Dead Code: Unused function 'improper_api_usage' in sample_project\module3.py
+- Lazy Class: 'HubLikeDependency' at line 1 in sample_project\module3.py
+- Lazy Class: 'OrphanModule' at line 87 in sample_project\module3.py
+- Lazy Class: 'CyclicDependencyA' at line 90 in sample_project\module3.py
+- Lazy Class: 'CyclicDependencyB' at line 94 in sample_project\module3.py
+- Lazy Class: 'UnstableDependency' at line 98 in sample_project\module3.py
+- Speculative Generality: Abstract class 'GodObject' at line 19 in sample_project\module3.py
+- Temporary Field: self in class 'ComplexClass' at line 1 in sample_project\module4.py
+- Temporary Field: self in class 'InconsistentNaming' at line 19 in sample_project\module4.py
+- Dead Code: Unused function 'long_chain_of_calls' in sample_project\module4.py
+- Lazy Class: 'ComplexClass' at line 1 in sample_project\module4.py
+- Lazy Class: 'UnusedClass' at line 42 in sample_project\module4.py
+- Speculative Generality: Abstract class 'UnusedClass' at line 42 in sample_project\module4.py
+- Temporary Field: self in class 'HighCoupling' at line 21 in sample_project\module5.py
+- Lazy Class: 'DeepInheritance1' at line 1 in sample_project\module5.py
+- Lazy Class: 'DeepInheritance2' at line 5 in sample_project\module5.py
+- Lazy Class: 'DeepInheritance3' at line 9 in sample_project\module5.py
+- Lazy Class: 'DeepInheritance4' at line 13 in sample_project\module5.py
+- Lazy Class: 'DeepInheritance5' at line 17 in sample_project\module5.py
+- Lazy Class: 'HighCoupling' at line 21 in sample_project\module5.py
+- Lazy Class: 'LargeMethod' at line 36 in sample_project\module5.py
+- Speculative Generality: Abstract class 'DeepInheritance1' at line 1 in sample_project\module5.py
+- Speculative Generality: Abstract class 'DeepInheritance2' at line 5 in sample_project\module5.py
+- Speculative Generality: Abstract class 'DeepInheritance3' at line 9 in sample_project\module5.py
+- Speculative Generality: Abstract class 'DeepInheritance4' at line 13 in sample_project\module5.py
+- Speculative Generality: Abstract class 'DeepInheritance5' at line 17 in sample_project\module5.py
+- Temporary Field: self in class 'HighFanOut' at line 24 in sample_project\module6.py
+- Lazy Class: 'HighCyclomaticComplexity' at line 1 in sample_project\module6.py
+- Lazy Class: 'HighFanOut' at line 24 in sample_project\module6.py
+- Large Class: 'GodClass' in sample_project\module7.py at line 1
+- Temporary Field: self in class 'GodClass' at line 1 in sample_project\module7.py
+- Potential Divergent Change: Class 'GodClass' at line 1 in sample_project\module7.py
+- Large Class: 'LargeClassWithManyMethods' in sample_project\module8.py at line 1
+- Potential Divergent Change: Class 'LargeClassWithManyMethods' at line 1 in sample_project\module8.py
+- Speculative Generality: Abstract class 'LargeClassWithManyMethods' at line 1 in sample_project\module8.py
+- Temporary Field: self in class 'HighCouplingClass' at line 1 in sample_project\module9.py
+- Temporary Field: self in class 'HighFanIn' at line 26 in sample_project\module9.py
+- Lazy Class: 'HighCouplingClass' at line 1 in sample_project\module9.py
+- Excessive Comments: Excessive Comments detected in sample_project\__init__.py
+- Temporary Field: self in class 'Module1' at line 3 in sample_project\architectural_smells\cyclic_dependencies.py
+- Temporary Field: self in class 'Module2' at line 10 in sample_project\architectural_smells\cyclic_dependencies.py
+- Alternative Classes with Different Interfaces: Module1, Module2 in sample_project\architectural_smells\cyclic_dependencies.py
+- Lazy Class: 'Module1' at line 3 in sample_project\architectural_smells\cyclic_dependencies.py
+- Lazy Class: 'Module2' at line 10 in sample_project\architectural_smells\cyclic_dependencies.py
+- Large Class: 'GodObject' in sample_project\architectural_smells\god_objects.py at line 1
+- Potential Divergent Change: Class 'GodObject' at line 1 in sample_project\architectural_smells\god_objects.py
+- Speculative Generality: Abstract class 'GodObject' at line 1 in sample_project\architectural_smells\god_objects.py
+- Temporary Field: self in class 'Hub' at line 1 in sample_project\architectural_smells\hub_like_dependency.py
+- Alternative Classes with Different Interfaces: Dependency1, Dependency2, Dependency3 in sample_project\architectural_smells\hub_like_dependency.py
+- Lazy Class: 'Hub' at line 1 in sample_project\architectural_smells\hub_like_dependency.py
+- Lazy Class: 'Dependency1' at line 7 in sample_project\architectural_smells\hub_like_dependency.py
+- Lazy Class: 'Dependency2' at line 8 in sample_project\architectural_smells\hub_like_dependency.py
+- Lazy Class: 'Dependency3' at line 9 in sample_project\architectural_smells\hub_like_dependency.py
+- Lazy Class: 'ImproperAPIUsage' at line 1 in sample_project\architectural_smells\improper_api_usage.py
+- Lazy Class: 'OrphanModule' at line 1 in sample_project\architectural_smells\orphan_modules.py
+- Speculative Generality: Abstract class 'OrphanModule' at line 1 in sample_project\architectural_smells\orphan_modules.py
+- Dead Code: Unused function 'function2' in sample_project\architectural_smells\redundant_abstractions.py
+- Dead Code: Unused function 'function1' in sample_project\architectural_smells\redundant_abstractions.py
+- Duplicate Code: Functions common_function, common_function in sample_project\architectural_smells\scattered_functionality.py
+- Dead Code: Unused function 'common_function' in sample_project\architectural_smells\scattered_functionality.py
+- Lazy Class: 'ClassA' at line 1 in sample_project\code_smells\alternative_classes.py
+- Lazy Class: 'ClassB' at line 5 in sample_project\code_smells\alternative_classes.py
+- Speculative Generality: Abstract class 'ClassA' at line 1 in sample_project\code_smells\alternative_classes.py
+- Speculative Generality: Abstract class 'ClassB' at line 5 in sample_project\code_smells\alternative_classes.py
+- Temporary Field: self in class 'DataClass' at line 1 in sample_project\code_smells\data_class.py
+- Lazy Class: 'DataClass' at line 1 in sample_project\code_smells\data_class.py
+- Data Clumps: Parameters a, b, c appear together in functions: function1, function2 in sample_project\code_smells\data_clumps.py
+- Dead Code: Unused function 'function2' in sample_project\code_smells\data_clumps.py
+- Dead Code: Unused function 'function1' in sample_project\code_smells\data_clumps.py
+- Speculative Generality: Abstract class 'DivergentChange' at line 1 in sample_project\code_smells\divergent_change.py
+- Temporary Field: self in class 'FeatureEnvy' at line 1 in sample_project\code_smells\feature_envy.py
+- Lazy Class: 'FeatureEnvy' at line 1 in sample_project\code_smells\feature_envy.py
+- Potential Divergent Change: Class 'LargeClass' at line 1 in sample_project\code_smells\large_class.py
+- Speculative Generality: Abstract class 'LargeClass' at line 1 in sample_project\code_smells\large_class.py
+- Lazy Class: 'LazyClass' at line 1 in sample_project\code_smells\lazy_class.py
+- Speculative Generality: Abstract class 'LazyClass' at line 1 in sample_project\code_smells\lazy_class.py
+- Long Method: 'long_method' in sample_project\code_smells\long_method.py at line 1
+- Potential Shotgun Surgery: Method 'range' called in multiple places in sample_project\code_smells\long_method.py
+- Potential Shotgun Surgery: Method 'print' called in multiple places in sample_project\code_smells\long_method.py
+- Dead Code: Unused function 'long_method' in sample_project\code_smells\long_method.py
+- Dead Code: Unused function 'long_parameter_list' in sample_project\code_smells\long_parameter_list.py
+- Lazy Class: 'A' at line 1 in sample_project\code_smells\message_chains.py
+- Lazy Class: 'B' at line 5 in sample_project\code_smells\message_chains.py
+- Lazy Class: 'C' at line 9 in sample_project\code_smells\message_chains.py
+- Middle Man: Class 'A' at line 1 in sample_project\code_smells\message_chains.py
+- Middle Man: Class 'B' at line 5 in sample_project\code_smells\message_chains.py
+- Temporary Field: self in class 'MiddleMan' at line 1 in sample_project\code_smells\middle_man.py
+- Lazy Class: 'MiddleMan' at line 1 in sample_project\code_smells\middle_man.py
+- Middle Man: Class 'MiddleMan' at line 1 in sample_project\code_smells\middle_man.py
+- Dead Code: Unused function 'primitive_obsession' in sample_project\code_smells\primitive_obsession.py
+- Lazy Class: 'Parent' at line 1 in sample_project\code_smells\refused_bequest.py
+- Lazy Class: 'Child' at line 5 in sample_project\code_smells\refused_bequest.py
+- Speculative Generality: Abstract class 'Parent' at line 1 in sample_project\code_smells\refused_bequest.py
+- Speculative Generality: Abstract class 'Child' at line 5 in sample_project\code_smells\refused_bequest.py
+- Speculative Generality: Abstract class 'ShotgunSurgery' at line 1 in sample_project\code_smells\shotgun_surgery.py
+- Dead Code: Unused function 'switch_statements' in sample_project\code_smells\switch_statements.py
+- Temporary Field: self in class 'TemporaryField' at line 1 in sample_project\code_smells\temporary_field.py
+- Lazy Class: 'TemporaryField' at line 1 in sample_project\code_smells\temporary_field.py
+- Speculative Generality: Abstract class 'LargeClass' at line 1 in sample_project\structural_smells\class_size.py
+- Temporary Field: self in class 'HighCoupling' at line 8 in sample_project\structural_smells\coupling_between_object_classes.py
+- Lazy Class: 'HighCoupling' at line 8 in sample_project\structural_smells\coupling_between_object_classes.py
+- Alternative Classes with Different Interfaces: GrandParent, Parent, Child, GrandChild in sample_project\structural_smells\depth_of_inheritance.py
+- Lazy Class: 'GrandParent' at line 1 in sample_project\structural_smells\depth_of_inheritance.py
+- Lazy Class: 'Parent' at line 4 in sample_project\structural_smells\depth_of_inheritance.py
+- Lazy Class: 'Child' at line 7 in sample_project\structural_smells\depth_of_inheritance.py
+- Lazy Class: 'GrandChild' at line 10 in sample_project\structural_smells\depth_of_inheritance.py
+- Speculative Generality: Abstract class 'TooManyMethods' at line 1 in sample_project\structural_smells\high_number_of_methods.py
+- Temporary Field: self in class 'LowCohesion' at line 1 in sample_project\structural_smells\lack_of_cohesion.py
+- Potential Divergent Change: Class 'LowCohesion' at line 1 in sample_project\structural_smells\lack_of_cohesion.py
+- Dead Code: Unused function 'long_function' in sample_project\structural_smells\lines_of_code.py
+- Temporary Field: self in class 'HighMPC' at line 1 in sample_project\structural_smells\message_passing_coupling.py
+- Lazy Class: 'HighMPC' at line 1 in sample_project\structural_smells\message_passing_coupling.py
+- Alternative Classes with Different Interfaces: BaseClass, Child1, Child2, Child3, Child4, Child5, Child6 in sample_project\structural_smells\number_of_children.py
+- Lazy Class: 'BaseClass' at line 1 in sample_project\structural_smells\number_of_children.py
+- Lazy Class: 'Child1' at line 4 in sample_project\structural_smells\number_of_children.py
+- Lazy Class: 'Child2' at line 5 in sample_project\structural_smells\number_of_children.py
+- Lazy Class: 'Child3' at line 6 in sample_project\structural_smells\number_of_children.py
+- Lazy Class: 'Child4' at line 7 in sample_project\structural_smells\number_of_children.py
+- Lazy Class: 'Child5' at line 8 in sample_project\structural_smells\number_of_children.py
+- Lazy Class: 'Child6' at line 9 in sample_project\structural_smells\number_of_children.py
+- Alternative Classes with Different Interfaces: Class1, Class2, Class3, Class4, Class5, Class6, Class7, Class8, Class9, Class10, Class11 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class1' at line 1 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class2' at line 2 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class3' at line 3 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class4' at line 4 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class5' at line 5 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class6' at line 6 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class7' at line 7 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class8' at line 8 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class9' at line 9 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class10' at line 10 in sample_project\structural_smells\number_of_classes.py
+- Lazy Class: 'Class11' at line 11 in sample_project\structural_smells\number_of_classes.py
+- Speculative Generality: Abstract class 'HighResponseForClass' at line 1 in sample_project\structural_smells\response_for_class.py
+- Temporary Field: self in class 'TooManyAttributes' at line 1 in sample_project\structural_smells\weighted_attribute_count.py
+- Lazy Class: 'TooManyAttributes' at line 1 in sample_project\structural_smells\weighted_attribute_count.py
+- Lazy Class: 'HighWMC' at line 1 in sample_project\structural_smells\weighted_methods_per_class.py
+
+Architectural Smells:
+---------------------
+- Scattered Functionality: Function 'method7' appears in modules module1, module12, module3, module7, module8, god_objects, large_class
+- Scattered Functionality: Function 'method4' appears in modules module1, module12, module3, module5, module7, module8, god_objects, alternative_classes, large_class, shotgun_surgery, class_size, high_number_of_methods, lack_of_cohesion, response_for_class
+- Scattered Functionality: Function 'method10' appears in modules module1, module12, module3, module7, module8, god_objects, large_class
+- Scattered Functionality: Function 'method8' appears in modules module1, module12, module3, module7, module8, god_objects, large_class
+- Scattered Functionality: Function 'primitive_obsession' appears in modules module1, primitive_obsession
+- Scattered Functionality: Function 'long_parameter_list' appears in modules module1, long_parameter_list
+- Scattered Functionality: Function 'method9' appears in modules module1, module12, module3, module7, module8, god_objects, large_class
+- Scattered Functionality: Function 'method3' appears in modules module1, module12, module2, module3, module5, module7, module8, god_objects, alternative_classes, large_class, shotgun_surgery, class_size, high_number_of_methods, lack_of_cohesion, response_for_class
+- Scattered Functionality: Function 'method5' appears in modules module1, module12, module3, module5, module7, module8, god_objects, large_class, shotgun_surgery, class_size, high_number_of_methods, lack_of_cohesion
+- Scattered Functionality: Function 'method1' appears in modules module1, module12, module2, module3, module5, module7, module8, god_objects, improper_api_usage, alternative_classes, large_class, lazy_class, middle_man, refused_bequest, shotgun_surgery, temporary_field, class_size, high_number_of_methods, lack_of_cohesion, response_for_class
+- Scattered Functionality: Function 'method11' appears in modules module1, module12, module3, module7, module8, god_objects, large_class
+- Scattered Functionality: Function 'switch_statements' appears in modules module1, switch_statements
+- Scattered Functionality: Function 'method6' appears in modules module1, module12, module3, module7, module8, god_objects, large_class, class_size, high_number_of_methods
+- Scattered Functionality: Function 'long_method' appears in modules module1, long_method
+- Scattered Functionality: Function 'method2' appears in modules module1, module12, module2, module3, module5, module7, module8, god_objects, alternative_classes, large_class, lazy_class, middle_man, refused_bequest, shotgun_surgery, temporary_field, class_size, high_number_of_methods, lack_of_cohesion, response_for_class
+- Scattered Functionality: Function 'set_field2' appears in modules module10, module2
+- Scattered Functionality: Function 'get_field2' appears in modules module10, module2
+- Scattered Functionality: Function 'set_field1' appears in modules module10, module2
+- Scattered Functionality: Function 'get_field1' appears in modules module10, module2
+- Scattered Functionality: Function '__init__' appears in modules module10, module11, module2, module3, module4, module5, module6, module7, module9, cyclic_dependencies, hub_like_dependency, data_class, feature_envy, middle_man, temporary_field, coupling_between_object_classes, lack_of_cohesion, message_passing_coupling, weighted_attribute_count
+- Scattered Functionality: Function 'method27' appears in modules module12, module8
+- Scattered Functionality: Function 'method38' appears in modules module12, module8
+- Scattered Functionality: Function 'method26' appears in modules module12, module8
+- Scattered Functionality: Function 'method18' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method14' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method41' appears in modules module12, module8
+- Scattered Functionality: Function 'method22' appears in modules module12, module8
+- Scattered Functionality: Function 'method49' appears in modules module12, module8
+- Scattered Functionality: Function 'method21' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method46' appears in modules module12, module8
+- Scattered Functionality: Function 'method29' appears in modules module12, module8
+- Scattered Functionality: Function 'method23' appears in modules module12, module8
+- Scattered Functionality: Function 'method45' appears in modules module12, module8
+- Scattered Functionality: Function 'method17' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method12' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method31' appears in modules module12, module8
+- Scattered Functionality: Function 'method36' appears in modules module12, module8
+- Scattered Functionality: Function 'method28' appears in modules module12, module8
+- Scattered Functionality: Function 'method33' appears in modules module12, module8
+- Scattered Functionality: Function 'method40' appears in modules module12, module8
+- Scattered Functionality: Function 'method13' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method39' appears in modules module12, module8
+- Scattered Functionality: Function 'method19' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method30' appears in modules module12, module8
+- Scattered Functionality: Function 'method43' appears in modules module12, module8
+- Scattered Functionality: Function 'method48' appears in modules module12, module8
+- Scattered Functionality: Function 'method32' appears in modules module12, module8
+- Scattered Functionality: Function 'method37' appears in modules module12, module8
+- Scattered Functionality: Function 'method16' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method50' appears in modules module12, module8
+- Scattered Functionality: Function 'method15' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method44' appears in modules module12, module8
+- Scattered Functionality: Function 'method42' appears in modules module12, module8
+- Scattered Functionality: Function 'method34' appears in modules module12, module8
+- Scattered Functionality: Function 'method25' appears in modules module12, module8
+- Scattered Functionality: Function 'method24' appears in modules module12, module8
+- Scattered Functionality: Function 'method20' appears in modules module12, module3, module7, module8, god_objects
+- Scattered Functionality: Function 'method35' appears in modules module12, module8
+- Scattered Functionality: Function 'method47' appears in modules module12, module8
+- Scattered Functionality: Function 'complex_method' appears in modules module4, module6, response_for_class
+- Scattered Functionality: Function 'use_dependencies' appears in modules module5, module6, module9
+- Scattered Functionality: Function 'method' appears in modules orphan_modules, feature_envy, message_passing_coupling
+- Scattered Functionality: Function 'function2' appears in modules redundant_abstractions, data_clumps
+- Scattered Functionality: Function 'function1' appears in modules redundant_abstractions, data_clumps
+- Potential Redundant Abstractions: Modules module12, module8 have similar functionalities
+- Potential Redundant Abstractions: Modules cyclic_dependencies, hub_like_dependency, coupling_between_object_classes, weighted_attribute_count have similar functionalities
+- Potential Redundant Abstractions: Modules redundant_abstractions, data_clumps have similar functionalities
+- Potential Redundant Abstractions: Modules feature_envy, message_passing_coupling have similar functionalities
+- Potential Redundant Abstractions: Modules lazy_class, refused_bequest have similar functionalities
+- Potential Redundant Abstractions: Modules middle_man, temporary_field have similar functionalities
+- Potential Redundant Abstractions: Modules class_size, high_number_of_methods have similar functionalities
+- God Object: Module 'module12' has too many functions (50)
+- God Object: Module 'module3' has too many functions (27)
+- God Object: Module 'module8' has too many functions (50)
+- Potential Improper API Usage: Module 'improper_api_usage' has repetitive API calls
+- Potential Improper API Usage: Module 'shotgun_surgery' has repetitive API calls
+- Orphan Module: 'module10' is not connected to other modules
+- Orphan Module: 'module11' is not connected to other modules
+- Orphan Module: 'module12' is not connected to other modules
+- Orphan Module: 'module7' is not connected to other modules
+- Orphan Module: 'module8' is not connected to other modules
+- Orphan Module: 'module9' is not connected to other modules
+- Orphan Module: '__init__' is not connected to other modules
+- Orphan Module: 'god_objects' is not connected to other modules
+- Orphan Module: 'hub_like_dependency' is not connected to other modules
+- Orphan Module: 'improper_api_usage' is not connected to other modules
+- Orphan Module: 'orphan_modules' is not connected to other modules
+- Orphan Module: 'redundant_abstractions' is not connected to other modules
+- Orphan Module: 'scattered_functionality' is not connected to other modules
+- Orphan Module: 'unstable_dependencies' is not connected to other modules
+- Orphan Module: 'alternative_classes' is not connected to other modules
+- Orphan Module: 'data_class' is not connected to other modules
+- Orphan Module: 'data_clumps' is not connected to other modules
+- Orphan Module: 'divergent_change' is not connected to other modules
+- Orphan Module: 'feature_envy' is not connected to other modules
+- Orphan Module: 'large_class' is not connected to other modules
+- Orphan Module: 'lazy_class' is not connected to other modules
+- Orphan Module: 'long_method' is not connected to other modules
+- Orphan Module: 'long_parameter_list' is not connected to other modules
+- Orphan Module: 'message_chains' is not connected to other modules
+- Orphan Module: 'middle_man' is not connected to other modules
+- Orphan Module: 'primitive_obsession' is not connected to other modules
+- Orphan Module: 'refused_bequest' is not connected to other modules
+- Orphan Module: 'shotgun_surgery' is not connected to other modules
+- Orphan Module: 'switch_statements' is not connected to other modules
+- Orphan Module: 'temporary_field' is not connected to other modules
+- Orphan Module: 'class_size' is not connected to other modules
+- Orphan Module: 'depth_of_inheritance' is not connected to other modules
+- Orphan Module: 'high_number_of_methods' is not connected to other modules
+- Orphan Module: 'lack_of_cohesion' is not connected to other modules
+- Orphan Module: 'lines_of_code' is not connected to other modules
+- Orphan Module: 'message_passing_coupling' is not connected to other modules
+- Orphan Module: 'number_of_children' is not connected to other modules
+- Orphan Module: 'number_of_classes' is not connected to other modules
+- Orphan Module: 'response_for_class' is not connected to other modules
+- Orphan Module: 'weighted_attribute_count' is not connected to other modules
+- Orphan Module: 'weighted_methods_per_class' is not connected to other modules
+
+Structural Smells:
+-------------------
+- High Number of Methods (NOM): Class 'module10.DataClassWithManyFields' has 21 methods
+- High Number of Methods (NOM): Class 'module12.HighNumberOfMethods' has 50 methods
+- High Number of Methods (NOM): Class 'module3.GodObject' has 21 methods
+- High Number of Methods (NOM): Class 'module7.GodClass' has 22 methods
+- High Number of Methods (NOM): Class 'module8.LargeClassWithManyMethods' has 50 methods
+- High Number of Methods (NOM): Class 'architectural_smells.god_objects.GodObject' has 21 methods
+- High Number of Classes (NOCC): Module 'structural_smells.number_of_classes' has 11 classes
+- Deep Inheritance Tree (DIT): Module 'module2' has a deep inheritance tree
+- Deep Inheritance Tree (DIT): Module 'module3' has a deep inheritance tree
+- Deep Inheritance Tree (DIT): Module 'module5' has a deep inheritance tree
+- Deep Inheritance Tree (DIT): Module 'structural_smells.number_of_children' has a deep inheritance tree
+- Deep Inheritance Tree (DIT): Module 'structural_smells.number_of_classes' has a deep inheritance tree

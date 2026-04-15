@@ -2,6 +2,16 @@ import astroid
 from astroid import nodes
 import os
 from collections import defaultdict
+from dataclasses import dataclass
+
+@dataclass
+class CodeSmell:
+    name: str
+    description: str
+    file_path: str
+    module_class: str
+    line_number: int
+    severity: str = ''
 
 class CodeSmellDetector:
     """
@@ -49,14 +59,14 @@ class CodeSmellDetector:
         self.detect_data_clumps(module, file_path)
         self.detect_switch_statements(module, file_path)
         self.detect_temporary_fields(module, file_path)
-        self.detect_refused_bequest(module, file_path)
+        # Remove the call to detect_refused_bequest
         self.detect_alternative_classes(module, file_path)
         self.detect_divergent_change(module, file_path)
         self.detect_parallel_inheritance(module, file_path)
         self.detect_shotgun_surgery(module, file_path)
         self.detect_comments(file_path)
         self.detect_duplicate_code(module, file_path)
-        self.detect_data_class(module, file_path)
+        #self.detect_data_class(module, file_path)
         self.detect_dead_code(module, file_path)
         self.detect_lazy_class(module, file_path)
         self.detect_speculative_generality(module, file_path)
@@ -76,7 +86,13 @@ class CodeSmellDetector:
         for node in module.body:
             if isinstance(node, nodes.FunctionDef):
                 if node.tolineno - node.fromlineno > self.thresholds["LONG_METHOD_LINES"]:
-                    self.code_smells.append(f"Long Method: '{node.name}' in {file_path} at line {node.lineno}")
+                    self.code_smells.append(CodeSmell(
+                        name="Long Method",
+                        description=f"'{node.name}' in {file_path} at line {node.lineno}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_large_classes(self, module, file_path):
         """
@@ -90,7 +106,13 @@ class CodeSmellDetector:
             if isinstance(node, nodes.ClassDef):
                 method_count = len([n for n in node.body if isinstance(n, nodes.FunctionDef)])
                 if method_count > self.thresholds["LARGE_CLASS_METHODS"]:
-                    self.code_smells.append(f"Large Class: '{node.name}' in {file_path} at line {node.lineno}")
+                    self.code_smells.append(CodeSmell(
+                        name="Large Class",
+                        description=f"'{node.name}' in {file_path} at line {node.lineno}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_primitive_obsession(self, module, file_path):
         """
@@ -111,7 +133,13 @@ class CodeSmellDetector:
                                 arg_type.name in ['int', 'str', 'float', 'bool']):
                                 primitives.append(arg)
                 if len(primitives) > self.thresholds["PRIMITIVE_OBSESSION_COUNT"]:
-                    self.code_smells.append(f"Primitive Obsession: '{node.name}' in {file_path} at line {node.lineno}")
+                    self.code_smells.append(CodeSmell(
+                        name="Primitive Obsession",
+                        description=f"'{node.name}' in {file_path} at line {node.lineno}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_long_parameter_lists(self, module, file_path):
         """
@@ -124,7 +152,13 @@ class CodeSmellDetector:
         for node in module.body:
             if isinstance(node, nodes.FunctionDef):
                 if len(node.args.args) > self.thresholds["LONG_PARAMETER_LIST"]:
-                    self.code_smells.append(f"Long Parameter List: '{node.name}' in {file_path} at line {node.lineno}")
+                    self.code_smells.append(CodeSmell(
+                        name="Long Parameter List",
+                        description=f"'{node.name}' in {file_path} at line {node.lineno}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_data_clumps(self, module, file_path):
         """
@@ -143,7 +177,13 @@ class CodeSmellDetector:
         
         for params, functions in parameter_groups.items():
             if len(functions) > 1:
-                self.code_smells.append(f"Data Clumps: Parameters {', '.join(params)} appear together in functions: {', '.join(functions)} in {file_path}")
+                self.code_smells.append(CodeSmell(
+                    name="Data Clumps",
+                    description=f"Parameters {', '.join(params)} appear together in functions: {', '.join(functions)} in {file_path}",
+                    file_path=file_path,
+                    module_class=', '.join(functions),
+                    line_number=None
+                ))
 
     def detect_switch_statements(self, module, file_path):
         """
@@ -155,7 +195,13 @@ class CodeSmellDetector:
         """
         for node in module.body:
             if isinstance(node, nodes.If) and len(node.orelse) > self.thresholds["COMPLEX_CONDITIONAL"]:
-                self.code_smells.append(f"Switch Statements: Complex conditional at line {node.lineno} in {file_path}")
+                self.code_smells.append(CodeSmell(
+                    name="Switch Statements",
+                    description=f"Complex conditional at line {node.lineno} in {file_path}",
+                    file_path=file_path,
+                    module_class=None,
+                    line_number=node.lineno
+                ))
 
     def detect_temporary_fields(self, module, file_path):
         """
@@ -177,29 +223,13 @@ class CodeSmellDetector:
                             used_fields.update({n.attrname for n in child.nodes_of_class(nodes.Attribute) if isinstance(n.expr, nodes.Name) and n.expr.name == 'self'})
                 temp_fields = init_fields - used_fields
                 if temp_fields:
-                    self.code_smells.append(f"Temporary Field: {', '.join(temp_fields)} in class '{node.name}' at line {node.lineno} in {file_path}")
-
-    def detect_refused_bequest(self, module, file_path):
-        """
-        Detect refused bequest in the given module.
-
-        Args:
-            module (astroid.Module): The parsed module to analyze.
-            file_path (str): The path of the file being analyzed.
-        """
-        for node in module.body:
-            if isinstance(node, nodes.ClassDef) and node.bases:
-                inherited_methods = set()
-                for base in node.bases:
-                    if isinstance(base, nodes.Name):
-                        base_class = module.locals.get(base.name)
-                        if base_class:
-                            inherited_methods.update(n.name for n in base_class[0].mymethods())
-                
-                class_methods = {n.name for n in node.mymethods()}
-                unused_methods = inherited_methods - class_methods
-                if len(unused_methods) > len(inherited_methods) / 2:
-                    self.code_smells.append(f"Refused Bequest: Class '{node.name}' at line {node.lineno} in {file_path}")
+                    self.code_smells.append(CodeSmell(
+                        name="Temporary Field",
+                        description=f"{', '.join(temp_fields)} in class '{node.name}' at line {node.lineno} in {file_path}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_alternative_classes(self, module, file_path):
         """
@@ -217,7 +247,13 @@ class CodeSmellDetector:
         
         for methods, classes in class_methods.items():
             if len(classes) > 1:
-                self.code_smells.append(f"Alternative Classes with Different Interfaces: {', '.join(classes)} in {file_path}")
+                self.code_smells.append(CodeSmell(
+                    name="Alternative Classes with Different Interfaces",
+                    description=f"{', '.join(classes)} in {file_path}",
+                    file_path=file_path,
+                    module_class=', '.join(classes),
+                    line_number=None
+                ))
 
     def detect_divergent_change(self, module, file_path):
         """
@@ -231,7 +267,13 @@ class CodeSmellDetector:
             if isinstance(node, nodes.ClassDef):
                 method_prefixes = [n.name.split('_')[0] for n in node.mymethods()]
                 if len(set(method_prefixes)) > self.thresholds["DIVERGENT_CHANGE_PREFIXES"]:
-                    self.code_smells.append(f"Potential Divergent Change: Class '{node.name}' at line {node.lineno} in {file_path}")
+                    self.code_smells.append(CodeSmell(
+                        name="Potential Divergent Change",
+                        description=f"Class '{node.name}' at line {node.lineno} in {file_path}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_parallel_inheritance(self, module, file_path):
         """
@@ -251,7 +293,13 @@ class CodeSmellDetector:
         if len(class_hierarchies) > 1:
             hierarchies = [h for h in class_hierarchies.values() if len(h) > 1]
             if len(set(map(tuple, hierarchies))) > 1:
-                self.code_smells.append(f"Parallel Inheritance Hierarchies detected in {file_path}")
+                self.code_smells.append(CodeSmell(
+                    name="Parallel Inheritance Hierarchies",
+                    description=f"Parallel Inheritance Hierarchies detected in {file_path}",
+                    file_path=file_path,
+                    module_class=None,
+                    line_number=None
+                ))
 
     def detect_shotgun_surgery(self, module, file_path):
         """
@@ -269,7 +317,13 @@ class CodeSmellDetector:
         
         for method, calls in method_calls.items():
             if len(calls) > self.thresholds["SHOTGUN_SURGERY_CALLS"]:
-                self.code_smells.append(f"Potential Shotgun Surgery: Method '{method}' called in multiple places in {file_path}")
+                self.code_smells.append(CodeSmell(
+                    name="Potential Shotgun Surgery",
+                    description=f"Method '{method}' called in multiple places in {file_path}",
+                    file_path=file_path,
+                    module_class=method,
+                    line_number=None
+                ))
 
     def detect_comments(self, file_path):
         """
@@ -280,7 +334,13 @@ class CodeSmellDetector:
         """
         comment_lines = [i for i, line in enumerate(self.file_content) if line.strip().startswith('#')]
         if len(comment_lines) > len(self.file_content) * self.thresholds["EXCESSIVE_COMMENTS_RATIO"]:
-            self.code_smells.append(f"Excessive Comments detected in {file_path}")
+            self.code_smells.append(CodeSmell(
+                name="Excessive Comments",
+                description=f"Excessive Comments detected in {file_path}",
+                file_path=file_path,
+                module_class=None,
+                line_number=None
+            ))
 
     def detect_duplicate_code(self, module, file_path):
         """
@@ -298,7 +358,13 @@ class CodeSmellDetector:
         
         for block, functions in code_blocks.items():
             if len(functions) > 1:
-                self.code_smells.append(f"Duplicate Code: Functions {', '.join(functions)} in {file_path}")
+                self.code_smells.append(CodeSmell(
+                    name="Duplicate Code",
+                    description=f"Functions {', '.join(functions)} in {file_path}",
+                    file_path=file_path,
+                    module_class=', '.join(functions),
+                    line_number=None
+                ))
 
     def detect_data_class(self, module, file_path):
         """
@@ -312,7 +378,13 @@ class CodeSmellDetector:
             if isinstance(node, nodes.ClassDef):
                 methods = [n for n in node.mymethods()]
                 if all(m.name.startswith(('__', 'get_', 'set_')) for m in methods):
-                    self.code_smells.append(f"Data Class: '{node.name}' at line {node.lineno} in {file_path}")
+                    self.code_smells.append(CodeSmell(
+                        name="Data Class",
+                        description=f"'{node.name}' at line {node.lineno} in {file_path}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_dead_code(self, module, file_path):
         """
@@ -333,7 +405,13 @@ class CodeSmellDetector:
         
         unused_functions = defined_functions - called_functions
         for func in unused_functions:
-            self.code_smells.append(f"Dead Code: Unused function '{func}' in {file_path}")
+            self.code_smells.append(CodeSmell(
+                name="Dead Code",
+                description=f"Unused function '{func}' in {file_path}",
+                file_path=file_path,
+                module_class=func,
+                line_number=None
+            ))
 
     def detect_lazy_class(self, module, file_path):
         """
@@ -347,7 +425,13 @@ class CodeSmellDetector:
             if isinstance(node, nodes.ClassDef):
                 methods = list(node.mymethods())
                 if len(methods) <= self.thresholds["LAZY_CLASS_METHODS"]:
-                    self.code_smells.append(f"Lazy Class: '{node.name}' at line {node.lineno} in {file_path}")
+                    self.code_smells.append(CodeSmell(
+                        name="Lazy Class",
+                        description=f"'{node.name}' at line {node.lineno} in {file_path}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_speculative_generality(self, module, file_path):
         """
@@ -361,7 +445,13 @@ class CodeSmellDetector:
             if isinstance(node, nodes.ClassDef):
                 abstract_methods = [n for n in node.mymethods() if n.body and isinstance(n.body[0], nodes.Pass)]
                 if abstract_methods:
-                    self.code_smells.append(f"Speculative Generality: Abstract class '{node.name}' at line {node.lineno} in {file_path}")
+                    self.code_smells.append(CodeSmell(
+                        name="Speculative Generality",
+                        description=f"Abstract class '{node.name}' at line {node.lineno} in {file_path}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_feature_envy(self, module, file_path):
         """
@@ -380,7 +470,13 @@ class CodeSmellDetector:
                 
                 if attr_calls and max(attr_calls.values()) > self.thresholds["FEATURE_ENVY_CALLS"]:
                     envied_class = max(attr_calls, key=attr_calls.get)
-                    self.code_smells.append(f"Feature Envy: Method '{node.name}' at line {node.lineno} might be envying class related to '{envied_class}' in {file_path}")
+                    self.code_smells.append(CodeSmell(
+                        name="Feature Envy",
+                        description=f"Method '{node.name}' at line {node.lineno} might be envying class related to '{envied_class}' in {file_path}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def detect_inappropriate_intimacy(self, module, file_path):
         """
@@ -402,7 +498,13 @@ class CodeSmellDetector:
                 if class_name != other_class:
                     shared = len(methods.intersection(other_fields))
                     if shared > self.thresholds["INAPPROPRIATE_INTIMACY_SHARED"]:
-                        self.code_smells.append(f"Inappropriate Intimacy: Class '{class_name}' might be too intimate with '{other_class}' in {file_path}")
+                        self.code_smells.append(CodeSmell(
+                            name="Inappropriate Intimacy",
+                            description=f"Class '{class_name}' might be too intimate with '{other_class}' in {file_path}",
+                            file_path=file_path,
+                            module_class=class_name,
+                            line_number=None
+                        ))
 
     def detect_message_chains(self, module, file_path):
         """
@@ -422,7 +524,13 @@ class CodeSmellDetector:
         for node in module.nodes_of_class(nodes.Attribute):
             chain_length = get_chain_length(node)
             if chain_length > self.thresholds["MESSAGE_CHAIN_LENGTH"]:
-                self.code_smells.append(f"Message Chains: Long chain detected at line {node.lineno} in {file_path}")
+                self.code_smells.append(CodeSmell(
+                    name="Message Chains",
+                    description=f"Long chain detected at line {node.lineno} in {file_path}",
+                    file_path=file_path,
+                    module_class=None,
+                    line_number=node.lineno
+                ))
 
     def detect_middle_man(self, module, file_path):
         """
@@ -449,7 +557,13 @@ class CodeSmellDetector:
                             delegating_methods += 1
                 
                 if total_methods > 0 and delegating_methods / total_methods > 0.5:
-                    self.code_smells.append(f"Middle Man: Class '{node.name}' at line {node.lineno} in {file_path}")
+                    self.code_smells.append(CodeSmell(
+                        name="Middle Man",
+                        description=f"Class '{node.name}' at line {node.lineno} in {file_path}",
+                        file_path=file_path,
+                        module_class=node.name,
+                        line_number=node.lineno
+                    ))
 
     def print_report(self):
         """
@@ -462,4 +576,4 @@ class CodeSmellDetector:
         else:
             print("Detected Code Smells:")
             for smell in self.code_smells:
-                print(f"- {smell}")
+                print(f"- {smell.name}: {smell.description}")

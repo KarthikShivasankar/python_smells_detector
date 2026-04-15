@@ -2,6 +2,16 @@ import os
 import ast
 import networkx as nx
 from collections import defaultdict
+from dataclasses import dataclass
+
+@dataclass
+class StructuralSmell:
+    name: str
+    description: str
+    file_path: str
+    module_class: str
+    line_number: int = None
+    severity: str = ''
 
 class StructuralSmellDetector:
     """
@@ -17,6 +27,7 @@ class StructuralSmellDetector:
         dependency_graph (nx.DiGraph): A directed graph to represent module dependencies.
         thresholds (dict): A dictionary of threshold values for various smell detections.
         project_root (str): The root directory of the project being analyzed.
+        file_paths (dict): A dictionary to store file paths of modules and classes.
     """
 
     def __init__(self, thresholds):
@@ -32,6 +43,7 @@ class StructuralSmellDetector:
         self.dependency_graph = nx.DiGraph()
         self.thresholds = thresholds
         self.project_root = None
+        self.file_paths = {}  # New attribute to store file paths
 
     def detect_smells(self, directory_path):
         """
@@ -86,6 +98,7 @@ class StructuralSmellDetector:
 
         module_name = os.path.relpath(file_path, self.project_root).replace(os.path.sep, '.')[:-3]
         self.module_info[module_name]['loc'] = len(tree.body)
+        self.file_paths[module_name] = file_path  # Store the file path
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
@@ -110,6 +123,25 @@ class StructuralSmellDetector:
                     if node.module:
                         self.dependency_graph.add_edge(module_name, node.module)
 
+    def add_smell(self, name, description, file_path, module_class, line_number=None):
+        """
+        Add a detected smell to the list of structural smells.
+
+        Args:
+            name (str): The name of the structural smell.
+            description (str): The description of the smell.
+            file_path (str): The path to the file where the smell was detected.
+            module_class (str): The name of the module or class where the smell was detected.
+            line_number (int, optional): The line number where the smell was detected.
+        """
+        self.structural_smells.append(StructuralSmell(
+            name=name,
+            description=description,
+            file_path=file_path,
+            module_class=module_class,
+            line_number=line_number
+        ))
+
     def detect_nom(self):
         """
         Detect classes with a high Number of Methods (NOM).
@@ -119,7 +151,12 @@ class StructuralSmellDetector:
         for class_name, info in self.class_info.items():
             nom = len(info['methods'])
             if nom > self.thresholds['NOM_THRESHOLD']:
-                self.structural_smells.append(f"High Number of Methods (NOM): Class '{class_name}' has {nom} methods")
+                self.add_smell(
+                    "High Number of Methods (NOM)",
+                    f"Class '{class_name}' has {nom} methods",
+                    self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                    class_name
+                )
 
     def detect_wmpc(self):
         """
@@ -130,7 +167,12 @@ class StructuralSmellDetector:
         for class_name, info in self.class_info.items():
             wmpc = sum(1 for method in info['methods'])  # Simplified, should consider complexity
             if wmpc > self.thresholds['WMPC1_THRESHOLD']:
-                self.structural_smells.append(f"High Weighted Methods per Class (WMPC): Class '{class_name}' has WMPC of {wmpc}")
+                self.add_smell(
+                    "High Weighted Methods per Class (WMPC)",
+                    f"Class '{class_name}' has WMPC of {wmpc}",
+                    self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                    class_name
+                )
 
     def detect_size2(self):
         """
@@ -142,7 +184,12 @@ class StructuralSmellDetector:
         for class_name, info in self.class_info.items():
             size2 = len(info['methods']) + len(info['attributes'])
             if size2 > self.thresholds['SIZE2_THRESHOLD']:
-                self.structural_smells.append(f"Large Class (SIZE2): Class '{class_name}' has {size2} members")
+                self.add_smell(
+                    "Large Class (SIZE2)",
+                    f"Class '{class_name}' has {size2} members",
+                    self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                    class_name
+                )
 
     def detect_wac(self):
         """
@@ -153,7 +200,12 @@ class StructuralSmellDetector:
         for class_name, info in self.class_info.items():
             wac = len(info['attributes'])
             if wac > self.thresholds['WAC_THRESHOLD']:
-                self.structural_smells.append(f"High Weight of a Class (WAC): Class '{class_name}' has {wac} attributes")
+                self.add_smell(
+                    "High Weight of a Class (WAC)",
+                    f"Class '{class_name}' has {wac} attributes",
+                    self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                    class_name
+                )
 
     def detect_lcom(self):
         """
@@ -167,7 +219,12 @@ class StructuralSmellDetector:
             if method_count > 1 and attribute_count > 0:
                 lcom = 1 - (attribute_count / method_count)
                 if lcom > self.thresholds['LCOM_THRESHOLD']:
-                    self.structural_smells.append(f"High Lack of Cohesion of Methods (LCOM): Class '{class_name}' has LCOM of {lcom:.2f}")
+                    self.add_smell(
+                        "High Lack of Cohesion of Methods (LCOM)",
+                        f"Class '{class_name}' has LCOM of {lcom:.2f}",
+                        self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                        class_name
+                    )
 
     def detect_rfc(self):
         """
@@ -178,7 +235,12 @@ class StructuralSmellDetector:
         for class_name, info in self.class_info.items():
             rfc = len(info['methods'])  # Should also include called methods
             if rfc > self.thresholds['RFC_THRESHOLD']:
-                self.structural_smells.append(f"High Response for a Class (RFC): Class '{class_name}' has RFC of {rfc}")
+                self.add_smell(
+                    "High Response for a Class (RFC)",
+                    f"Class '{class_name}' has RFC of {rfc}",
+                    self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                    class_name
+                )
 
     def detect_nocc(self):
         """
@@ -193,7 +255,12 @@ class StructuralSmellDetector:
 
         for module_name, count in module_class_count.items():
             if count > self.thresholds['NOCC_THRESHOLD']:
-                self.structural_smells.append(f"High Number of Classes (NOCC): Module '{module_name}' has {count} classes")
+                self.add_smell(
+                    "High Number of Classes (NOCC)",
+                    f"Module '{module_name}' has {count} classes",
+                    self.file_paths.get(module_name, "Unknown"),
+                    module_name
+                )
 
     def detect_dit(self):
         """
@@ -209,30 +276,55 @@ class StructuralSmellDetector:
 
         for module_name, classes in class_hierarchy.items():
             if len(classes) > self.thresholds['DIT_THRESHOLD']:
-                self.structural_smells.append(f"Deep Inheritance Tree (DIT): Module '{module_name}' has a deep inheritance tree")
+                self.add_smell(
+                    "Deep Inheritance Tree (DIT)",
+                    f"Module '{module_name}' has a deep inheritance tree",
+                    self.file_paths.get(module_name, "Unknown"),
+                    module_name
+                )
 
     def detect_loc(self):
         for module_name, info in self.module_info.items():
             if info['loc'] > self.thresholds['LOC_THRESHOLD']:
-                self.structural_smells.append(f"High Lines of Code (LOC): Module '{module_name}' has {info['loc']} lines")
+                self.add_smell(
+                    "High Lines of Code (LOC)",
+                    f"Module '{module_name}' has {info['loc']} lines",
+                    self.file_paths.get(module_name, "Unknown"),
+                    module_name
+                )
 
     def detect_mpc(self):
         # Simplified MPC detection
         for class_name, info in self.class_info.items():
             mpc = len(info['methods'])  # Should count method calls to other classes
             if mpc > self.thresholds['MPC_THRESHOLD']:
-                self.structural_smells.append(f"High Message Passing Coupling (MPC): Class '{class_name}' has MPC of {mpc}")
+                self.add_smell(
+                    "High Message Passing Coupling (MPC)",
+                    f"Class '{class_name}' has MPC of {mpc}",
+                    self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                    class_name
+                )
 
     def detect_cbo(self):
         for node in self.dependency_graph.nodes():
             cbo = self.dependency_graph.degree(node)
             if cbo > self.thresholds['CBO_THRESHOLD']:
-                self.structural_smells.append(f"High Coupling Between Object Classes (CBO): Module '{node}' has CBO of {cbo}")
+                self.add_smell(
+                    "High Coupling Between Object Classes (CBO)",
+                    f"Module '{node}' has CBO of {cbo}",
+                    self.file_paths.get(node, "Unknown"),
+                    node
+                )
 
     def detect_noc(self):
         noc = len(self.class_info)
         if noc > self.thresholds['NOC_THRESHOLD']:
-            self.structural_smells.append(f"High Number of Classes (NOC): Project has {noc} classes")
+            self.add_smell(
+                "High Number of Classes (NOC)",
+                f"Project has {noc} classes",
+                self.project_root,
+                "Project"
+            )
 
     def print_report(self):
         if not self.structural_smells:

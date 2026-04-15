@@ -3,6 +3,16 @@ import ast
 import networkx as nx
 from collections import defaultdict
 import yaml
+from dataclasses import dataclass
+
+@dataclass
+class ArchitecturalSmell:
+    name: str
+    description: str
+    file_path: str
+    module_class: str
+    line_number: int = None
+    severity: str = ''
 
 class ArchitecturalSmellDetector:
     """
@@ -17,6 +27,7 @@ class ArchitecturalSmellDetector:
         module_functions (defaultdict): A dictionary to store functions for each module.
         api_usage (defaultdict): A dictionary to store API usage for each module.
         thresholds (dict): A dictionary of threshold values for various smell detections.
+        file_paths (dict): A dictionary to store file paths for each module.
     """
 
     def __init__(self, thresholds):
@@ -31,6 +42,7 @@ class ArchitecturalSmellDetector:
         self.module_functions = defaultdict(set)
         self.api_usage = defaultdict(list)
         self.thresholds = thresholds
+        self.file_paths = {}  # New attribute to store file paths
 
     def load_thresholds(self, config_path):
         """
@@ -94,6 +106,7 @@ class ArchitecturalSmellDetector:
 
         module_name = os.path.basename(file_path)[:-3]  # Remove .py extension
         self.module_dependencies.add_node(module_name)
+        self.file_paths[module_name] = file_path  # Store the file path
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -108,6 +121,15 @@ class ArchitecturalSmellDetector:
                 if isinstance(node.func, ast.Attribute):
                     self.api_usage[module_name].append(node.func.attr)
 
+    def add_smell(self, name, description, file_path, module_class, line_number=None):
+        self.architectural_smells.append(ArchitecturalSmell(
+            name=name,
+            description=description,
+            file_path=file_path,
+            module_class=module_class,
+            line_number=line_number
+        ))
+
     def detect_hub_like_dependency(self):
         """
         Detect hub-like dependencies in the project.
@@ -119,7 +141,12 @@ class ArchitecturalSmellDetector:
             in_degree = self.module_dependencies.in_degree(node)
             out_degree = self.module_dependencies.out_degree(node)
             if in_degree + out_degree > len(self.module_dependencies.nodes()) / 2:
-                self.architectural_smells.append(f"Hub-like Dependency: Module '{node}' has high connectivity")
+                self.add_smell(
+                    "Hub-like Dependency",
+                    f"Module '{node}' has high connectivity",
+                    self.file_paths.get(node, "Unknown"),
+                    node
+                )
 
     def detect_scattered_functionality(self):
         """
@@ -134,7 +161,12 @@ class ArchitecturalSmellDetector:
         
         for func, modules in function_modules.items():
             if len(modules) > 1:
-                self.architectural_smells.append(f"Scattered Functionality: Function '{func}' appears in modules {', '.join(modules)}")
+                self.add_smell(
+                    "Scattered Functionality",
+                    f"Function '{func}' appears in modules {', '.join(modules)}",
+                    self.file_paths.get(modules[0], "Unknown"),
+                    modules[0]
+                )
 
     def detect_redundant_abstractions(self):
         """
@@ -149,7 +181,12 @@ class ArchitecturalSmellDetector:
         
         for signature, modules in similar_modules.items():
             if len(modules) > 1:
-                self.architectural_smells.append(f"Potential Redundant Abstractions: Modules {', '.join(modules)} have similar functionalities")
+                self.add_smell(
+                    "Potential Redundant Abstractions",
+                    f"Modules {', '.join(modules)} have similar functionalities",
+                    self.file_paths.get(modules[0], "Unknown"),
+                    modules[0]
+                )
 
     def detect_god_objects(self):
         """
@@ -159,7 +196,12 @@ class ArchitecturalSmellDetector:
         """
         for module, functions in self.module_functions.items():
             if len(functions) > self.thresholds['GOD_OBJECT_FUNCTIONS']:
-                self.architectural_smells.append(f"God Object: Module '{module}' has too many functions ({len(functions)})")
+                self.add_smell(
+                    "God Object",
+                    f"Module '{module}' has too many functions ({len(functions)})", 
+                    self.file_paths.get(module, "Unknown"),
+                    module
+                )
 
     def detect_improper_api_usage(self):
         """
@@ -169,17 +211,34 @@ class ArchitecturalSmellDetector:
         """
         for module, api_calls in self.api_usage.items():
             if len(set(api_calls)) < len(api_calls) / 2:
-                self.architectural_smells.append(f"Potential Improper API Usage: Module '{module}' has repetitive API calls")
+                self.add_smell(
+                    "Potential Improper API Usage",
+                    f"Module '{module}' has repetitive API calls",
+                    self.file_paths.get(module, "Unknown"),
+                    module
+                )
 
     def detect_orphan_modules(self):
         for node in self.module_dependencies.nodes():
             if self.module_dependencies.in_degree(node) + self.module_dependencies.out_degree(node) == 0:
-                self.architectural_smells.append(f"Orphan Module: '{node}' is not connected to other modules")
+                self.add_smell(
+                    "Orphan Module",
+                    f"'{node}' is not connected to other modules",
+                    self.file_paths.get(node, "Unknown"),
+                    node
+                )
 
     def detect_cyclic_dependencies(self):
         cycles = list(nx.simple_cycles(self.module_dependencies))
         for cycle in cycles:
-            self.architectural_smells.append(f"Cyclic Dependency: Modules {' -> '.join(cycle)} form a dependency cycle")
+            cycle_str = ' -> '.join(cycle)
+            self.add_smell(
+                "Cyclic Dependency",
+                f"Modules {cycle_str} form a dependency cycle",
+                self.file_paths.get(cycle[0], "Unknown"),
+                cycle[0]
+            )
+
     def detect_unstable_dependencies(self):
         for node in self.module_dependencies.nodes():
             in_degree = self.module_dependencies.in_degree(node)
@@ -187,7 +246,12 @@ class ArchitecturalSmellDetector:
             if in_degree > 0 and out_degree > 0:
                 instability = out_degree / (in_degree + out_degree)
                 if instability > self.thresholds['UNSTABLE_DEPENDENCY_THRESHOLD']:
-                    self.architectural_smells.append(f"Unstable Dependency: Module '{node}' has high instability ({instability:.2f})")
+                    self.add_smell(
+                        "Unstable Dependency",
+                        f"Module '{node}' has high instability ({instability:.2f})",
+                        self.file_paths.get(node, "Unknown"),
+                        node
+                    )
 
     def print_report(self):
         if not self.architectural_smells:
