@@ -12,20 +12,15 @@ Before installing Code Quality Analyzer, ensure you have:
 Installation Methods
 ------------------
 
-From PyPI
-^^^^^^^^^
 
-.. code-block:: bash
-
-   pip install code-quality-analyzer
 
 From Source
 ^^^^^^^^^^^
 
 .. code-block:: bash
 
-   git clone https://github.com/yourusername/code-quality-analyzer.git
-   cd code-quality-analyzer
+   Download the repository
+   cd  "the_repository"
    pip install -e .
 
 Development Installation

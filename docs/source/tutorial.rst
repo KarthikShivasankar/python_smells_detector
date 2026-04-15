@@ -6,9 +6,11 @@ Getting Started
 
 1. Install the Code Quality Analyzer:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      pip install code-quality-analyzer
+      Download the repository
+      cd  "the_repository"
+      pip install -e .
 
 2. Create a configuration file named `code_quality_config.YAML` in your project root:
 
