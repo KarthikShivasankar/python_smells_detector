@@ -158,7 +158,7 @@ def analyze_project(debug=False, smell_type=None):
     parser = argparse.ArgumentParser(description="Analyze code quality in Python projects.")
     parser.add_argument("directory", help="Directory path to analyze")
     parser.add_argument("--config", default="code_quality_config.yaml", help="Path to the configuration file")
-    parser.add_argument("--output", help="Path to the output file for the report")
+    parser.add_argument("--output", help="Path to the output file (supports .txt and .csv extensions)")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--type", choices=['code', 'architectural', 'structural'], 
                        help="Type of smell to analyze (default: all)")
@@ -169,8 +169,16 @@ def analyze_project(debug=False, smell_type=None):
         logger.debug("Debug mode enabled")
 
     smell_type = args.type or smell_type
-    output_file = args.output or "code_quality_report.txt"
     
+    # Determine output filenames based on the --output argument
+    if args.output:
+        base_name = os.path.splitext(args.output)[0]
+        output_txt = f"{base_name}.txt"
+        output_csv = f"{base_name}.csv"
+    else:
+        output_txt = "code_quality_report.txt"
+        output_csv = "code_quality_report.csv"
+
     try:
         logger.info(f"Loading configuration from: {args.config}")
         config_handler = ConfigHandler(args.config)
@@ -194,7 +202,8 @@ def analyze_project(debug=False, smell_type=None):
             struct_detector = StructuralSmellDetector(config_handler.get_thresholds('structural_smells'))
             structural_smells = analyze_structural_smells(args.directory, struct_detector)
 
-        generate_report(code_smells, architectural_smells, structural_smells, output_file)
+        generate_report(code_smells, architectural_smells, structural_smells, 
+                       output_txt, output_csv)
 
     except Exception as e:
         logger.error(f"Error during analysis: {str(e)}", exc_info=True)
@@ -245,7 +254,7 @@ def analyze_structural_smells(directory_path, detector):
 
     return detector.structural_smells
 
-def analyze_structural_smells_only(directory_path, config_path="code_quality_config.yaml"):
+def analyze_structural_smells_only(directory_path, config_path="code_quality_config.yaml", output=None):
     """
     Analyze only structural smells in a Python project.
 
@@ -260,16 +269,24 @@ def analyze_structural_smells_only(directory_path, config_path="code_quality_con
         print("Analyzing Structural Smells...")
         structural_smells = analyze_structural_smells(directory_path, struct_detector)
         
-        # Generate report with only structural smells
-        generate_report([], [], structural_smells, "structural_smells_report.txt")
-        
+        # Use provided output filename or default
+        if output:
+            base_name = os.path.splitext(output)[0]
+            txt_file = f"{base_name}.txt"
+            csv_file = f"{base_name}.csv"
+        else:
+            txt_file = "structural_smells_report.txt"
+            csv_file = "structural_smells_report.csv"
+            
+        generate_report([], [], structural_smells, txt_file, csv_file)
         return structural_smells
     
     except Exception as e:
         logger.error(f"Error analyzing structural smells: {str(e)}", exc_info=True)
         raise
 
-def generate_report(code_smells, architectural_smells, structural_smells, output_file=None):
+def generate_report(code_smells, architectural_smells, structural_smells, 
+                   output_txt=None, output_csv=None):
     """
     Generate a report of all detected smells in both text and CSV formats.
 
@@ -277,7 +294,8 @@ def generate_report(code_smells, architectural_smells, structural_smells, output
         code_smells (list): A list of detected CodeSmell objects
         architectural_smells (list): A list of detected ArchitecturalSmell objects
         structural_smells (list): A list of detected StructuralSmell objects
-        output_file (str, optional): The path to the output file. If None, prints to console.
+        output_txt (str, optional): The path to the output text file
+        output_csv (str, optional): The path to the output CSV file
     """
     # Generate text report
     report = "Code Quality Analysis Report\n"
@@ -319,14 +337,15 @@ def generate_report(code_smells, architectural_smells, structural_smells, output
     report += f"Total Architectural Smells: {len(architectural_smells)}\n"
 
     # Write or print the report
-    if output_file:
-        with open(output_file, 'w') as f:
+    if output_txt:
+        with open(output_txt, 'w') as f:
             f.write(report)
-        print(f"Report generated and saved to {output_file}")
+        print(f"Text report generated and saved to {output_txt}")
         
-        # Generate CSV report
-        csv_file = output_file.rsplit('.', 1)[0] + '.csv'
-        generate_csv_report(code_smells, architectural_smells, structural_smells, csv_file)
+        # Generate CSV report with the specified filename
+        if output_csv:
+            generate_csv_report(code_smells, architectural_smells, 
+                              structural_smells, output_csv)
     else:
         print(report)
 
@@ -431,18 +450,28 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze code quality in Python projects.")
     parser.add_argument("directory", help="Directory path to analyze")
     parser.add_argument("--config", default="code_quality_config.yaml", help="Path to the configuration file")
+    parser.add_argument("--output", help="Path to the output file (supports .txt and .csv extensions)")
     parser.add_argument("--type", choices=['code', 'architectural', 'structural'], 
                        help="Type of smell to analyze (default: all)")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     
     args = parser.parse_args()
     
+    # Determine output filenames based on the --output argument
+    if args.output:
+        base_name = os.path.splitext(args.output)[0]
+        output_txt = f"{base_name}.txt"
+        output_csv = f"{base_name}.csv"
+    else:
+        output_txt = "code_quality_report.txt"
+        output_csv = "code_quality_report.csv"
+    
     if args.type == 'structural':
-        analyze_structural_smells_only(args.directory, args.config)
+        analyze_structural_smells_only(args.directory, args.config, args.output)
     elif args.type == 'code':
-        analyze_code_smells_only(args.directory, args.config)
+        analyze_code_smells_only(args.directory, args.config, args.output)
     elif args.type == 'architectural':
-        analyze_architectural_smells_only(args.directory, args.config)
+        analyze_architectural_smells_only(args.directory, args.config, args.output)
     else:
         analyze_project(args.debug, args.type)
 

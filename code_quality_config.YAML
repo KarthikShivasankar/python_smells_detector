@@ -1,6 +1,6 @@
 code_smells:
   LONG_METHOD_LINES:
-    value: 30
+    value: 45
     explanation: "Methods longer than this many lines may be too complex and should be refactored."
 
   LARGE_CLASS_METHODS:
@@ -48,7 +48,7 @@ code_smells:
     explanation: "Method call chains longer than this may indicate tight coupling and violate the Law of Demeter."
 
   DATA_CLUMPS_THRESHOLD:
-    value: 4
+    value: 6
     explanation: "Groups of parameters appearing together in multiple functions may indicate data clumps."
 
   TEMPORARY_FIELD_THRESHOLD:
@@ -91,10 +91,6 @@ code_smells:
     value: 5
     explanation: "Comment blocks larger than this may indicate code that needs refactoring."
 
-  UNUSED_PARAMETERS_THRESHOLD:
-    value: 3
-    explanation: "Methods with more than this many unused parameters may need refactoring."
-
 architectural_smells:
   GOD_OBJECT_FUNCTIONS:
     value: 20
@@ -107,10 +103,6 @@ architectural_smells:
   HUB_LIKE_DEPENDENCY_RATIO:
     value: 0.3
     explanation: "Modules connected to more than this ratio of total modules may be hub-like dependencies."
-
-  SCATTERED_FUNCTIONALITY_THRESHOLD:
-    value: 5
-    explanation: "Functions appearing in more than this many modules may indicate scattered functionality."
 
   REDUNDANT_ABSTRACTION_SIMILARITY:
     value: 0.7
