@@ -4,7 +4,7 @@ code_smells:
     explanation: "Methods longer than this many lines may be too complex and should be refactored."
 
   LARGE_CLASS_METHODS:
-    value: 15
+    value: 10
     explanation: "Classes with more than this many methods may have too many responsibilities."
 
   PRIMITIVE_OBSESSION_COUNT:
@@ -12,7 +12,7 @@ code_smells:
     explanation: "Functions with more than this many primitive parameters may benefit from introducing parameter objects."
 
   LONG_PARAMETER_LIST:
-    value: 6
+    value: 5
     explanation: "Functions with more than this many parameters may be trying to do too much."
 
   COMPLEX_CONDITIONAL:
@@ -49,7 +49,7 @@ code_smells:
 
 architectural_smells:
   GOD_OBJECT_FUNCTIONS:
-    value: 25
+    value: 20
     explanation: "Modules with more than this many functions may be trying to do too much and should be split."
 
   UNSTABLE_DEPENDENCY_THRESHOLD:
@@ -78,23 +78,23 @@ architectural_smells:
 
 structural_smells:
   NOM_THRESHOLD:
-    value: 20
+    value: 10
     explanation: "Classes with more than this many methods may be too complex."
 
   WMPC1_THRESHOLD:
-    value: 50
+    value: 25
     explanation: "Classes with Weighted Methods per Class (complexity-based) higher than this may be too complex."
 
   WMPC2_THRESHOLD:
-    value: 50
+    value: 25
     explanation: "Classes with Weighted Methods per Class (parameter-based) higher than this may have too many responsibilities."
 
   SIZE2_THRESHOLD:
-    value: 50
+    value: 30
     explanation: "Classes with more than this many members (methods + fields) may be too large."
 
   WAC_THRESHOLD:
-    value: 15
+    value: 10
     explanation: "Classes with more than this many fields may have poor encapsulation."
 
   LCOM_THRESHOLD:
@@ -102,7 +102,7 @@ structural_smells:
     explanation: "Classes with Lack of Cohesion in Methods higher than this may need to be split."
 
   RFC_THRESHOLD:
-    value: 50
+    value: 30
     explanation: "Classes with Response for Class higher than this may be too coupled."
 
   NOCC_THRESHOLD:
@@ -114,11 +114,11 @@ structural_smells:
     explanation: "Classes with Depth of Inheritance Tree higher than this may be using inheritance excessively."
 
   LOC_THRESHOLD:
-    value: 1000
+    value: 200
     explanation: "Modules with more than this many lines of code may be too large."
 
   MPC_THRESHOLD:
-    value: 50
+    value: 25
     explanation: "Classes with Method Propagation Coupling higher than this may be too coupled."
 
   CBO_THRESHOLD:
@@ -126,5 +126,5 @@ structural_smells:
     explanation: "Modules with Coupling Between Object Classes higher than this may be too coupled."
 
   NOC_THRESHOLD:
-    value: 100
+    value: 45
     explanation: "Projects with more than this many classes may be too large or complex."
