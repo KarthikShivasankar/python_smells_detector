@@ -1,9 +1,0 @@
-astroid
-networkx
-pyyaml
-pytest
-
-[dev]
-pytest
-sphinx
-sphinx-rtd-theme

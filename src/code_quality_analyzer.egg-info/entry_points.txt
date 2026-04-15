@@ -1,2 +1,0 @@
-[console_scripts]
-analyze_code_quality = code_quality_analyzer.main:analyze_project
