@@ -57,6 +57,7 @@ class ArchitecturalSmellDetector:
         self.file_paths = {}  # New attribute to store file paths
         self.external_dependencies = defaultdict(set)
         self.function_calls = defaultdict(set)  # Track inter-module function calls
+        self.project_root = None  # Set once in analyze_directory for consistent module naming
 
     def load_thresholds(self, config_path):
         """
@@ -122,6 +123,7 @@ class ArchitecturalSmellDetector:
             directory_path (str): The path to the directory to be analyzed.
             ignore_dirs (iterable): Directory names to skip.
         """
+        self.project_root = os.path.abspath(directory_path)
         ignore_dirs = set(ignore_dirs or [])
         for root, dirs, files in os.walk(directory_path):
             dirs[:] = [d for d in dirs if d not in ignore_dirs]
@@ -142,8 +144,8 @@ class ArchitecturalSmellDetector:
             with open(file_path, 'r') as file:
                 tree = ast.parse(file.read())
 
-            # Get relative module path
-            module_name = os.path.relpath(file_path, os.path.dirname(os.path.dirname(file_path)))
+            # Get relative module path from consistent project root
+            module_name = os.path.relpath(os.path.abspath(file_path), self.project_root)
             module_name = module_name.replace(os.path.sep, '.')[:-3]  # Remove .py extension
             self.module_dependencies.add_node(module_name)
             self.file_paths[module_name] = file_path
@@ -205,7 +207,7 @@ class ArchitecturalSmellDetector:
         Resolve external dependencies while preserving intra-project dependencies.
         """
         # Get all project modules
-        project_root = os.path.dirname(os.path.dirname(next(iter(self.file_paths.values()))))
+        project_root = self.project_root
         all_modules = set(self.module_dependencies.nodes())
         standard_lib_modules = set(sys.stdlib_module_names)
 
