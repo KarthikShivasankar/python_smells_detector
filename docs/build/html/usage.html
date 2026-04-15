@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage &mdash; Code Quality Analyzer 0.1 documentation</title>
+  <title>Usage Guide &mdash; Code Quality Analyzer 0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -22,7 +22,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Tutorial" href="tutorial.html" />
-    <link rel="prev" title="Welcome to Code Quality Analyzer’s documentation!" href="index.html" /> 
+    <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,18 +46,28 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#command-line-interface">Command Line Interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#python-api">Python API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#command-line-interface">Command Line Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analyze-specific-smell-types">Analyze Specific Smell Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-options">Additional Options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#python-api">Python API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analyzing-specific-smells">Analyzing Specific Smells</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#output-formats">Output Formats</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test.html">Testing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/code_smell_detector.html">Code Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/architectural_smell_detector.html">Architectural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/structural_smell_detector.html">Structural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/config_handler.html">Configuration Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_smell_detector.html">Code Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architectural_smell_detector.html">Architectural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structural_smell_detector.html">Structural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config_handler.html">Configuration Handler</a></li>
 </ul>
 
         </div>
@@ -74,7 +84,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Usage</li>
+      <li class="breadcrumb-item active">Usage Guide</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -84,30 +94,82 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
+  <section id="usage-guide">
+<h1>Usage Guide<a class="headerlink" href="#usage-guide" title="Link to this heading"></a></h1>
 <section id="command-line-interface">
 <h2>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading"></a></h2>
-<p>You can use the Code Quality Analyzer as a command-line tool:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>sample_project<span class="w"> </span>--config<span class="w"> </span>code_quality_config.YAML
+<section id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>/path/to/project
 </pre></div>
 </div>
-<p>Where <cite>sample_project</cite> is the directory containing the code you want to analyze, and <cite>code_quality_config.YAML</cite> is your configuration file.</p>
+</section>
+<section id="analyze-specific-smell-types">
+<h3>Analyze Specific Smell Types<a class="headerlink" href="#analyze-specific-smell-types" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Analyze only code smells</span>
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--type<span class="w"> </span>code
+
+<span class="c1"># Analyze only architectural smells</span>
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--type<span class="w"> </span>architectural
+
+<span class="c1"># Analyze only structural smells</span>
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--type<span class="w"> </span>structural
+</pre></div>
+</div>
+</section>
+<section id="additional-options">
+<h3>Additional Options<a class="headerlink" href="#additional-options" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="w"> </span>custom_config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span>report<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--debug
+</pre></div>
+</div>
+</section>
 </section>
 <section id="python-api">
 <h2>Python API<a class="headerlink" href="#python-api" title="Link to this heading"></a></h2>
-<p>You can also use the Code Quality Analyzer as a Python library:</p>
+<section id="id1">
+<h3>Basic Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">code_quality_analyzer</span> <span class="kn">import</span> <span class="n">CodeAnalyzer</span>
 
-<span class="n">analyzer</span> <span class="o">=</span> <span class="n">CodeAnalyzer</span><span class="p">(</span><span class="s1">&#39;sample_project&#39;</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="s1">&#39;code_quality_config.YAML&#39;</span><span class="p">)</span>
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">CodeAnalyzer</span><span class="p">(</span><span class="s1">&#39;/path/to/project&#39;</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="s1">&#39;code_quality_config.yaml&#39;</span><span class="p">)</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="configuration">
-<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h2>
-<p>The Code Quality Analyzer uses a YAML configuration file to set thresholds for various code smells. You can customize these thresholds by editing the <cite>code_quality_config.YAML</cite> file and specifying it with the <cite>–config</cite> option.</p>
+<section id="analyzing-specific-smells">
+<h3>Analyzing Specific Smells<a class="headerlink" href="#analyzing-specific-smells" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">code_quality_analyzer</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CodeSmellDetector</span><span class="p">,</span>
+    <span class="n">ArchitecturalSmellDetector</span><span class="p">,</span>
+    <span class="n">StructuralSmellDetector</span>
+<span class="p">)</span>
+
+<span class="c1"># Analyze code smells</span>
+<span class="n">code_detector</span> <span class="o">=</span> <span class="n">CodeSmellDetector</span><span class="p">(</span><span class="n">thresholds</span><span class="p">)</span>
+<span class="n">code_detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="s1">&#39;/path/to/file.py&#39;</span><span class="p">)</span>
+
+<span class="c1"># Analyze architectural smells</span>
+<span class="n">arch_detector</span> <span class="o">=</span> <span class="n">ArchitecturalSmellDetector</span><span class="p">(</span><span class="n">thresholds</span><span class="p">)</span>
+<span class="n">arch_detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="s1">&#39;/path/to/project&#39;</span><span class="p">)</span>
+
+<span class="c1"># Analyze structural smells</span>
+<span class="n">struct_detector</span> <span class="o">=</span> <span class="n">StructuralSmellDetector</span><span class="p">(</span><span class="n">thresholds</span><span class="p">)</span>
+<span class="n">struct_detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="s1">&#39;/path/to/project&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="output-formats">
+<h2>Output Formats<a class="headerlink" href="#output-formats" title="Link to this heading"></a></h2>
+<p>The tool generates reports in multiple formats:</p>
+<ul class="simple">
+<li><p>Text report (default): Detailed human-readable analysis</p></li>
+<li><p>CSV report: Structured data for further processing</p></li>
+<li><p>Log file: Detailed analysis process and any errors encountered</p></li>
+</ul>
 </section>
 </section>
 
@@ -115,14 +177,14 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Code Quality Analyzer’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="tutorial.html" class="btn btn-neutral float-right" title="Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anon.</p>
+    <p>&#169; Copyright 2024, Your Name.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -5,9 +5,10 @@ Welcome to Code Quality Analyzer's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   installation
    usage
    tutorial
-   test
+   configuration
    code_smell_detector
    architectural_smell_detector
    structural_smell_detector

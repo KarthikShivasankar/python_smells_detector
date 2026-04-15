@@ -43,13 +43,14 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../test.html">Testing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/code_smell_detector.html">Code Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/architectural_smell_detector.html">Architectural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/structural_smell_detector.html">Structural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/config_handler.html">Configuration Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_smell_detector.html">Code Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architectural_smell_detector.html">Architectural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../structural_smell_detector.html">Structural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config_handler.html">Configuration Handler</a></li>
 </ul>
 
         </div>
@@ -82,11 +83,16 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span><span class="p">,</span> <span class="n">product</span>
 <span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">CodeAnalysisError</span>
+
+<span class="c1"># Set up logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CodeSmell">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmell">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmell">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">CodeSmell</span><span class="p">:</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
@@ -98,7 +104,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector">[docs]</a>
 <span class="k">class</span> <span class="nc">CodeSmellDetector</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A class to detect various code smells in Python source code.</span>
@@ -112,6 +118,8 @@
 <span class="sd">        file_content (list): A list of strings representing the content of the analyzed file.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="CodeSmellDetector.__init__">
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thresholds</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the CodeSmellDetector with given thresholds.</span>
@@ -120,56 +128,84 @@
 <span class="sd">            thresholds (dict): A dictionary of threshold values for various code smell detections.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="n">thresholds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="n">thresholds</span></div>
+
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_smells">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_smells">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_smells">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_smells</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect code smells in the given file.</span>
-
-<span class="sd">        This method reads the file, parses it using astroid, and runs all the smell detection methods.</span>
-<span class="sd">        If a parse error occurs, it prints the error message and continues with the analysis.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            file_path (str): The path to the file to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">detection_methods</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_long_methods</span><span class="p">,</span> <span class="s2">&quot;detect_long_methods&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_large_classes</span><span class="p">,</span> <span class="s2">&quot;detect_large_classes&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_primitive_obsession</span><span class="p">,</span> <span class="s2">&quot;detect_primitive_obsession&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_long_parameter_lists</span><span class="p">,</span> <span class="s2">&quot;detect_long_parameter_lists&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_data_clumps</span><span class="p">,</span> <span class="s2">&quot;detect_data_clumps&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_switch_statements</span><span class="p">,</span> <span class="s2">&quot;detect_switch_statements&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_temporary_fields</span><span class="p">,</span> <span class="s2">&quot;detect_temporary_fields&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_alternative_classes</span><span class="p">,</span> <span class="s2">&quot;detect_alternative_classes&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_divergent_change</span><span class="p">,</span> <span class="s2">&quot;detect_divergent_change&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_parallel_inheritance</span><span class="p">,</span> <span class="s2">&quot;detect_parallel_inheritance&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_shotgun_surgery</span><span class="p">,</span> <span class="s2">&quot;detect_shotgun_surgery&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_comments</span><span class="p">,</span> <span class="s2">&quot;detect_comments&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_duplicate_code</span><span class="p">,</span> <span class="s2">&quot;detect_duplicate_code&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_speculative_generality</span><span class="p">,</span> <span class="s2">&quot;detect_speculative_generality&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_feature_envy</span><span class="p">,</span> <span class="s2">&quot;detect_feature_envy&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_inappropriate_intimacy</span><span class="p">,</span> <span class="s2">&quot;detect_inappropriate_intimacy&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_message_chains</span><span class="p">,</span> <span class="s2">&quot;detect_message_chains&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_middle_man</span><span class="p">,</span> <span class="s2">&quot;detect_middle_man&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
                 <span class="n">content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             
-            <span class="n">module</span> <span class="o">=</span> <span class="n">astroid</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">module</span> <span class="o">=</span> <span class="n">astroid</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">astroid_exceptions</span><span class="o">.</span><span class="n">AstroidSyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Syntax error in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Failed to parse Python file: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;lineno&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="p">)</span>
+            
             <span class="bp">self</span><span class="o">.</span><span class="n">file_content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
             
-            <span class="c1"># Call all smell detection methods</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_long_methods</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_large_classes</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_primitive_obsession</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_long_parameter_lists</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_data_clumps</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_switch_statements</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_temporary_fields</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_alternative_classes</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_divergent_change</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_parallel_inheritance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_shotgun_surgery</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_comments</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_duplicate_code</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="c1">#self.detect_dead_code(module, file_path)</span>
-            <span class="c1">#self.detect_lazy_class(module, file_path)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_speculative_generality</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_feature_envy</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_inappropriate_intimacy</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_message_chains</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_middle_man</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">astroid_exceptions</span><span class="o">.</span><span class="n">AstroidSyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error in file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Run each detection method</span>
+            <span class="k">for</span> <span class="n">detect_method</span><span class="p">,</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">detection_methods</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">detect_method</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Error in </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2"> analyzing </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> 
+                        <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Error in </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
+                        <span class="n">function_name</span><span class="o">=</span><span class="n">method_name</span>
+                    <span class="p">)</span>
+                
+        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Encoding error in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;File encoding error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error analyzing </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Unexpected error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span>
+            <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_long_methods">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_long_methods">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_long_methods">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_long_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect long methods in the given module.</span>
@@ -177,8 +213,18 @@
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
                 <span class="c1"># Skip property decorators and simple getter/setters</span>
-                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span> <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span> <span class="k">else</span> <span class="kc">False</span><span class="p">:</span>
-                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                    <span class="n">is_property</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                        <span class="c1"># Handle both direct name and call decorators</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                            <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                            <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                    <span class="k">if</span> <span class="n">is_property</span><span class="p">:</span>
+                        <span class="k">continue</span>
                 
                 <span class="c1"># Count non-empty, non-comment lines</span>
                 <span class="n">actual_lines</span> <span class="o">=</span> <span class="mi">0</span>
@@ -199,7 +245,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_large_classes">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_large_classes">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_large_classes">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_large_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect large classes in the given module.</span>
@@ -207,7 +253,22 @@
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
                 <span class="c1"># Skip data classes and exception classes</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span> <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span> <span class="k">else</span> <span class="kc">False</span> <span class="ow">or</span>
+                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                            <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">decorator</span><span class="o">.</span><span class="n">attrname</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">is_dataclass</span> <span class="ow">or</span>
                     <span class="nb">any</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;Exception&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">bases</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">))):</span>
                     <span class="k">continue</span>
 
@@ -224,17 +285,17 @@
                         <span class="n">non_trivial_methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
 
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_trivial_methods</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;LARGE_CLASS_METHODS&quot;</span><span class="p">]:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Large Class&quot;</span><span class="p">,</span>
                         <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">non_trivial_methods</span><span class="p">)</span><span class="si">}</span><span class="s2"> non-trivial methods in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                         <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
                         <span class="n">module_class</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                         <span class="n">line_number</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span>
-                    <span class="p">))</span></div>
+                    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_primitive_obsession">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_primitive_obsession">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_primitive_obsession">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_primitive_obsession</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect primitive obsession in the given module.</span>
@@ -274,7 +335,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_long_parameter_lists">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_long_parameter_lists">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_long_parameter_lists">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_long_parameter_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect long parameter lists in the given module.</span>
@@ -313,7 +374,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_data_clumps">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_clumps">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_clumps">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_data_clumps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect data clumps in the given module.</span>
@@ -323,12 +384,13 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
                 <span class="c1"># Skip if it&#39;s a constructor or property</span>
                 <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;__init__&#39;</span> <span class="ow">or</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">decorators</span> <span class="ow">and</span> 
-                    <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)):</span>
+                    <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span> 
+                        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)):</span>
                     <span class="k">continue</span>
                 
                 <span class="c1"># Get parameters excluding self</span>
                 <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span> 
-                         <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;self&#39;</span><span class="p">]</span>
+                         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">AssignName</span><span class="p">)</span> <span class="ow">and</span> <span class="n">arg</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;self&#39;</span><span class="p">]</span>
                 
                 <span class="c1"># Skip if too few parameters</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;DATA_CLUMPS_THRESHOLD&quot;</span><span class="p">]:</span>
@@ -344,18 +406,18 @@
             <span class="c1"># and represent a significant portion of each function&#39;s parameters</span>
             <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> 
                 <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;DATA_CLUMPS_THRESHOLD&quot;</span><span class="p">]):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Data Clumps&quot;</span><span class="p">,</span>
                     <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Parameters </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">params</span><span class="p">)</span><span class="si">}</span><span class="s2"> appear together in functions: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                     <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
                     <span class="n">module_class</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">functions</span><span class="p">),</span>
                     <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
-                <span class="p">))</span></div>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_switch_statements">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_switch_statements">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_switch_statements">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_switch_statements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect switch statements in the given module.</span>
@@ -398,7 +460,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_temporary_fields">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_temporary_fields">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_temporary_fields">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_temporary_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect temporary fields in the given module.</span>
@@ -406,7 +468,22 @@
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
                 <span class="c1"># Skip data classes and exception classes</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span> <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span> <span class="k">else</span> <span class="kc">False</span> <span class="ow">or</span>
+                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                            <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">decorator</span><span class="o">.</span><span class="n">attrname</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">is_dataclass</span> <span class="ow">or</span>
                     <span class="nb">any</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;Exception&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">bases</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">))):</span>
                     <span class="k">continue</span>
 
@@ -437,18 +514,18 @@
                              <span class="p">{</span><span class="s1">&#39;logger&#39;</span><span class="p">,</span> <span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="s1">&#39;cache&#39;</span><span class="p">,</span> <span class="s1">&#39;_cache&#39;</span><span class="p">})</span>
                 
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp_fields</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;TEMPORARY_FIELD_THRESHOLD&quot;</span><span class="p">]:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Temporary Field&quot;</span><span class="p">,</span>
                         <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Potentially unused fields </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_fields</span><span class="p">)</span><span class="si">}</span><span class="s2"> in class &#39;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; at line </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                         <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
                         <span class="n">module_class</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                         <span class="n">line_number</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span>
                         <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;low&#39;</span>
-                    <span class="p">))</span></div>
+                    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_alternative_classes">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_alternative_classes">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_alternative_classes">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_alternative_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect alternative classes with different interfaces in the given module.</span>
@@ -457,8 +534,22 @@
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
                 <span class="c1"># Skip data classes, exceptions, and abstract base classes</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;dataclass&#39;</span><span class="p">,</span> <span class="s1">&#39;abstractmethod&#39;</span><span class="p">}</span> 
-                       <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span> <span class="k">else</span> <span class="kc">False</span> <span class="ow">or</span>
+                <span class="n">is_excluded</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;dataclass&#39;</span><span class="p">,</span> <span class="s1">&#39;abstractmethod&#39;</span><span class="p">}:</span>
+                            <span class="n">is_excluded</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;dataclass&#39;</span><span class="p">,</span> <span class="s1">&#39;abstractmethod&#39;</span><span class="p">}:</span>
+                                <span class="n">is_excluded</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">decorator</span><span class="o">.</span><span class="n">attrname</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;dataclass&#39;</span><span class="p">,</span> <span class="s1">&#39;abstractmethod&#39;</span><span class="p">}:</span>
+                                <span class="n">is_excluded</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">is_excluded</span> <span class="ow">or</span>
                     <span class="nb">any</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;Exception&#39;</span><span class="p">,</span> <span class="s1">&#39;ABC&#39;</span><span class="p">))</span> 
                         <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">bases</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">))):</span>
                     <span class="k">continue</span>
@@ -485,18 +576,18 @@
                                       <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">bases</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)})</span> <span class="o">&gt;</span> <span class="mi">0</span>
                 
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">share_base_class</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Alternative Classes with Different Interfaces&quot;</span><span class="p">,</span>
                         <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Classes </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span><span class="si">}</span><span class="s2"> share similar methods </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">methods</span><span class="p">)</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                         <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
                         <span class="n">module_class</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">classes</span><span class="p">),</span>
                         <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                         <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
-                    <span class="p">))</span></div>
+                    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_divergent_change">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_divergent_change">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_divergent_change">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_divergent_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect divergent change in the given module.</span>
@@ -504,7 +595,22 @@
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
                 <span class="c1"># Skip data classes, exceptions, and utility classes</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span> <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span> <span class="k">else</span> <span class="kc">False</span> <span class="ow">or</span>
+                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                            <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">decorator</span><span class="o">.</span><span class="n">attrname</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">is_dataclass</span> <span class="ow">or</span>
                     <span class="nb">any</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;Exception&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">bases</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">))</span> <span class="ow">or</span>
                     <span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;Utils&#39;</span><span class="p">,</span> <span class="s1">&#39;Helper&#39;</span><span class="p">,</span> <span class="s1">&#39;Mixin&#39;</span><span class="p">))):</span>
                     <span class="k">continue</span>
@@ -513,9 +619,22 @@
                 <span class="n">method_prefixes</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">mymethods</span><span class="p">():</span>
                     <span class="c1"># Skip magic methods, properties, and private methods</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span> <span class="ow">or</span> 
-                        <span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">decorators</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">))</span> <span class="ow">or</span>
-                        <span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)):</span>
+                    <span class="n">is_property</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                                <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+                            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                                    <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                                    <span class="k">break</span>
+                            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="n">decorator</span><span class="o">.</span><span class="n">attrname</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                                    <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                                    <span class="k">break</span>
+
+                    <span class="k">if</span> <span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_property</span> <span class="ow">or</span> <span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)):</span>
                         <span class="k">continue</span>
                         
                     <span class="n">prefix</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -526,18 +645,18 @@
                 <span class="n">unique_prefixes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">method_prefixes</span><span class="p">)</span>
                 <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_prefixes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;DIVERGENT_CHANGE_PREFIXES&quot;</span><span class="p">]</span> <span class="ow">and</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">method_prefixes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;DIVERGENT_CHANGE_METHODS&quot;</span><span class="p">]):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Potential Divergent Change&quot;</span><span class="p">,</span>
                         <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_prefixes</span><span class="p">)</span><span class="si">}</span><span class="s2"> different method prefixes: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unique_prefixes</span><span class="p">)</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                         <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
                         <span class="n">module_class</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                         <span class="n">line_number</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span>
                         <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
-                    <span class="p">))</span></div>
+                    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_parallel_inheritance">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_parallel_inheritance">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_parallel_inheritance">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_parallel_inheritance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect parallel inheritance hierarchies in the given module.</span>
@@ -567,24 +686,27 @@
                     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">h1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">c2</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">h2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
                           <span class="k">for</span> <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">h2</span><span class="p">)):</span>
                         <span class="c1"># Check for method similarity</span>
-                        <span class="n">similarity</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">class_info</span><span class="p">[</span><span class="n">h1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">&amp;</span> <span class="n">class_info</span><span class="p">[</span><span class="n">h2</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span> <span class="o">/</span> \
-                                   <span class="nb">len</span><span class="p">(</span><span class="n">class_info</span><span class="p">[</span><span class="n">h1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">|</span> <span class="n">class_info</span><span class="p">[</span><span class="n">h2</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-                        <span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>  <span class="c1"># More than 30% similar methods</span>
-                            <span class="n">parallel_hierarchies</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">h1</span><span class="p">,</span> <span class="n">h2</span><span class="p">])</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">h1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">class_info</span> <span class="ow">and</span> <span class="n">h2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">class_info</span> <span class="ow">and</span> 
+                            <span class="p">(</span><span class="n">class_info</span><span class="p">[</span><span class="n">h1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="ow">or</span> <span class="n">class_info</span><span class="p">[</span><span class="n">h2</span><span class="p">[</span><span class="mi">0</span><span class="p">]])):</span>  <span class="c1"># Ensure at least one set has methods</span>
+                            <span class="n">union_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">class_info</span><span class="p">[</span><span class="n">h1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">|</span> <span class="n">class_info</span><span class="p">[</span><span class="n">h2</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                            <span class="k">if</span> <span class="n">union_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Prevent division by zero</span>
+                                <span class="n">similarity</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">class_info</span><span class="p">[</span><span class="n">h1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">&amp;</span> <span class="n">class_info</span><span class="p">[</span><span class="n">h2</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span> <span class="o">/</span> <span class="n">union_size</span>
+                                <span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>  <span class="c1"># More than 30% similar methods</span>
+                                    <span class="n">parallel_hierarchies</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">h1</span><span class="p">,</span> <span class="n">h2</span><span class="p">])</span>
 
             <span class="k">if</span> <span class="n">parallel_hierarchies</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Parallel Inheritance Hierarchies&quot;</span><span class="p">,</span>
                     <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Parallel hierarchies detected: </span><span class="si">{</span><span class="s1">&#39; and &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39; -&gt; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">parallel_hierarchies</span><span class="p">])</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                     <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
                     <span class="n">module_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;high&#39;</span>
-                <span class="p">))</span></div>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_shotgun_surgery">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_shotgun_surgery">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_shotgun_surgery">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_shotgun_surgery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect potential shotgun surgery in the given module.</span>
@@ -620,10 +742,14 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_comments">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_comments">[docs]</a>
-    <span class="k">def</span> <span class="nf">detect_comments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_comments">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_comments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Detect excessive comments in the given file.</span>
+<span class="sd">        Detect excessive comments in the given module and file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module (astroid.Module): The AST module being analyzed</span>
+<span class="sd">            file_path (str): Path to the file being analyzed</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">comment_blocks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">current_block</span> <span class="o">=</span> <span class="p">[]</span>
@@ -665,7 +791,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_duplicate_code">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_duplicate_code">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_duplicate_code">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_duplicate_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect duplicate code in the given module.</span>
@@ -709,7 +835,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_data_class">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_class">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_data_class">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_data_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect data classes in the given module.</span>
@@ -756,7 +882,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_dead_code">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_dead_code">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_dead_code">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_dead_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect dead code in the given module.</span>
@@ -815,7 +941,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_lazy_class">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_lazy_class">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_lazy_class">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_lazy_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect lazy classes in the given module.</span>
@@ -852,7 +978,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_speculative_generality">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_speculative_generality">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_speculative_generality">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_speculative_generality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect speculative generality in the given module.</span>
@@ -898,7 +1024,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_feature_envy">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_feature_envy">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_feature_envy">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_feature_envy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect feature envy in the given module.</span>
@@ -906,7 +1032,22 @@
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
                 <span class="c1"># Skip property methods and simple delegators</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">decorators</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="n">is_property</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                            <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                                <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">decorator</span><span class="o">.</span><span class="n">attrname</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                                <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">is_property</span> <span class="ow">or</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Return</span><span class="p">)):</span>
                     <span class="k">continue</span>
                 
@@ -930,18 +1071,18 @@
                     <span class="c1"># Check if external calls significantly outnumber local calls</span>
                     <span class="k">if</span> <span class="p">(</span><span class="n">max_calls</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;FEATURE_ENVY_CALLS&quot;</span><span class="p">]</span> <span class="ow">and</span>
                         <span class="n">max_calls</span> <span class="o">&gt;</span> <span class="n">local_calls</span> <span class="o">*</span> <span class="mi">2</span><span class="p">):</span>  <span class="c1"># At least twice as many external calls</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                             <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Feature Envy&quot;</span><span class="p">,</span>
                             <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Method &#39;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; makes </span><span class="si">{</span><span class="n">max_calls</span><span class="si">}</span><span class="s2"> calls to &#39;</span><span class="si">{</span><span class="n">max_class</span><span class="si">}</span><span class="s2">&#39; but only </span><span class="si">{</span><span class="n">local_calls</span><span class="si">}</span><span class="s2"> local calls in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                             <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
                             <span class="n">module_class</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                             <span class="n">line_number</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span>
                             <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
-                        <span class="p">))</span></div>
+                        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_inappropriate_intimacy">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_inappropriate_intimacy">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_inappropriate_intimacy">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_inappropriate_intimacy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect inappropriate intimacy in the given module.</span>
@@ -953,8 +1094,22 @@
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
                 <span class="c1"># Skip data classes and utility classes</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span> <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span> <span class="k">else</span> <span class="kc">False</span> <span class="ow">or</span>
-                    <span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;Utils&#39;</span><span class="p">,</span> <span class="s1">&#39;Helper&#39;</span><span class="p">,</span> <span class="s1">&#39;Factory&#39;</span><span class="p">))):</span>
+                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                            <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">decorator</span><span class="o">.</span><span class="n">attrname</span> <span class="o">==</span> <span class="s1">&#39;dataclass&#39;</span><span class="p">:</span>
+                                <span class="n">is_dataclass</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">is_dataclass</span> <span class="ow">or</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;Utils&#39;</span><span class="p">,</span> <span class="s1">&#39;Helper&#39;</span><span class="p">,</span> <span class="s1">&#39;Factory&#39;</span><span class="p">))):</span>
                     <span class="k">continue</span>
 
                 <span class="c1"># Store class methods and fields</span>
@@ -990,7 +1145,7 @@
 
                     <span class="k">if</span> <span class="p">(</span><span class="n">shared</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;INAPPROPRIATE_INTIMACY_SHARED&quot;</span><span class="p">]</span> <span class="ow">and</span>
                         <span class="n">method_ratio</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">):</span>  <span class="c1"># More than 30% of methods are shared</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                             <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Inappropriate Intimacy&quot;</span><span class="p">,</span>
                             <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; might be too intimate with &#39;</span><span class="si">{</span><span class="n">other_class</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
                                       <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">shared</span><span class="si">}</span><span class="s2"> shared members, </span><span class="si">{</span><span class="n">method_ratio</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2"> of methods) in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -998,11 +1153,11 @@
                             <span class="n">module_class</span><span class="o">=</span><span class="n">class_name</span><span class="p">,</span>
                             <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                             <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
-                        <span class="p">))</span></div>
+                        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_message_chains">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_message_chains">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_message_chains">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_message_chains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect message chains in the given module.</span>
@@ -1060,7 +1215,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.detect_middle_man">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_middle_man">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_middle_man">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_middle_man</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect middle man classes in the given module.</span>
@@ -1079,12 +1234,26 @@
                     <span class="k">continue</span>
 
                 <span class="n">delegating_methods</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="n">delegate_targets</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                <span class="n">delegate_targets</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
 
                 <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
                     <span class="c1"># Skip property methods and magic methods</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">decorators</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="ow">or</span>
-                        <span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)):</span>
+                    <span class="n">is_property</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">decorators</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">decorator</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                                <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>
+                            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decorator</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                                    <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                                    <span class="k">break</span>
+                            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decorator</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="n">decorator</span><span class="o">.</span><span class="n">attrname</span> <span class="o">==</span> <span class="s1">&#39;property&#39;</span><span class="p">:</span>
+                                    <span class="n">is_property</span> <span class="o">=</span> <span class="kc">True</span>
+                                    <span class="k">break</span>
+
+                    <span class="k">if</span> <span class="n">is_property</span> <span class="ow">or</span> <span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">):</span>
                         <span class="k">continue</span>
 
                     <span class="c1"># Check if method is just delegating</span>
@@ -1100,7 +1269,7 @@
                 <span class="k">if</span> <span class="p">(</span><span class="n">delegation_ratio</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s2">&quot;MIDDLE_MAN_RATIO&quot;</span><span class="p">]</span> <span class="ow">and</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">delegate_targets</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">):</span>  <span class="c1"># Only flag if delegating to 1-2 objects</span>
                     <span class="n">primary_delegate</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">delegate_targets</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">code_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CodeSmell</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
                         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Middle Man&quot;</span><span class="p">,</span>
                         <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; delegates </span><span class="si">{</span><span class="n">delegating_methods</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total_methods</span><span class="si">}</span><span class="s2"> methods &quot;</span>
                                   <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">delegation_ratio</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">), mainly to </span><span class="si">{</span><span class="n">primary_delegate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -1108,11 +1277,11 @@
                         <span class="n">module_class</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                         <span class="n">line_number</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span>
                         <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
-                    <span class="p">))</span></div>
+                    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CodeSmellDetector.print_report">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.print_report">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.print_report">[docs]</a>
     <span class="k">def</span> <span class="nf">print_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Print a report of all detected code smells.</span>
@@ -1128,7 +1297,7 @@
 
 
 <div class="viewcode-block" id="CodeSmellDetector.add_smell">
-<a class="viewcode-back" href="../../api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.add_smell">[docs]</a>
+<a class="viewcode-back" href="../../code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector.add_smell">[docs]</a>
     <span class="k">def</span> <span class="nf">add_smell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">module_class</span><span class="p">,</span> <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a detected smell to the list of code smells.</span>
@@ -1160,7 +1329,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anon.</p>
+    <p>&#169; Copyright 2024, Your Name.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

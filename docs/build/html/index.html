@@ -21,7 +21,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Usage" href="usage.html" /> 
+    <link rel="next" title="Installation" href="installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,13 +45,14 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test.html">Testing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/code_smell_detector.html">Code Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/architectural_smell_detector.html">Architectural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/structural_smell_detector.html">Structural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/config_handler.html">Configuration Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_smell_detector.html">Code Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architectural_smell_detector.html">Architectural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structural_smell_detector.html">Structural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config_handler.html">Configuration Handler</a></li>
 </ul>
 
         </div>
@@ -83,10 +84,15 @@
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#installation-methods">Installation Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#command-line-interface">Command Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#python-api">Python API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#output-formats">Output Formats</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a><ul>
@@ -94,32 +100,33 @@
 <li class="toctree-l2"><a class="reference internal" href="tutorial.html#advanced-usage">Advanced Usage</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="test.html">Testing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="test.html#running-tests">Running Tests</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test.html#test-structure">Test Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test.html#example-tests">Example Tests</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test.html#writing-new-tests">Writing New Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#configuration-file">Configuration File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#example-configuration">Example Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#customizing-thresholds">Customizing Thresholds</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/code_smell_detector.html">Code Smell Detector</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmell"><code class="docutils literal notranslate"><span class="pre">CodeSmell</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/code_smell_detector.html#code_quality_analyzer.code_smell_detector.CodeSmellDetector"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_smell_detector.html">Code Smell Detection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="code_smell_detector.html#detected-smells">Detected Smells</a></li>
+<li class="toctree-l2"><a class="reference internal" href="code_smell_detector.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="code_smell_detector.html#api-reference">API Reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/architectural_smell_detector.html">Architectural Smell Detector</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmell</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.analyze_architecture"><code class="docutils literal notranslate"><span class="pre">analyze_architecture()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="architectural_smell_detector.html">Architectural Smell Detection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architectural_smell_detector.html#detected-smells">Detected Smells</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architectural_smell_detector.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architectural_smell_detector.html#api-reference">API Reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/structural_smell_detector.html">Structural Smell Detector</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmell"><code class="docutils literal notranslate"><span class="pre">StructuralSmell</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.analyze_structure"><code class="docutils literal notranslate"><span class="pre">analyze_structure()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="structural_smell_detector.html">Structural Smell Detection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="structural_smell_detector.html#detected-smells">Detected Smells</a></li>
+<li class="toctree-l2"><a class="reference internal" href="structural_smell_detector.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="structural_smell_detector.html#api-reference">API Reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/config_handler.html">Configuration Handler</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/config_handler.html#code_quality_analyzer.config_handler.ConfigHandler"><code class="docutils literal notranslate"><span class="pre">ConfigHandler</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="config_handler.html">Configuration Handler</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config_handler.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config_handler.html#api-reference">API Reference</a></li>
 </ul>
 </li>
 </ul>
@@ -138,13 +145,13 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anon.</p>
+    <p>&#169; Copyright 2024, Your Name.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -43,13 +43,14 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../test.html">Testing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/code_smell_detector.html">Code Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/architectural_smell_detector.html">Architectural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/structural_smell_detector.html">Structural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/config_handler.html">Configuration Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_smell_detector.html">Code Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architectural_smell_detector.html">Architectural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../structural_smell_detector.html">Structural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config_handler.html">Configuration Handler</a></li>
 </ul>
 
         </div>
@@ -85,9 +86,14 @@
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">importlib.util</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">CodeAnalysisError</span>
+
+<span class="c1"># Set up logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ArchitecturalSmell">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">ArchitecturalSmell</span><span class="p">:</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
@@ -99,7 +105,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector">[docs]</a>
 <span class="k">class</span> <span class="nc">ArchitecturalSmellDetector</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A class to detect architectural smells in Python projects.</span>
@@ -118,6 +124,8 @@
 <span class="sd">        function_calls (defaultdict): A dictionary to track inter-module function calls.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="ArchitecturalSmellDetector.__init__">
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thresholds</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the ArchitecturalSmellDetector with given thresholds.</span>
@@ -132,10 +140,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="n">thresholds</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># New attribute to store file paths</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">external_dependencies</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">function_calls</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>  <span class="c1"># Track inter-module function calls</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">function_calls</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>  <span class="c1"># Track inter-module function calls</span></div>
+
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.load_thresholds">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.load_thresholds">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.load_thresholds">[docs]</a>
     <span class="k">def</span> <span class="nf">load_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load threshold values from a YAML configuration file.</span>
@@ -152,34 +161,50 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_smells">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_smells">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_smells">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_smells</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect architectural smells in the given directory.</span>
-
-<span class="sd">        This method analyzes all Python files in the given directory and its subdirectories,</span>
-<span class="sd">        and runs various smell detection methods. If a parse error occurs, it prints the error</span>
-<span class="sd">        message and continues with the analysis.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            directory_path (str): The path to the directory to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">detection_methods</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_hub_like_dependency</span><span class="p">,</span> <span class="s2">&quot;detect_hub_like_dependency&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_scattered_functionality</span><span class="p">,</span> <span class="s2">&quot;detect_scattered_functionality&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_redundant_abstractions</span><span class="p">,</span> <span class="s2">&quot;detect_redundant_abstractions&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_god_objects</span><span class="p">,</span> <span class="s2">&quot;detect_god_objects&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_improper_api_usage</span><span class="p">,</span> <span class="s2">&quot;detect_improper_api_usage&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_orphan_modules</span><span class="p">,</span> <span class="s2">&quot;detect_orphan_modules&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclic_dependencies</span><span class="p">,</span> <span class="s2">&quot;detect_cyclic_dependencies&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_unstable_dependencies</span><span class="p">,</span> <span class="s2">&quot;detect_unstable_dependencies&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+
         <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># First analyze the directory structure</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Analyzing directory structure: </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">analyze_directory</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_hub_like_dependency</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_scattered_functionality</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_redundant_abstractions</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_god_objects</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_improper_api_usage</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_orphan_modules</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclic_dependencies</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_unstable_dependencies</span><span class="p">()</span>
+            
+            <span class="c1"># Then run each detection method</span>
+            <span class="k">for</span> <span class="n">detect_method</span><span class="p">,</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">detection_methods</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">detect_method</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                        <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="n">directory_path</span><span class="p">,</span>
+                        <span class="n">function_name</span><span class="o">=</span><span class="n">method_name</span>
+                    <span class="p">)</span>
+                    
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing directory </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing directory </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+                <span class="n">file_path</span><span class="o">=</span><span class="n">directory_path</span>
+            <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.analyze_directory">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.analyze_directory">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.analyze_directory">[docs]</a>
     <span class="k">def</span> <span class="nf">analyze_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Analyze all Python files in the given directory and its subdirectories.</span>
@@ -198,7 +223,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.analyze_file">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.analyze_file">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.analyze_file">[docs]</a>
     <span class="k">def</span> <span class="nf">analyze_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Analyze a single Python file for architectural information with improved</span>
@@ -268,7 +293,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.resolve_external_dependencies">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.resolve_external_dependencies">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.resolve_external_dependencies">[docs]</a>
     <span class="k">def</span> <span class="nf">resolve_external_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Resolve external dependencies while preserving intra-project dependencies.</span>
@@ -315,7 +340,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.add_smell">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.add_smell">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.add_smell">[docs]</a>
     <span class="k">def</span> <span class="nf">add_smell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">module_class</span><span class="p">,</span> <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a detected architectural smell to the list.</span>
@@ -339,7 +364,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_hub_like_dependency">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_hub_like_dependency">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_hub_like_dependency">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_hub_like_dependency</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect hub-like dependencies in the project with improved accuracy.</span>
@@ -387,7 +412,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_scattered_functionality">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_scattered_functionality">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_scattered_functionality">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_scattered_functionality</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect scattered functionality in the project.</span>
@@ -416,7 +441,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_redundant_abstractions">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_redundant_abstractions">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_redundant_abstractions">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_redundant_abstractions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect potential redundant abstractions in the project.</span>
@@ -457,7 +482,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_god_objects">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_god_objects">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_god_objects">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_god_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect god objects in the project.</span>
@@ -482,7 +507,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_improper_api_usage">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_improper_api_usage">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_improper_api_usage">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_improper_api_usage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect potential improper API usage in the project.</span>
@@ -513,7 +538,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_orphan_modules">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_orphan_modules">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_orphan_modules">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_orphan_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect orphan modules in the project.</span>
@@ -526,19 +551,21 @@
             
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
             <span class="n">module_name</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># Fix: Check if any excluded module name is in the full node path</span>
             <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span>
                 <span class="n">module_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">excluded_modules</span> <span class="ow">and</span>
-                <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">excluded</span> <span class="ow">in</span> <span class="n">node</span> <span class="k">for</span> <span class="n">excluded</span> <span class="ow">in</span> <span class="n">excluded_modules</span><span class="p">)):</span>
+                <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">excluded</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">excluded</span> <span class="ow">in</span> <span class="n">excluded_modules</span><span class="p">)):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                    <span class="s2">&quot;Orphan Module&quot;</span><span class="p">,</span>
-                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; is isolated from other modules&quot;</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
-                    <span class="n">node</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Orphan Module&quot;</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; is isolated from other modules&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module_class</span><span class="o">=</span><span class="n">node</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
                 <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_cyclic_dependencies">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_cyclic_dependencies">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_cyclic_dependencies">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_cyclic_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect cyclic dependencies with improved accuracy and cycle classification.</span>
@@ -593,7 +620,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_unstable_dependencies">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_unstable_dependencies">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_unstable_dependencies">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_unstable_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect unstable dependencies in the project.</span>
@@ -622,7 +649,7 @@
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.print_report">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.print_report">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.print_report">[docs]</a>
     <span class="k">def</span> <span class="nf">print_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Print a report of all detected architectural smells.</span>
@@ -639,7 +666,7 @@
 
 
 <div class="viewcode-block" id="analyze_architecture">
-<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.analyze_architecture">[docs]</a>
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.analyze_architecture">[docs]</a>
 <span class="k">def</span> <span class="nf">analyze_architecture</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">config_path</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Analyze the architecture of a Python project and detect architectural smells.</span>
@@ -670,7 +697,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anon.</p>
+    <p>&#169; Copyright 2024, Your Name.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

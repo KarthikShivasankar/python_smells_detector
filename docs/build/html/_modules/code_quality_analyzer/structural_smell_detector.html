@@ -43,13 +43,14 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../test.html">Testing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/code_smell_detector.html">Code Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/architectural_smell_detector.html">Architectural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/structural_smell_detector.html">Structural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/config_handler.html">Configuration Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_smell_detector.html">Code Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architectural_smell_detector.html">Architectural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../structural_smell_detector.html">Structural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config_handler.html">Configuration Handler</a></li>
 </ul>
 
         </div>
@@ -83,9 +84,14 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">CodeAnalysisError</span>
+
+<span class="c1"># Set up logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <div class="viewcode-block" id="StructuralSmell">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmell">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmell">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">StructuralSmell</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -108,7 +114,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector">[docs]</a>
 <span class="k">class</span> <span class="nc">StructuralSmellDetector</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A class to detect structural smells in Python code.</span>
@@ -126,6 +132,8 @@
 <span class="sd">        file_paths (dict): A dictionary to store file paths of modules and classes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="StructuralSmellDetector.__init__">
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the StructuralSmellDetector with given configuration.</span>
@@ -137,12 +145,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_thresholds</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span> <span class="o">=</span> <span class="p">{}</span></div>
+
 
 <div class="viewcode-block" id="StructuralSmellDetector.load_thresholds">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.load_thresholds">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.load_thresholds">[docs]</a>
     <span class="k">def</span> <span class="nf">load_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load threshold values from the given configuration.</span>
@@ -167,32 +177,59 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_smells">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_smells">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_smells">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_smells</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect structural smells in the given directory.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">detection_methods</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_nom</span><span class="p">,</span> <span class="s2">&quot;detect_nom&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_lcom</span><span class="p">,</span> <span class="s2">&quot;detect_lcom&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_rfc</span><span class="p">,</span> <span class="s2">&quot;detect_rfc&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_nocc</span><span class="p">,</span> <span class="s2">&quot;detect_nocc&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_dit</span><span class="p">,</span> <span class="s2">&quot;detect_dit&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_loc</span><span class="p">,</span> <span class="s2">&quot;detect_loc&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_noc</span><span class="p">,</span> <span class="s2">&quot;detect_noc&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclomatic_complexity</span><span class="p">,</span> <span class="s2">&quot;detect_cyclomatic_complexity&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_fanout</span><span class="p">,</span> <span class="s2">&quot;detect_fanout&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_fanin</span><span class="p">,</span> <span class="s2">&quot;detect_fanin&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_file_length</span><span class="p">,</span> <span class="s2">&quot;detect_file_length&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_branches</span><span class="p">,</span> <span class="s2">&quot;detect_branches&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">directory_path</span>
+            <span class="c1"># First analyze the directory structure</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Analyzing directory structure: </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">analyze_directory</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_nom</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_lcom</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_rfc</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_nocc</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_dit</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_loc</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_noc</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclomatic_complexity</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_fanout</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_fanin</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_file_length</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detect_branches</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No modules were successfully analyzed. Skipping smell detection.&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            
+            <span class="c1"># Then run each detection method</span>
+            <span class="k">for</span> <span class="n">detect_method</span><span class="p">,</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">detection_methods</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">detect_method</span><span class="p">()</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Completed </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">. Total smells so far: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="c1"># Continue with next detection method instead of stopping</span>
+                    <span class="k">continue</span>
+                
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing directory </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing directory </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+                <span class="n">file_path</span><span class="o">=</span><span class="n">directory_path</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Log final results</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Analysis complete. Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="p">)</span><span class="si">}</span><span class="s2"> structural smells.&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.analyze_directory">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_directory">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_directory">[docs]</a>
     <span class="k">def</span> <span class="nf">analyze_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Analyze all Python files in the given directory and its subdirectories.</span>
@@ -200,15 +237,47 @@
 <span class="sd">        Args:</span>
 <span class="sd">            directory_path (str): The path to the directory to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
+        <span class="n">files_analyzed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">files_with_errors</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting analysis of directory: </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
         <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">directory_path</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.py&#39;</span><span class="p">):</span>
                     <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">analyze_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span></div>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">analyze_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+                        <span class="n">files_analyzed</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully analyzed: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">CodeAnalysisError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">files_with_errors</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="c1"># Continue with next file instead of stopping</span>
+                        <span class="k">continue</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">files_with_errors</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error analyzing </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">continue</span>
+
+        <span class="c1"># Log analysis summary</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">Analysis Summary:</span>
+<span class="s2">----------------</span>
+<span class="s2">Files analyzed: </span><span class="si">{</span><span class="n">files_analyzed</span><span class="si">}</span>
+<span class="s2">Files with errors: </span><span class="si">{</span><span class="n">files_with_errors</span><span class="si">}</span>
+<span class="s2">Success rate: </span><span class="si">{</span><span class="p">((</span><span class="n">files_analyzed</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">files_with_errors</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="n">files_analyzed</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">files_analyzed</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No Python files were successfully analyzed!&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">files_with_errors</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">files_with_errors</span><span class="si">}</span><span class="s2"> files could not be analyzed due to errors&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.analyze_file">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_file">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_file">[docs]</a>
     <span class="k">def</span> <span class="nf">analyze_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Analyze a single Python file for structural information.</span>
@@ -217,13 +286,29 @@
 <span class="sd">            file_path (str): The path to the Python file to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
                 <span class="n">content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             
-            <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-            <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="p">[</span><span class="n">module_name</span><span class="p">][</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">SyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Syntax error in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Parse error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;lineno&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="p">)</span>
+            
+            <span class="c1"># Get relative module path</span>
+            <span class="n">rel_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span>
+            <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">rel_path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="p">[</span><span class="n">module_name</span><span class="p">][</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_path</span>
+            
+            <span class="c1"># Add node to dependency graph</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
 
             <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
@@ -231,17 +316,28 @@
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Import</span><span class="p">):</span>
                     <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">SyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error in file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
+                        
+        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Encoding error in </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;File encoding error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Analysis error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span>
+            <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.analyze_class">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_class">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_class">[docs]</a>
     <span class="k">def</span> <span class="nf">analyze_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">module_name</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Analyze a class definition node and extract relevant information.</span>
@@ -268,7 +364,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.analyze_method">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_method">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_method">[docs]</a>
     <span class="k">def</span> <span class="nf">analyze_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">class_name</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Analyze a method definition node and extract relevant information.</span>
@@ -284,7 +380,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.add_smell">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.add_smell">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.add_smell">[docs]</a>
     <span class="k">def</span> <span class="nf">add_smell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">module_class</span><span class="p">,</span> <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a detected structural smell to the list.</span>
@@ -308,14 +404,18 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_nom">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nom">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nom">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_nom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with a high Number of Methods (NOM).</span>
-
-<span class="sd">        This method identifies classes that exceed the NOM threshold and adds them to the structural smells list.</span>
-<span class="sd">        Excludes special methods (__init__, __str__, etc.) and properties from the count.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NOM_THRESHOLD&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;NOM_THRESHOLD not found in configuration, using default value of 10&quot;</span><span class="p">)</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="mi">10</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detecting NOM smells with threshold: </span><span class="si">{</span><span class="n">threshold</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># Filter out special methods and properties</span>
             <span class="n">regular_methods</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]</span> 
@@ -324,19 +424,21 @@
                                        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s1">&#39;decorator_list&#39;</span><span class="p">,</span> <span class="p">[]))]</span>
             
             <span class="n">nom</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">regular_methods</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">nom</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;NOM_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="n">severity</span> <span class="o">=</span> <span class="s1">&#39;High&#39;</span> <span class="k">if</span> <span class="n">nom</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;NOM_THRESHOLD&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="k">else</span> <span class="s1">&#39;Medium&#39;</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                    <span class="s2">&quot;High Number of Methods (NOM)&quot;</span><span class="p">,</span>
-                    <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">nom</span><span class="si">}</span><span class="s2"> methods (excluding special methods and properties)&quot;</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
-                    <span class="n">class_name</span><span class="p">,</span>
+            <span class="k">if</span> <span class="n">nom</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">severity</span> <span class="o">=</span> <span class="s1">&#39;High&#39;</span> <span class="k">if</span> <span class="n">nom</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="k">else</span> <span class="s1">&#39;Medium&#39;</span>
+                <span class="n">smell</span> <span class="o">=</span> <span class="n">StructuralSmell</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;High Number of Methods (NOM)&quot;</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">nom</span><span class="si">}</span><span class="s2"> methods (excluding special methods and properties)&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module_class</span><span class="o">=</span><span class="n">class_name</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="n">severity</span>
-                <span class="p">)</span></div>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">smell</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detected NOM smell in </span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">nom</span><span class="si">}</span><span class="s2"> methods&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_wmpc">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wmpc">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wmpc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_wmpc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Weighted Methods per Class (WMPC).</span>
@@ -379,7 +481,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_size2">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_size2">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_size2">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_size2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect large classes based on the SIZE2 metric.</span>
@@ -414,7 +516,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_wac">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wac">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wac">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_wac</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Weight of a Class (WAC).</span>
@@ -456,7 +558,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_lcom">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_lcom">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_lcom">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_lcom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Lack of Cohesion of Methods (LCOM).</span>
@@ -512,6 +614,8 @@
                 <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="StructuralSmellDetector._build_field_usage_map">
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._build_field_usage_map">[docs]</a>
     <span class="k">def</span> <span class="nf">_build_field_usage_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methods</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper method to build comprehensive field usage map.&quot;&quot;&quot;</span>
         <span class="n">method_field_usage</span> <span class="o">=</span> <span class="p">{</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">}</span>
@@ -538,10 +642,11 @@
                             <span class="n">method_field_usage</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_fields</span><span class="p">)</span>
                             <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
         
-        <span class="k">return</span> <span class="n">method_field_usage</span>
+        <span class="k">return</span> <span class="n">method_field_usage</span></div>
+
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_rfc">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_rfc">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_rfc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_rfc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Response for a Class (RFC).</span>
@@ -594,7 +699,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_nocc">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nocc">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nocc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_nocc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect modules with a high Number of Classes (NOCC).</span>
@@ -650,7 +755,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_dit">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_dit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with a Deep Inheritance Tree (DIT).</span>
@@ -718,22 +823,35 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_loc">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_loc">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_loc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_loc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect modules with high Lines of Code (LOC).</span>
-<span class="sd">        Enhanced to consider:</span>
-<span class="sd">        - Blank lines and comments</span>
-<span class="sd">        - Documentation</span>
-<span class="sd">        - Import statements</span>
-<span class="sd">        - Code complexity</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-                    <span class="n">lines</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+                <span class="n">file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Try different encodings</span>
+                <span class="n">encodings</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="s1">&#39;utf-8-sig&#39;</span><span class="p">,</span> <span class="s1">&#39;latin1&#39;</span><span class="p">,</span> <span class="s1">&#39;cp1252&#39;</span><span class="p">]</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="kc">None</span>
                 
+                <span class="k">for</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="n">encodings</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                            <span class="n">content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="k">break</span>
+                    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                
+                <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not read file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2"> with any supported encoding&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
                 <span class="c1"># Count different types of lines</span>
+                <span class="n">lines</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
                 <span class="n">code_lines</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="n">doc_lines</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="n">import_lines</span> <span class="o">=</span> <span class="mi">0</span>
@@ -783,20 +901,21 @@
                 <span class="k">if</span> <span class="n">effective_loc</span> <span class="o">&gt;</span> <span class="n">adjusted_threshold</span><span class="p">:</span>
                     <span class="n">severity</span> <span class="o">=</span> <span class="s1">&#39;High&#39;</span> <span class="k">if</span> <span class="n">effective_loc</span> <span class="o">&gt;</span> <span class="n">adjusted_threshold</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="k">else</span> <span class="s1">&#39;Medium&#39;</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                        <span class="s2">&quot;High Lines of Code (LOC)&quot;</span><span class="p">,</span>
-                        <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">effective_loc</span><span class="si">}</span><span class="s2"> effective code lines</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;High Lines of Code (LOC)&quot;</span><span class="p">,</span>
+                        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">effective_loc</span><span class="si">}</span><span class="s2"> effective code lines</span><span class="se">\n</span><span class="s2">&quot;</span>
                         <span class="sa">f</span><span class="s2">&quot;(Total: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span><span class="si">}</span><span class="s2">, Code: </span><span class="si">{</span><span class="n">code_lines</span><span class="si">}</span><span class="s2">, Doc: </span><span class="si">{</span><span class="n">doc_lines</span><span class="si">}</span><span class="s2">, &quot;</span>
                         <span class="sa">f</span><span class="s2">&quot;Import: </span><span class="si">{</span><span class="n">import_lines</span><span class="si">}</span><span class="s2">, Blank: </span><span class="si">{</span><span class="n">blank_lines</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
-                        <span class="n">module_name</span><span class="p">,</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
+                        <span class="n">module_class</span><span class="o">=</span><span class="n">module_name</span><span class="p">,</span>
                         <span class="n">severity</span><span class="o">=</span><span class="n">severity</span>
                     <span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing LOC for </span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">continue</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_mpc">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_mpc">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_mpc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_mpc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Message Passing Coupling (MPC).</span>
@@ -850,7 +969,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_cbo">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_cbo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect modules with high Coupling Between Object Classes (CBO).</span>
@@ -926,6 +1045,8 @@
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_object</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
 
+<div class="viewcode-block" id="StructuralSmellDetector._is_excluded_dependency">
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._is_excluded_dependency">[docs]</a>
     <span class="k">def</span> <span class="nf">_is_excluded_dependency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">standard_libs</span><span class="p">,</span> <span class="n">framework_patterns</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check if a dependency should be excluded from coupling calculations.</span>
@@ -954,8 +1075,11 @@
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="s1">&#39;Exception&#39;</span><span class="p">,</span> <span class="s1">&#39;dict&#39;</span><span class="p">,</span> <span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="s1">&#39;set&#39;</span><span class="p">}:</span>
             <span class="k">return</span> <span class="kc">True</span>
             
-        <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
 
+
+<div class="viewcode-block" id="StructuralSmellDetector._calculate_cbo_severity">
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._calculate_cbo_severity">[docs]</a>
     <span class="k">def</span> <span class="nf">_calculate_cbo_severity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weighted_cbo</span><span class="p">,</span> <span class="n">threshold</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the severity of a CBO smell based on how much it exceeds the threshold.</span>
@@ -971,10 +1095,11 @@
             <span class="k">return</span> <span class="s1">&#39;High&#39;</span>
         <span class="k">elif</span> <span class="n">weighted_cbo</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">:</span>
             <span class="k">return</span> <span class="s1">&#39;Medium&#39;</span>
-        <span class="k">return</span> <span class="s1">&#39;Low&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;Low&#39;</span></div>
+
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_noc">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_noc">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_noc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_noc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect projects with a high Number of Classes (NOC).</span>
@@ -1038,6 +1163,8 @@
             <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="StructuralSmellDetector._adjust_noc_threshold">
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._adjust_noc_threshold">[docs]</a>
     <span class="k">def</span> <span class="nf">_adjust_noc_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Adjust NOC threshold based on project characteristics.</span>
@@ -1059,11 +1186,12 @@
         <span class="k">elif</span> <span class="n">total_loc</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">:</span>
             <span class="n">base_threshold</span> <span class="o">*=</span> <span class="mf">1.2</span>
             
-        <span class="k">return</span> <span class="n">base_threshold</span>
+        <span class="k">return</span> <span class="n">base_threshold</span></div>
+
 
     
 <div class="viewcode-block" id="StructuralSmellDetector.print_report">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.print_report">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.print_report">[docs]</a>
     <span class="k">def</span> <span class="nf">print_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Print a report of all detected structural smells.</span>
@@ -1077,7 +1205,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.resolve_base_class">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.resolve_base_class">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.resolve_base_class">[docs]</a>
     <span class="k">def</span> <span class="nf">resolve_base_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_node</span><span class="p">,</span> <span class="n">module_name</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Resolve the name of a base class from its AST node.</span>
@@ -1097,16 +1225,19 @@
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">base_node</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="StructuralSmellDetector._get_base_object">
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._get_base_object">[docs]</a>
     <span class="k">def</span> <span class="nf">_get_base_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper method to get the base object name from an attribute node.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_object</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_cyclomatic_complexity">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cyclomatic_complexity">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cyclomatic_complexity">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_cyclomatic_complexity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect methods with high cyclomatic complexity.</span>
@@ -1134,7 +1265,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.calculate_cyclomatic_complexity">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.calculate_cyclomatic_complexity">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.calculate_cyclomatic_complexity">[docs]</a>
     <span class="k">def</span> <span class="nf">calculate_cyclomatic_complexity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate cyclomatic complexity using a simplified approach.</span>
@@ -1174,7 +1305,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_fanout">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanout">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanout">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_fanout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect modules with high fan-out (too many outgoing dependencies).</span>
@@ -1204,7 +1335,7 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_fanin">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanin">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanin">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_fanin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect modules with high fan-in (too many incoming dependencies).</span>
@@ -1230,22 +1361,35 @@
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_file_length">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_file_length">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_file_length">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_file_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect files that are too long.</span>
-<span class="sd">        Considers meaningful code lines and excludes common exceptions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="c1"># Skip test files and generated code</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">pattern</span> <span class="ow">in</span> <span class="n">module_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="s1">&#39;generated&#39;</span><span class="p">]):</span>
-                <span class="k">continue</span>
-                
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-                    <span class="n">lines</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
-                    
-                <span class="c1"># Count meaningful lines (exclude blanks, comments, and docstrings)</span>
+                <span class="n">file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Try different encodings</span>
+                <span class="n">encodings</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="s1">&#39;utf-8-sig&#39;</span><span class="p">,</span> <span class="s1">&#39;latin1&#39;</span><span class="p">,</span> <span class="s1">&#39;cp1252&#39;</span><span class="p">]</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="kc">None</span>
+                
+                <span class="k">for</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="n">encodings</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                            <span class="n">content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="k">break</span>
+                    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                
+                <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not read file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2"> with any supported encoding&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Count meaningful lines</span>
+                <span class="n">lines</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
                 <span class="n">meaningful_lines</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="n">in_docstring</span> <span class="o">=</span> <span class="kc">False</span>
                 
@@ -1263,18 +1407,19 @@
                 <span class="k">if</span> <span class="n">meaningful_lines</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
                     <span class="n">severity</span> <span class="o">=</span> <span class="s1">&#39;High&#39;</span> <span class="k">if</span> <span class="n">meaningful_lines</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="k">else</span> <span class="s1">&#39;Medium&#39;</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                        <span class="s2">&quot;Long File&quot;</span><span class="p">,</span>
-                        <span class="sa">f</span><span class="s2">&quot;File &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">meaningful_lines</span><span class="si">}</span><span class="s2"> meaningful lines of code&quot;</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
-                        <span class="n">module_name</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Long File&quot;</span><span class="p">,</span>
+                        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;File &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">meaningful_lines</span><span class="si">}</span><span class="s2"> meaningful lines of code&quot;</span><span class="p">,</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
+                        <span class="n">module_class</span><span class="o">=</span><span class="n">module_name</span><span class="p">,</span>
                         <span class="n">severity</span><span class="o">=</span><span class="n">severity</span>
                     <span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing file length for </span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">continue</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_branches">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_branches">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_branches">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_branches</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect methods with too many branches (if/else, loops).</span>
@@ -1305,6 +1450,8 @@
                     <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="StructuralSmellDetector._analyze_branches">
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._analyze_branches">[docs]</a>
     <span class="k">def</span> <span class="nf">_analyze_branches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Analyze branches in a method, considering both count and nesting level.</span>
@@ -1341,10 +1488,11 @@
             <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">branch_count</span><span class="p">,</span>
             <span class="s1">&#39;max_nesting&#39;</span><span class="p">:</span> <span class="n">max_nesting</span>
         <span class="p">}</span></div>
+</div>
 
 
 <div class="viewcode-block" id="analyze_structure">
-<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.analyze_structure">[docs]</a>
+<a class="viewcode-back" href="../../structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.analyze_structure">[docs]</a>
 <span class="k">def</span> <span class="nf">analyze_structure</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Analyze the structural smells in a given directory.</span>
@@ -1375,7 +1523,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anon.</p>
+    <p>&#169; Copyright 2024, Your Name.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

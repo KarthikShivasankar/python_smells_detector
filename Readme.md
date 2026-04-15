@@ -180,3 +180,14 @@ analyze_code_quality /path/to/project --debug
 ## Support
 
 For bug reports and feature requests, please use the GitHub issue tracker.
+
+## Documentation
+
+The documentation is built using Sphinx and hosted on Read the Docs.
+
+### Building the Documentation Locally
+
+1. Install the documentation requirements:
+```bash
+pip install -r docs/requirements.txt
+```

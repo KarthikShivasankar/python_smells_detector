@@ -20,8 +20,7 @@
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Structural Smell Detector" href="structural_smell_detector.html" /> 
+    <link rel="search" title="Search" href="../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,23 +43,15 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../test.html">Testing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="code_smell_detector.html">Code Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="architectural_smell_detector.html">Architectural Smell Detector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="structural_smell_detector.html">Structural Smell Detector</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration Handler</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#code_quality_analyzer.config_handler.ConfigHandler"><code class="docutils literal notranslate"><span class="pre">ConfigHandler</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.config_handler.ConfigHandler.config_path"><code class="docutils literal notranslate"><span class="pre">ConfigHandler.config_path</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.config_handler.ConfigHandler.thresholds"><code class="docutils literal notranslate"><span class="pre">ConfigHandler.thresholds</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.config_handler.ConfigHandler.get_thresholds"><code class="docutils literal notranslate"><span class="pre">ConfigHandler.get_thresholds()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.config_handler.ConfigHandler.load_thresholds"><code class="docutils literal notranslate"><span class="pre">ConfigHandler.load_thresholds()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_smell_detector.html">Code Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architectural_smell_detector.html">Architectural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../structural_smell_detector.html">Structural Smell Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../config_handler.html">Configuration Handler</a></li>
 </ul>
 
         </div>
@@ -92,49 +83,21 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">code_quality_analyzer.config_handler.</span></span><span class="sig-name descname"><span class="pre">ConfigHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/config_handler.html#ConfigHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A class to handle configuration loading and management for code quality analysis.</p>
-<p>This class is responsible for loading threshold values from a YAML configuration file
-and providing access to these thresholds for different types of code smells.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler.config_path">
-<span class="sig-name descname"><span class="pre">config_path</span></span><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler.config_path" title="Link to this definition"></a></dt>
-<dd><p>The path to the YAML configuration file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler.thresholds">
-<span class="sig-name descname"><span class="pre">thresholds</span></span><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler.thresholds" title="Link to this definition"></a></dt>
-<dd><p>A dictionary containing threshold values for different types of code smells.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler.get_thresholds">
-<span class="sig-name descname"><span class="pre">get_thresholds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">smell_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/config_handler.html#ConfigHandler.get_thresholds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler.get_thresholds" title="Link to this definition"></a></dt>
-<dd><p>Get threshold values for a specific type of code smell.</p>
+<p>Initialize the ConfigHandler with a given configuration file path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>smell_type</strong> (<em>str</em>) – The type of code smell (‘code_smells’, ‘architectural_smells’, or ‘structural_smells’).</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A dictionary of threshold values for the specified smell type.</dt><dd><p>Returns an empty dictionary if the smell type is not found.</p>
+<dd class="field-odd"><p><strong>config_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The path to the YAML configuration file.</p>
 </dd>
 </dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/config_handler.html#ConfigHandler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize the ConfigHandler with a given configuration file path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The path to the YAML configuration file.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -143,16 +106,18 @@ and providing access to these thresholds for different types of code smells.</p>
 <dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler.load_thresholds">
 <span class="sig-name descname"><span class="pre">load_thresholds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/config_handler.html#ConfigHandler.load_thresholds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler.load_thresholds" title="Link to this definition"></a></dt>
 <dd><p>Load threshold values from the YAML configuration file.</p>
-<p>This method reads the configuration file and extracts threshold values
-for different types of code smells.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dictionary containing threshold values for different types of code smells.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict</p>
-</dd>
-</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler._validate_thresholds">
+<span class="sig-name descname"><span class="pre">_validate_thresholds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/config_handler.html#ConfigHandler._validate_thresholds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler._validate_thresholds" title="Link to this definition"></a></dt>
+<dd><p>Validate that all required thresholds are present and have valid values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler.get_thresholds">
+<span class="sig-name descname"><span class="pre">get_thresholds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">smell_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/config_handler.html#ConfigHandler.get_thresholds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler.get_thresholds" title="Link to this definition"></a></dt>
+<dd><p>Get threshold values for a specific type of code smell.</p>
 </dd></dl>
 
 </dd></dl>
@@ -162,14 +127,12 @@ for different types of code smells.</p>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="structural_smell_detector.html" class="btn btn-neutral float-left" title="Structural Smell Detector" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-    </div>
+          <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anon.</p>
+    <p>&#169; Copyright 2024, Your Name.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
