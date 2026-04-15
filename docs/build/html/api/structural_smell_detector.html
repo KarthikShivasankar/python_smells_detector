@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Structural Smell Detector &mdash; Code Quality Analyzer 0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=2709fde1"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Configuration Handler" href="config_handler.html" />
+    <link rel="prev" title="Architectural Smell Detector" href="architectural_smell_detector.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Code Quality Analyzer
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_smell_detector.html">Code Smell Detector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architectural_smell_detector.html">Architectural Smell Detector</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Structural Smell Detector</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.structural_smells"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.structural_smells</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.class_info"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.class_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.module_info"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.module_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.dependency_graph"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.dependency_graph</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.thresholds"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.thresholds</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.project_root"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.project_root</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_directory"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.analyze_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_file"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.analyze_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_cbo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_dit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_lcom"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_lcom()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_loc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_loc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_mpc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_mpc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_noc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_noc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nocc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_nocc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nom"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_nom()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_rfc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_rfc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_size2"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_size2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_smells"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_smells()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wac"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_wac()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wmpc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_wmpc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.print_report"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.print_report()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.analyze_structure"><code class="docutils literal notranslate"><span class="pre">analyze_structure()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config_handler.html">Configuration Handler</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Code Quality Analyzer</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Structural Smell Detector</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/structural_smell_detector.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-code_quality_analyzer.structural_smell_detector">
+<span id="structural-smell-detector"></span><h1>Structural Smell Detector<a class="headerlink" href="#module-code_quality_analyzer.structural_smell_detector" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">code_quality_analyzer.structural_smell_detector.</span></span><span class="sig-name descname"><span class="pre">StructuralSmellDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thresholds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to detect structural code smells in Python projects.</p>
+<p>This class analyzes Python source code files within a directory to identify
+various structural code smells based on predefined thresholds.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.structural_smells">
+<span class="sig-name descname"><span class="pre">structural_smells</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.structural_smells" title="Link to this definition"></a></dt>
+<dd><p>A list to store detected structural smells.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.class_info">
+<span class="sig-name descname"><span class="pre">class_info</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.class_info" title="Link to this definition"></a></dt>
+<dd><p>A dictionary to store information about classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>defaultdict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.module_info">
+<span class="sig-name descname"><span class="pre">module_info</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.module_info" title="Link to this definition"></a></dt>
+<dd><p>A dictionary to store information about modules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>defaultdict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.dependency_graph">
+<span class="sig-name descname"><span class="pre">dependency_graph</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.dependency_graph" title="Link to this definition"></a></dt>
+<dd><p>A directed graph to represent module dependencies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nx.DiGraph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.thresholds">
+<span class="sig-name descname"><span class="pre">thresholds</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.thresholds" title="Link to this definition"></a></dt>
+<dd><p>A dictionary of threshold values for various smell detections.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.project_root">
+<span class="sig-name descname"><span class="pre">project_root</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.project_root" title="Link to this definition"></a></dt>
+<dd><p>The root directory of the project being analyzed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_directory">
+<span class="sig-name descname"><span class="pre">analyze_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.analyze_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_directory" title="Link to this definition"></a></dt>
+<dd><p>Analyze all Python files in the given directory and its subdirectories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory_path</strong> (<em>str</em>) – The path to the directory to be analyzed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_file">
+<span class="sig-name descname"><span class="pre">analyze_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.analyze_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_file" title="Link to this definition"></a></dt>
+<dd><p>Analyze a single Python file for structural information.</p>
+<p>This method parses the file and extracts information about classes, methods,
+attributes, and module dependencies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file_path</strong> (<em>str</em>) – The path to the Python file to be analyzed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo">
+<span class="sig-name descname"><span class="pre">detect_cbo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_cbo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit">
+<span class="sig-name descname"><span class="pre">detect_dit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_dit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit" title="Link to this definition"></a></dt>
+<dd><p>Detect modules with a Deep Inheritance Tree (DIT).</p>
+<p>This method identifies modules with a high number of classes, which may indicate a deep inheritance tree.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_lcom">
+<span class="sig-name descname"><span class="pre">detect_lcom</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_lcom"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_lcom" title="Link to this definition"></a></dt>
+<dd><p>Detect classes with high Lack of Cohesion of Methods (LCOM).</p>
+<p>This method calculates a simplified LCOM metric for each class and identifies those exceeding the threshold.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_loc">
+<span class="sig-name descname"><span class="pre">detect_loc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_loc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_loc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_mpc">
+<span class="sig-name descname"><span class="pre">detect_mpc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_mpc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_mpc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_noc">
+<span class="sig-name descname"><span class="pre">detect_noc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_noc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_noc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nocc">
+<span class="sig-name descname"><span class="pre">detect_nocc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_nocc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nocc" title="Link to this definition"></a></dt>
+<dd><p>Detect modules with a high Number of Classes (NOCC).</p>
+<p>This method counts the number of classes in each module and identifies those exceeding the NOCC threshold.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nom">
+<span class="sig-name descname"><span class="pre">detect_nom</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_nom"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nom" title="Link to this definition"></a></dt>
+<dd><p>Detect classes with a high Number of Methods (NOM).</p>
+<p>This method identifies classes that exceed the NOM threshold and adds them to the structural smells list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_rfc">
+<span class="sig-name descname"><span class="pre">detect_rfc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_rfc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_rfc" title="Link to this definition"></a></dt>
+<dd><p>Detect classes with high Response for a Class (RFC).</p>
+<p>This method calculates a simplified RFC metric for each class and identifies those exceeding the threshold.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_size2">
+<span class="sig-name descname"><span class="pre">detect_size2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_size2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_size2" title="Link to this definition"></a></dt>
+<dd><p>Detect large classes based on the SIZE2 metric.</p>
+<p>This method calculates the SIZE2 metric (sum of methods and attributes) for each class
+and identifies those exceeding the threshold.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_smells">
+<span class="sig-name descname"><span class="pre">detect_smells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_smells"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_smells" title="Link to this definition"></a></dt>
+<dd><p>Detect structural smells in the given directory.</p>
+<p>This method analyzes all Python files in the given directory and its subdirectories,
+and runs various smell detection methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory_path</strong> (<em>str</em>) – The path to the directory to be analyzed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wac">
+<span class="sig-name descname"><span class="pre">detect_wac</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_wac"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wac" title="Link to this definition"></a></dt>
+<dd><p>Detect classes with high Weight of a Class (WAC).</p>
+<p>This method counts the number of attributes in each class and identifies those exceeding the WAC threshold.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wmpc">
+<span class="sig-name descname"><span class="pre">detect_wmpc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_wmpc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_wmpc" title="Link to this definition"></a></dt>
+<dd><p>Detect classes with high Weighted Methods per Class (WMPC).</p>
+<p>This method calculates a simplified WMPC for each class and identifies those exceeding the threshold.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.print_report">
+<span class="sig-name descname"><span class="pre">print_report</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.print_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.print_report" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.analyze_structure">
+<span class="sig-prename descclassname"><span class="pre">code_quality_analyzer.structural_smell_detector.</span></span><span class="sig-name descname"><span class="pre">analyze_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresholds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/structural_smell_detector.html#analyze_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.analyze_structure" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="architectural_smell_detector.html" class="btn btn-neutral float-left" title="Architectural Smell Detector" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="config_handler.html" class="btn btn-neutral float-right" title="Configuration Handler" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Anon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

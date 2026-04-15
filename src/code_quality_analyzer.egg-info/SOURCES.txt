@@ -1,0 +1,17 @@
+setup.py
+src/code_quality_analyzer/__init__.py
+src/code_quality_analyzer/architectural_smell_detector.py
+src/code_quality_analyzer/code_smell_detector.py
+src/code_quality_analyzer/config_handler.py
+src/code_quality_analyzer/main.py
+src/code_quality_analyzer/structural_smell_detector.py
+src/code_quality_analyzer/structural_smells.py
+src/code_quality_analyzer.egg-info/PKG-INFO
+src/code_quality_analyzer.egg-info/SOURCES.txt
+src/code_quality_analyzer.egg-info/dependency_links.txt
+src/code_quality_analyzer.egg-info/entry_points.txt
+src/code_quality_analyzer.egg-info/requires.txt
+src/code_quality_analyzer.egg-info/top_level.txt
+tests/test_architectural_smell_detector.py
+tests/test_code_smell_detector.py
+tests/test_structural_smell_detector.py
