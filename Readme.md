@@ -39,8 +39,8 @@ A comprehensive Python code quality analysis tool that detects code smells, arch
 
 ### Install from source
 ```bash
-git clone https://github.com/yourusername/code-quality-analyzer.git
-cd code-quality-analyzer
+Download the repository
+cd  "the_repository"
 pip install -e .
 ```
 
