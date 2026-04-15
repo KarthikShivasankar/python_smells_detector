@@ -6,11 +6,11 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # Project information
 project = 'Code Quality Analyzer'
-copyright = '2024, Your Name'
-author = 'Your Name'
+copyright = '2026, Karthik Shivashankar'
+author = 'Karthik Shivashankar'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.2.1'
 
 # Extensions needed for API documentation
 extensions = [
@@ -18,8 +18,6 @@ extensions = [
     'sphinx.ext.napoleon',  # Support for Google/NumPy-style docstrings
     'sphinx.ext.viewcode',  # Add links to source code
     'sphinx.ext.intersphinx',  # Link to other project's documentation
-    'sphinx_autodoc_typehints',  # Support for type hints
-    'myst_parser',  # Support for Markdown files
 ]
 
 # Theme settings

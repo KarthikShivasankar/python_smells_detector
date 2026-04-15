@@ -9,6 +9,7 @@ Welcome to Code Quality Analyzer's documentation!
    usage
    tutorial
    configuration
+   test
 
 .. toctree::
    :maxdepth: 2

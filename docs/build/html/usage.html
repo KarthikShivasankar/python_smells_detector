@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage Guide &mdash; Code Quality Analyzer 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>Usage Guide &mdash; Code Quality Analyzer 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=2709fde1"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -52,6 +50,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#analyze-specific-smell-types">Analyze Specific Smell Types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#additional-options">Additional Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-uv-before-the-entry-point-is-on-path">Using uv (before the entry-point is on PATH)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#output-formats">Output Formats</a></li>
@@ -60,6 +59,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Testing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
 <ul>
@@ -130,8 +130,17 @@ analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </s
 <span class="c1"># Enable debug logging</span>
 analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--debug
 
+<span class="c1"># Ignore specific directories (e.g. tests, docs, virtual environments)</span>
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--ignore<span class="w"> </span>tests<span class="w"> </span>docs<span class="w"> </span>venv
+
 <span class="c1"># Combine multiple options</span>
-analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--config<span class="w"> </span>custom_config.yaml<span class="w"> </span>--output<span class="w"> </span>report.txt<span class="w"> </span>--debug
+analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--config<span class="w"> </span>custom_config.yaml<span class="w"> </span>--output<span class="w"> </span>report.txt<span class="w"> </span>--ignore<span class="w"> </span>tests<span class="w"> </span>venv<span class="w"> </span>--debug
+</pre></div>
+</div>
+</section>
+<section id="using-uv-before-the-entry-point-is-on-path">
+<h3>Using uv (before the entry-point is on PATH)<a class="headerlink" href="#using-uv-before-the-entry-point-is-on-path" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>analyze_code_quality<span class="w"> </span>/path/to/project
 </pre></div>
 </div>
 </section>
@@ -142,7 +151,7 @@ analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </s
 <ul class="simple">
 <li><p>Text report (default): Detailed human-readable analysis</p></li>
 <li><p>CSV report: Structured data for further processing</p></li>
-<li><p>Log file: Detailed analysis process and any errors encountered</p></li>
+<li><p>Log file (<code class="docutils literal notranslate"><span class="pre">code_analysis.log</span></code>): Detailed analysis process and any errors encountered</p></li>
 </ul>
 </section>
 <section id="example-output">
@@ -187,7 +196,7 @@ Total Architectural Smells: 3
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Your Name.</p>
+    <p>&#169; Copyright 2025, Karthik Shivashankar.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
