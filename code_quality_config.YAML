@@ -61,7 +61,7 @@ architectural_smells:
     explanation: "Modules connected to more than this ratio of total modules may be hub-like dependencies."
 
   SCATTERED_FUNCTIONALITY_THRESHOLD:
-    value: 2
+    value: 4
     explanation: "Functions appearing in more than this many modules may indicate scattered functionality."
 
   REDUNDANT_ABSTRACTION_SIMILARITY:
@@ -119,7 +119,7 @@ structural_smells:
 
   MPC_THRESHOLD:
     value: 25
-    explanation: "Classes with Method Propagation Coupling higher than this may be too coupled."
+    explanation: "Classes with Message Passing Coupling higher than this may be too coupled."
 
   CBO_THRESHOLD:
     value: 10
@@ -128,3 +128,47 @@ structural_smells:
   NOC_THRESHOLD:
     value: 45
     explanation: "Projects with more than this many classes may be too large or complex."
+
+  CYCLOMATIC_COMPLEXITY_THRESHOLD:
+    value: 10
+    explanation: "Methods with cyclomatic complexity higher than this may be too complex and hard to maintain."
+
+  MAX_FANOUT:
+    value: 15
+    explanation: "Modules with more outgoing dependencies than this may be too coupled to other modules."
+
+  MAX_FANIN:
+    value: 15
+    explanation: "Modules with more incoming dependencies than this may be too central or have too many responsibilities."
+
+  MAX_FILE_LENGTH:
+    value: 500
+    explanation: "Files with more lines than this may be too large and should be split."
+
+  MAX_METHOD_LENGTH:
+    value: 50
+    explanation: "Methods with more lines than this may be too complex and should be refactored."
+
+  MAX_PARAMETERS:
+    value: 5
+    explanation: "Methods with more parameters than this may have too many responsibilities."
+
+  MAX_RETURNS:
+    value: 3
+    explanation: "Methods with more return statements than this may be too complex and hard to follow."
+
+  MAX_BRANCHES:
+    value: 10
+    explanation: "Methods with more branches (if/else, switch cases) than this may be too complex."
+
+  MAX_NESTING_DEPTH:
+    value: 4
+    explanation: "Code with nesting depth greater than this may be too complex and hard to read."
+
+  MIN_IDENTIFIER_LENGTH:
+    value: 3
+    explanation: "Identifiers shorter than this may not be descriptive enough."
+
+  MAX_IDENTIFIER_LENGTH:
+    value: 30
+    explanation: "Identifiers longer than this may be too verbose."

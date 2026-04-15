@@ -94,6 +94,9 @@ class ArchitecturalSmellDetector:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
                     self.analyze_file(file_path)
+        
+        # After analyzing all files, resolve external dependencies
+        self.resolve_external_dependencies()
 
     def analyze_file(self, file_path):
         """
@@ -109,7 +112,8 @@ class ArchitecturalSmellDetector:
             with open(file_path, 'r') as file:
                 tree = ast.parse(file.read())
 
-            module_name = os.path.basename(file_path)[:-3]  # Remove .py extension
+            module_name = os.path.relpath(file_path, os.path.dirname(os.path.dirname(file_path)))
+            module_name = module_name.replace(os.path.sep, '.')[:-3]  # Remove .py extension
             self.module_dependencies.add_node(module_name)
             self.file_paths[module_name] = file_path
 
@@ -130,7 +134,29 @@ class ArchitecturalSmellDetector:
         except Exception as e:
             print(f"Error analyzing file {file_path}: {str(e)}")
 
+    def resolve_external_dependencies(self):
+        """
+        Resolve external dependencies by checking if imported modules exist in the project.
+        """
+        all_modules = set(self.module_dependencies.nodes())
+        for module in list(self.module_dependencies.nodes()):
+            for dependency in list(self.module_dependencies.successors(module)):
+                if dependency not in all_modules:
+                    self.module_dependencies.remove_edge(module, dependency)
+                    if not self.module_dependencies.in_edges(dependency) and not self.module_dependencies.out_edges(dependency):
+                        self.module_dependencies.remove_node(dependency)
+
     def add_smell(self, name, description, file_path, module_class, line_number=None):
+        """
+        Add a detected architectural smell to the list of smells.
+
+        Args:
+            name (str): The name of the architectural smell.
+            description (str): A description of the detected smell.
+            file_path (str): The path to the file where the smell was detected.
+            module_class (str): The module or class where the smell was detected.
+            line_number (int, optional): The line number where the smell was detected. Defaults to None.
+        """
         self.architectural_smells.append(ArchitecturalSmell(
             name=name,
             description=description,
@@ -146,13 +172,15 @@ class ArchitecturalSmellDetector:
         A hub-like dependency is a module that has high connectivity
         (sum of in-degree and out-degree) relative to the total number of modules.
         """
+        total_modules = len(self.module_dependencies.nodes())
+        threshold = self.thresholds.get('HUB_LIKE_DEPENDENCY_THRESHOLD', 0.5)
         for node in self.module_dependencies.nodes():
             in_degree = self.module_dependencies.in_degree(node)
             out_degree = self.module_dependencies.out_degree(node)
-            if in_degree + out_degree > len(self.module_dependencies.nodes()) / 2:
+            if (in_degree + out_degree) / total_modules > threshold:
                 self.add_smell(
                     "Hub-like Dependency",
-                    f"Module '{node}' has high connectivity",
+                    f"Module '{node}' has high connectivity ({in_degree + out_degree} connections)",
                     self.file_paths.get(node, "Unknown"),
                     node
                 )
@@ -228,6 +256,11 @@ class ArchitecturalSmellDetector:
                 )
 
     def detect_orphan_modules(self):
+        """
+        Detect orphan modules in the project.
+
+        An orphan module is a module that has no incoming or outgoing dependencies.
+        """
         for node in self.module_dependencies.nodes():
             if self.module_dependencies.in_degree(node) + self.module_dependencies.out_degree(node) == 0:
                 self.add_smell(
@@ -238,22 +271,35 @@ class ArchitecturalSmellDetector:
                 )
 
     def detect_cyclic_dependencies(self):
+        """
+        Detect cyclic dependencies in the project.
+
+        A cyclic dependency occurs when two or more modules depend on each other in a circular manner.
+        """
         cycles = list(nx.simple_cycles(self.module_dependencies))
         for cycle in cycles:
-            cycle_str = ' -> '.join(cycle)
-            self.add_smell(
-                "Cyclic Dependency",
-                f"Modules {cycle_str} form a dependency cycle",
-                self.file_paths.get(cycle[0], "Unknown"),
-                cycle[0]
-            )
+            if len(cycle) > 1:  # Ignore self-loops
+                cycle_str = ' -> '.join(cycle + [cycle[0]])  # Add the first node at the end to complete the cycle
+                self.add_smell(
+                    "Cyclic Dependency",
+                    f"Modules form a dependency cycle: {cycle_str}",
+                    self.file_paths.get(cycle[0], "Unknown"),
+                    cycle[0]
+                )
 
     def detect_unstable_dependencies(self):
+        """
+        Detect unstable dependencies in the project.
+
+        An unstable dependency is a module with high instability, calculated as the ratio of
+        outgoing dependencies to total dependencies.
+        """
         for node in self.module_dependencies.nodes():
             in_degree = self.module_dependencies.in_degree(node)
             out_degree = self.module_dependencies.out_degree(node)
-            if in_degree > 0 and out_degree > 0:
-                instability = out_degree / (in_degree + out_degree)
+            total_dependencies = in_degree + out_degree
+            if total_dependencies > 0:
+                instability = out_degree / total_dependencies
                 if instability > self.thresholds['UNSTABLE_DEPENDENCY_THRESHOLD']:
                     self.add_smell(
                         "Unstable Dependency",
@@ -263,13 +309,26 @@ class ArchitecturalSmellDetector:
                     )
 
     def print_report(self):
+        """
+        Print a report of all detected architectural smells.
+
+        If no smells are detected, it prints a message indicating so.
+        """
         if not self.architectural_smells:
             print("No architectural smells detected.")
         else:
             print("Detected Architectural Smells:")
             for smell in self.architectural_smells:
                 print(f"- {smell}")
+
 def analyze_architecture(directory_path, config_path):
+    """
+    Analyze the architecture of a Python project and detect architectural smells.
+
+    Args:
+        directory_path (str): The path to the directory containing the Python project to analyze.
+        config_path (str): The path to the configuration file containing smell detection thresholds.
+    """
     detector = ArchitecturalSmellDetector(config_path)
     detector.detect_smells(directory_path)
     detector.print_report()

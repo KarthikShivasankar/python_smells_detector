@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>code_quality_analyzer.structural_smell_detector &mdash; Project name not set  documentation</title>
+  <title>code_quality_analyzer.structural_smell_detector &mdash; Code Quality Analyzer 0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
 
@@ -14,7 +14,7 @@
   
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/documentation_options.js?v=2709fde1"></script>
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -31,7 +31,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            Project name not set
+            Code Quality Analyzer
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -58,7 +58,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">Project name not set</a>
+          <a href="../../index.html">Code Quality Analyzer</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -81,15 +81,40 @@
 <span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<div class="viewcode-block" id="StructuralSmell">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmell">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">StructuralSmell</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a detected structural smell in the code.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name (str): The name of the structural smell.</span>
+<span class="sd">        description (str): A description of the detected smell.</span>
+<span class="sd">        file_path (str): The path to the file where the smell was detected.</span>
+<span class="sd">        module_class (str): The module or class where the smell was detected.</span>
+<span class="sd">        line_number (int, optional): The line number where the smell was detected.</span>
+<span class="sd">        severity (str, optional): The severity level of the smell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">module_class</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">line_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></div>
+
 
 <div class="viewcode-block" id="StructuralSmellDetector">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector">[docs]</a>
 <span class="k">class</span> <span class="nc">StructuralSmellDetector</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A class to detect structural code smells in Python projects.</span>
+<span class="sd">    A class to detect structural smells in Python code.</span>
 
-<span class="sd">    This class analyzes Python source code files within a directory to identify</span>
-<span class="sd">    various structural code smells based on predefined thresholds.</span>
+<span class="sd">    This class analyzes Python source code files to identify various structural</span>
+<span class="sd">    code smells based on predefined thresholds.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        structural_smells (list): A list to store detected structural smells.</span>
@@ -98,21 +123,48 @@
 <span class="sd">        dependency_graph (nx.DiGraph): A directed graph to represent module dependencies.</span>
 <span class="sd">        thresholds (dict): A dictionary of threshold values for various smell detections.</span>
 <span class="sd">        project_root (str): The root directory of the project being analyzed.</span>
+<span class="sd">        file_paths (dict): A dictionary to store file paths of modules and classes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thresholds</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize the StructuralSmellDetector with given thresholds.</span>
+<span class="sd">        Initialize the StructuralSmellDetector with given configuration.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            thresholds (dict): A dictionary of threshold values for various smell detections.</span>
+<span class="sd">            config (dict or str): Either a dictionary of thresholds or a path to a YAML config file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="n">thresholds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_thresholds</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="StructuralSmellDetector.load_thresholds">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.load_thresholds">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load threshold values from the given configuration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config (dict or str): Either a dictionary of thresholds or a path to a YAML config file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: A dictionary of threshold values.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the config is neither a dictionary nor a valid file path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">config</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">config_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">config_data</span><span class="p">[</span><span class="s1">&#39;structural_smells&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Config must be either a dictionary or a file path string&quot;</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_smells">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_smells">[docs]</a>
@@ -126,20 +178,33 @@
 <span class="sd">        Args:</span>
 <span class="sd">            directory_path (str): The path to the directory to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">directory_path</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">analyze_directory</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_nom</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_wmpc</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_size2</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_wac</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_lcom</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_rfc</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_nocc</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_dit</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_loc</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_mpc</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_cbo</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_noc</span><span class="p">()</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">directory_path</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">analyze_directory</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_nom</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_wmpc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_size2</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_wac</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_lcom</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_rfc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_nocc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_dit</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_loc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_mpc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_cbo</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_noc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclomatic_complexity</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_fanout</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_fanin</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_file_length</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_method_length</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_parameters</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_returns</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_branches</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_nesting_depth</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_identifier_length</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing directory </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.analyze_directory">
@@ -164,40 +229,96 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Analyze a single Python file for structural information.</span>
 
-<span class="sd">        This method parses the file and extracts information about classes, methods,</span>
-<span class="sd">        attributes, and module dependencies.</span>
-
 <span class="sd">        Args:</span>
 <span class="sd">            file_path (str): The path to the Python file to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-            <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+            <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="p">[</span><span class="n">module_name</span><span class="p">][</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_path</span>
 
-        <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="p">[</span><span class="n">module_name</span><span class="p">][</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
-                <span class="n">class_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;methods&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;attributes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">end_lineno</span> <span class="o">-</span> <span class="n">node</span><span class="o">.</span><span class="n">lineno</span> <span class="o">+</span> <span class="mi">1</span>
-
-                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;methods&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">):</span>
-                        <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
-                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;attributes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">Import</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">)):</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Import</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">analyze_class</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">module_name</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Import</span><span class="p">):</span>
                     <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">)</span></div>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">SyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error in file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.analyze_class">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_class">[docs]</a>
+    <span class="k">def</span> <span class="nf">analyze_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">module_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analyze a class definition node and extract relevant information.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node (ast.ClassDef): The class definition node to analyze.</span>
+<span class="sd">            module_name (str): The name of the module containing the class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">class_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;methods&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;method_calls&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;base_classes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve_base_class</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">module_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">bases</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">end_lineno</span> <span class="o">-</span> <span class="n">node</span><span class="o">.</span><span class="n">lineno</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;methods&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">analyze_method</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">class_name</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assign</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.analyze_method">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_method">[docs]</a>
+    <span class="k">def</span> <span class="nf">analyze_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">class_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analyze a method definition node and extract relevant information.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node (ast.FunctionDef): The method definition node to analyze.</span>
+<span class="sd">            class_name (str): The name of the class containing the method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">[</span><span class="n">class_name</span><span class="p">][</span><span class="s1">&#39;method_calls&#39;</span><span class="p">][</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.add_smell">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.add_smell">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_smell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">module_class</span><span class="p">,</span> <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a detected smell to the list of structural smells.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): The name of the structural smell.</span>
+<span class="sd">            description (str): A description of the detected smell.</span>
+<span class="sd">            file_path (str): The path to the file where the smell was detected.</span>
+<span class="sd">            module_class (str): The module or class where the smell was detected.</span>
+<span class="sd">            line_number (int, optional): The line number where the smell was detected.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">StructuralSmell</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+            <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
+            <span class="n">module_class</span><span class="o">=</span><span class="n">module_class</span><span class="p">,</span>
+            <span class="n">line_number</span><span class="o">=</span><span class="n">line_number</span>
+        <span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_nom">
@@ -211,7 +332,12 @@
         <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">nom</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">nom</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;NOM_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Number of Methods (NOM): Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">nom</span><span class="si">}</span><span class="s2"> methods&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Number of Methods (NOM)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">nom</span><span class="si">}</span><span class="s2"> methods&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">class_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_wmpc">
@@ -220,12 +346,19 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Weighted Methods per Class (WMPC).</span>
 
-<span class="sd">        This method calculates a simplified WMPC for each class and identifies those exceeding the threshold.</span>
+<span class="sd">        This method calculates both WMPC1 (based on cyclomatic complexity) and WMPC2 (based on number of parameters)</span>
+<span class="sd">        for each class and identifies those exceeding the respective thresholds.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">wmpc</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span>  <span class="c1"># Simplified, should consider complexity</span>
-            <span class="k">if</span> <span class="n">wmpc</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;WMPC1_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Weighted Methods per Class (WMPC): Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has WMPC of </span><span class="si">{</span><span class="n">wmpc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="n">wmpc1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculate_cyclomatic_complexity</span><span class="p">(</span><span class="n">method</span><span class="p">)</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span>
+            <span class="n">wmpc2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">wmpc1</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;WMPC1_THRESHOLD&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">wmpc2</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;WMPC2_THRESHOLD&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Weighted Methods per Class (WMPC)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; (WMPC1: </span><span class="si">{</span><span class="n">wmpc1</span><span class="si">}</span><span class="s2">, WMPC2: </span><span class="si">{</span><span class="n">wmpc2</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">class_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_size2">
@@ -234,13 +367,18 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect large classes based on the SIZE2 metric.</span>
 
-<span class="sd">        This method calculates the SIZE2 metric (sum of methods and attributes) for each class</span>
+<span class="sd">        This method calculates the SIZE2 metric (sum of methods and fields) for each class</span>
 <span class="sd">        and identifies those exceeding the threshold.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">size2</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">])</span>
+            <span class="n">size2</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">size2</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;SIZE2_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Large Class (SIZE2): Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">size2</span><span class="si">}</span><span class="s2"> members&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;Large Class (SIZE2)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">size2</span><span class="si">}</span><span class="s2"> members&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">class_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_wac">
@@ -249,12 +387,17 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Weight of a Class (WAC).</span>
 
-<span class="sd">        This method counts the number of attributes in each class and identifies those exceeding the WAC threshold.</span>
+<span class="sd">        This method counts the number of fields in each class and identifies those exceeding the WAC threshold.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">wac</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">])</span>
+            <span class="n">wac</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">wac</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;WAC_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Weight of a Class (WAC): Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">wac</span><span class="si">}</span><span class="s2"> attributes&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Weight of a Class (WAC)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">wac</span><span class="si">}</span><span class="s2"> attributes&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">class_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_lcom">
@@ -263,15 +406,38 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Lack of Cohesion of Methods (LCOM).</span>
 
-<span class="sd">        This method calculates a simplified LCOM metric for each class and identifies those exceeding the threshold.</span>
+<span class="sd">        This method calculates the LCOM metric for each class and identifies those exceeding the threshold.</span>
+<span class="sd">        LCOM is calculated as the difference between the number of method pairs not sharing instance variables</span>
+<span class="sd">        and the number of method pairs sharing instance variables.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">method_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span>
-            <span class="n">attribute_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">method_count</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">attribute_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">lcom</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">attribute_count</span> <span class="o">/</span> <span class="n">method_count</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">lcom</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;LCOM_THRESHOLD&#39;</span><span class="p">]:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Lack of Cohesion of Methods (LCOM): Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has LCOM of </span><span class="si">{</span><span class="n">lcom</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="n">methods</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span>
+            <span class="n">method_field_usage</span> <span class="o">=</span> <span class="p">{</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">}</span>
+            
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s1">&#39;self&#39;</span><span class="p">:</span>
+                        <span class="n">method_field_usage</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
+            
+            <span class="n">non_cohesive_pairs</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cohesive_pairs</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">method1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">methods</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">method2</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">:]:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">method_field_usage</span><span class="p">[</span><span class="n">method1</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">method_field_usage</span><span class="p">[</span><span class="n">method2</span><span class="o">.</span><span class="n">name</span><span class="p">]):</span>
+                        <span class="n">non_cohesive_pairs</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">cohesive_pairs</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+            <span class="n">lcom</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">non_cohesive_pairs</span> <span class="o">-</span> <span class="n">cohesive_pairs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lcom</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;LCOM_THRESHOLD&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Lack of Cohesion of Methods (LCOM)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has LCOM of </span><span class="si">{</span><span class="n">lcom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">class_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_rfc">
@@ -280,12 +446,18 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Detect classes with high Response for a Class (RFC).</span>
 
-<span class="sd">        This method calculates a simplified RFC metric for each class and identifies those exceeding the threshold.</span>
+<span class="sd">        This method calculates the RFC metric (number of methods + number of distinct method calls)</span>
+<span class="sd">        for each class and identifies those exceeding the threshold.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">rfc</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span>  <span class="c1"># Should also include called methods</span>
+            <span class="n">rfc</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">calls</span><span class="p">)</span> <span class="k">for</span> <span class="n">calls</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;method_calls&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
             <span class="k">if</span> <span class="n">rfc</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;RFC_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Response for a Class (RFC): Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has RFC of </span><span class="si">{</span><span class="n">rfc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Response for a Class (RFC)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has RFC of </span><span class="si">{</span><span class="n">rfc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">class_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_nocc">
@@ -303,79 +475,460 @@
 
         <span class="k">for</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">module_class_count</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;NOCC_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Number of Classes (NOCC): Module &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> classes&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Number of Classes (NOCC)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> classes&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_dit">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_dit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Detect modules with a Deep Inheritance Tree (DIT).</span>
+<span class="sd">        Detect classes with a Deep Inheritance Tree (DIT).</span>
 
-<span class="sd">        This method identifies modules with a high number of classes, which may indicate a deep inheritance tree.</span>
+<span class="sd">        This method calculates the depth of inheritance tree for each class and identifies those exceeding the threshold.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Simplified DIT detection</span>
-        <span class="n">class_hierarchy</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">class_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">:</span>
-            <span class="n">module_name</span><span class="p">,</span> <span class="n">class_name</span> <span class="o">=</span> <span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">class_hierarchy</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">class_name</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">classes</span> <span class="ow">in</span> <span class="n">class_hierarchy</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;DIT_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deep Inheritance Tree (DIT): Module &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has a deep inheritance tree&quot;</span><span class="p">)</span></div>
+        <span class="n">inheritance_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+        
+        <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">inheritance_graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">class_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;base_classes&#39;</span><span class="p">]:</span>
+                <span class="n">inheritance_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">class_name</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="s1">&#39;object&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inheritance_graph</span><span class="p">:</span>
+            <span class="n">inheritance_graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">inheritance_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">inheritance_graph</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">node</span> <span class="o">!=</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span>
+                    <span class="n">inheritance_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">class_name</span> <span class="ow">in</span> <span class="n">inheritance_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">class_name</span> <span class="o">!=</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">dit</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">shortest_path_length</span><span class="p">(</span><span class="n">inheritance_graph</span><span class="p">,</span> <span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">class_name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">dit</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;DIT_THRESHOLD&#39;</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                            <span class="s2">&quot;Deep Inheritance Tree (DIT)&quot;</span><span class="p">,</span>
+                            <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has DIT of </span><span class="si">{</span><span class="n">dit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                            <span class="n">class_name</span>
+                        <span class="p">)</span>
+                <span class="k">except</span> <span class="n">nx</span><span class="o">.</span><span class="n">NetworkXNoPath</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                        <span class="s2">&quot;Isolated Class in Inheritance Tree&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; is isolated&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="n">class_name</span>
+                    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_loc">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_loc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_loc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect modules with high Lines of Code (LOC).</span>
+
+<span class="sd">        This method counts the number of lines in each module and identifies those exceeding the LOC threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;LOC_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Lines of Code (LOC): Module &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> lines&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Lines of Code (LOC)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> lines&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_mpc">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_mpc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_mpc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># Simplified MPC detection</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect classes with high Message Passing Coupling (MPC).</span>
+
+<span class="sd">        This method calculates the MPC metric (number of method calls to other classes)</span>
+<span class="sd">        for each class and identifies those exceeding the threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">mpc</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span>  <span class="c1"># Should count method calls to other classes</span>
+            <span class="n">mpc</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">calls</span><span class="p">)</span> <span class="k">for</span> <span class="n">calls</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;method_calls&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
             <span class="k">if</span> <span class="n">mpc</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MPC_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Message Passing Coupling (MPC): Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has MPC of </span><span class="si">{</span><span class="n">mpc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Message Passing Coupling (MPC)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has MPC of </span><span class="si">{</span><span class="n">mpc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">class_name</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_cbo">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_cbo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect modules with high Coupling Between Object Classes (CBO).</span>
+
+<span class="sd">        This method calculates the CBO metric (number of other classes a class is coupled to)</span>
+<span class="sd">        for each module and identifies those exceeding the threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
             <span class="n">cbo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cbo</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;CBO_THRESHOLD&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Coupling Between Object Classes (CBO): Module &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; has CBO of </span><span class="si">{</span><span class="n">cbo</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Coupling Between Object Classes (CBO)&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; has CBO of </span><span class="si">{</span><span class="n">cbo</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">node</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.detect_noc">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_noc">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_noc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect projects with a high Number of Classes (NOC).</span>
+
+<span class="sd">        This method counts the total number of classes in the project and identifies if it exceeds the NOC threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">noc</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">noc</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;NOC_THRESHOLD&#39;</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High Number of Classes (NOC): Project has </span><span class="si">{</span><span class="n">noc</span><span class="si">}</span><span class="s2"> classes&quot;</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                <span class="s2">&quot;High Number of Classes (NOC)&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Project has </span><span class="si">{</span><span class="n">noc</span><span class="si">}</span><span class="s2"> classes&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">,</span>
+                <span class="s2">&quot;Project&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.calculate_cyclomatic_complexity">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.calculate_cyclomatic_complexity">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_cyclomatic_complexity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_node</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the cyclomatic complexity of a method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            method_node (ast.FunctionDef): The AST node of the method.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: The cyclomatic complexity of the method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">complexity</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">method_node</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">While</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">For</span><span class="p">)):</span>
+                <span class="n">complexity</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">BoolOp</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">And</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Or</span><span class="p">):</span>
+                    <span class="n">complexity</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Try</span><span class="p">):</span>
+                <span class="n">complexity</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">handlers</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">finalbody</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ExceptHandler</span><span class="p">):</span>
+                <span class="n">complexity</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Assert</span><span class="p">):</span>
+                <span class="n">complexity</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Return</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Compare</span><span class="p">):</span>
+                <span class="n">complexity</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ops</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">complexity</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.resolve_base_class">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.resolve_base_class">[docs]</a>
+    <span class="k">def</span> <span class="nf">resolve_base_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_node</span><span class="p">,</span> <span class="n">current_module</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve the full name of a base class.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base_node (ast.expr): The AST node representing the base class.</span>
+<span class="sd">            current_module (str): The name of the current module.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The full name of the base class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">current_module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">base_node</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">base_node</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;object&#39;</span></div>
 
 
 <div class="viewcode-block" id="StructuralSmellDetector.print_report">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.print_report">[docs]</a>
     <span class="k">def</span> <span class="nf">print_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print a report of all detected structural smells.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No structural smells detected.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Detected Structural Smells:&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">smell</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">structural_smells</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">smell</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_cyclomatic_complexity">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cyclomatic_complexity">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_cyclomatic_complexity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect methods with high cyclomatic complexity.</span>
+
+<span class="sd">        This method calculates the cyclomatic complexity of each method and identifies those exceeding the threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]:</span>
+                <span class="n">complexity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_cyclomatic_complexity</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">complexity</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;CYCLOMATIC_COMPLEXITY_THRESHOLD&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                        <span class="s2">&quot;High Cyclomatic Complexity&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Method &#39;</span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has complexity of </span><span class="si">{</span><span class="n">complexity</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="n">class_name</span><span class="p">,</span>
+                        <span class="n">method</span><span class="o">.</span><span class="n">lineno</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_fanout">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanout">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_fanout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect modules with high fan-out.</span>
+
+<span class="sd">        This method calculates the fan-out (number of outgoing dependencies) for each module</span>
+<span class="sd">        and identifies those exceeding the threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
+            <span class="n">fanout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fanout</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_FANOUT&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Fan-out&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">&#39; has fan-out of </span><span class="si">{</span><span class="n">fanout</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_fanin">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanin">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_fanin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect modules with high fan-in.</span>
+
+<span class="sd">        This method calculates the fan-in (number of incoming dependencies) for each module</span>
+<span class="sd">        and identifies those exceeding the threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
+            <span class="n">fanin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_graph</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fanin</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_FANIN&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;High Fan-in&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">&#39; has fan-in of </span><span class="si">{</span><span class="n">fanin</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_file_length">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_file_length">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_file_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect files with excessive length.</span>
+
+<span class="sd">        This method identifies files that exceed the maximum file length threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_FILE_LENGTH&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;Long File&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;File &#39;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> lines&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module_name</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_method_length">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_method_length">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_method_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect methods with excessive length.</span>
+
+<span class="sd">        This method identifies methods that exceed the maximum method length threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]:</span>
+                <span class="n">method_length</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">end_lineno</span> <span class="o">-</span> <span class="n">method</span><span class="o">.</span><span class="n">lineno</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">method_length</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_METHOD_LENGTH&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                        <span class="s2">&quot;Long Method&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Method &#39;</span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">method_length</span><span class="si">}</span><span class="s2"> lines&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="n">class_name</span><span class="p">,</span>
+                        <span class="n">method</span><span class="o">.</span><span class="n">lineno</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_parameters">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect methods with too many parameters.</span>
+
+<span class="sd">        This method identifies methods that exceed the maximum number of parameters threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]:</span>
+                <span class="n">param_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Subtract 1 for &#39;self&#39;</span>
+                <span class="k">if</span> <span class="n">param_count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_PARAMETERS&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                        <span class="s2">&quot;Too Many Parameters&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Method &#39;</span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">param_count</span><span class="si">}</span><span class="s2"> parameters&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="n">class_name</span><span class="p">,</span>
+                        <span class="n">method</span><span class="o">.</span><span class="n">lineno</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_returns">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_returns">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect methods with too many return statements.</span>
+
+<span class="sd">        This method identifies methods that exceed the maximum number of return statements threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]:</span>
+                <span class="n">return_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">method</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Return</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">return_count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_RETURNS&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                        <span class="s2">&quot;Too Many Return Statements&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Method &#39;</span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">return_count</span><span class="si">}</span><span class="s2"> return statements&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="n">class_name</span><span class="p">,</span>
+                        <span class="n">method</span><span class="o">.</span><span class="n">lineno</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_branches">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_branches">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_branches</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect methods with too many branches.</span>
+
+<span class="sd">        This method identifies methods that exceed the maximum number of branches threshold.</span>
+<span class="sd">        Branches include if statements, for loops, while loops, and try-except blocks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]:</span>
+                <span class="n">branch_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">method</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">For</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">While</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Try</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">branch_count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_BRANCHES&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                        <span class="s2">&quot;Too Many Branches&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Method &#39;</span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has </span><span class="si">{</span><span class="n">branch_count</span><span class="si">}</span><span class="s2"> branches&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="n">class_name</span><span class="p">,</span>
+                        <span class="n">method</span><span class="o">.</span><span class="n">lineno</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_nesting_depth">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nesting_depth">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_nesting_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect methods with excessive nesting depth.</span>
+
+<span class="sd">        This method identifies methods that exceed the maximum nesting depth threshold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]:</span>
+                <span class="n">max_depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_max_nesting_depth</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">max_depth</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_NESTING_DEPTH&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                        <span class="s2">&quot;Deep Nesting&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Method &#39;</span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; has nesting depth of </span><span class="si">{</span><span class="n">max_depth</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="n">class_name</span><span class="p">,</span>
+                        <span class="n">method</span><span class="o">.</span><span class="n">lineno</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.detect_identifier_length">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_identifier_length">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_identifier_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect identifiers (class names, method names, field names) that are too short or too long.</span>
+
+<span class="sd">        This method identifies identifiers that are shorter than the minimum or longer than the maximum</span>
+<span class="sd">        identifier length thresholds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check_identifier_length</span><span class="p">(</span><span class="n">class_name</span><span class="p">,</span> <span class="n">class_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">check_identifier_length</span><span class="p">(</span><span class="n">class_name</span><span class="p">,</span> <span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">method</span><span class="o">.</span><span class="n">lineno</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">check_identifier_length</span><span class="p">(</span><span class="n">class_name</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.check_identifier_length">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.check_identifier_length">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_identifier_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if an identifier&#39;s length is within the acceptable range.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            class_name (str): The name of the class containing the identifier.</span>
+<span class="sd">            identifier (str): The identifier to check.</span>
+<span class="sd">            line_number (int, optional): The line number where the identifier is defined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MIN_IDENTIFIER_LENGTH&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                <span class="s2">&quot;Short Identifier&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Identifier &#39;</span><span class="si">{</span><span class="n">identifier</span><span class="si">}</span><span class="s2">&#39; in class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; is too short&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                <span class="n">class_name</span><span class="p">,</span>
+                <span class="n">line_number</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;MAX_IDENTIFIER_LENGTH&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                <span class="s2">&quot;Long Identifier&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Identifier &#39;</span><span class="si">{</span><span class="n">identifier</span><span class="si">}</span><span class="s2">&#39; in class &#39;</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">&#39; is too long&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                <span class="n">class_name</span><span class="p">,</span>
+                <span class="n">line_number</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuralSmellDetector.calculate_max_nesting_depth">
+<a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.calculate_max_nesting_depth">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_max_nesting_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">current_depth</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the maximum nesting depth of a given AST node.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node (ast.AST): The AST node to analyze.</span>
+<span class="sd">            current_depth (int): The current nesting depth.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: The maximum nesting depth found in the node and its children.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">max_depth</span> <span class="o">=</span> <span class="n">current_depth</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_child_nodes</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">If</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">For</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">While</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Try</span><span class="p">)):</span>
+                <span class="n">child_depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_max_nesting_depth</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">current_depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">max_depth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">child_depth</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">max_depth</span></div>
 </div>
 
 
 <div class="viewcode-block" id="analyze_structure">
 <a class="viewcode-back" href="../../api/structural_smell_detector.html#code_quality_analyzer.structural_smell_detector.analyze_structure">[docs]</a>
-<span class="k">def</span> <span class="nf">analyze_structure</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">thresholds</span><span class="p">):</span>
-    <span class="n">detector</span> <span class="o">=</span> <span class="n">StructuralSmellDetector</span><span class="p">(</span><span class="n">thresholds</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">analyze_structure</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Analyze the structural smells in a given directory.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        directory_path (str): The path to the directory to analyze.</span>
+<span class="sd">        config (dict or str): Either a dictionary of thresholds or a path to a YAML config file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">detector</span> <span class="o">=</span> <span class="n">StructuralSmellDetector</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="n">detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
     <span class="n">detector</span><span class="o">.</span><span class="n">print_report</span><span class="p">()</span></div>
 
@@ -387,11 +940,7 @@
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;code_quality_config.yaml&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the configuration file&quot;</span><span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 
-    <span class="kn">from</span> <span class="nn">config_handler</span> <span class="kn">import</span> <span class="n">ConfigHandler</span>
-    <span class="n">config_handler</span> <span class="o">=</span> <span class="n">ConfigHandler</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
-    <span class="n">thresholds</span> <span class="o">=</span> <span class="n">config_handler</span><span class="o">.</span><span class="n">get_thresholds</span><span class="p">(</span><span class="s1">&#39;structural_smells&#39;</span><span class="p">)</span>
-
-    <span class="n">analyze_structure</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="n">thresholds</span><span class="p">)</span>
+    <span class="n">analyze_structure</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 
            </div>
@@ -401,7 +950,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright .</p>
+    <p>&#169; Copyright 2024, Anon.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

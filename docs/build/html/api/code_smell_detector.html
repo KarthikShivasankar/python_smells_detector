@@ -50,6 +50,15 @@
 <li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../test.html">Testing</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Code Smell Detector</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmell"><code class="docutils literal notranslate"><span class="pre">CodeSmell</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmell.description"><code class="docutils literal notranslate"><span class="pre">CodeSmell.description</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmell.file_path"><code class="docutils literal notranslate"><span class="pre">CodeSmell.file_path</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmell.line_number"><code class="docutils literal notranslate"><span class="pre">CodeSmell.line_number</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmell.module_class"><code class="docutils literal notranslate"><span class="pre">CodeSmell.module_class</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmell.name"><code class="docutils literal notranslate"><span class="pre">CodeSmell.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmell.severity"><code class="docutils literal notranslate"><span class="pre">CodeSmell.severity</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.code_smells"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.code_smells</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.thresholds"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.thresholds</span></code></a></li>
@@ -71,7 +80,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_middle_man"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_middle_man()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_parallel_inheritance"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_parallel_inheritance()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_primitive_obsession"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_primitive_obsession()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_refused_bequest"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_refused_bequest()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_shotgun_surgery"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_shotgun_surgery()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_smells"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_smells()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_speculative_generality"><code class="docutils literal notranslate"><span class="pre">CodeSmellDetector.detect_speculative_generality()</span></code></a></li>
@@ -113,6 +121,42 @@
              
   <section id="module-code_quality_analyzer.code_smell_detector">
 <span id="code-smell-detector"></span><h1>Code Smell Detector<a class="headerlink" href="#module-code_quality_analyzer.code_smell_detector" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmell">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">code_quality_analyzer.code_smell_detector.</span></span><span class="sig-name descname"><span class="pre">CodeSmell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_class</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">severity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmell" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmell.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmell.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmell.file_path">
+<span class="sig-name descname"><span class="pre">file_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmell.file_path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmell.line_number">
+<span class="sig-name descname"><span class="pre">line_number</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmell.line_number" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmell.module_class">
+<span class="sig-name descname"><span class="pre">module_class</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmell.module_class" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmell.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmell.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmell.severity">
+<span class="sig-name descname"><span class="pre">severity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmell.severity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">code_quality_analyzer.code_smell_detector.</span></span><span class="sig-name descname"><span class="pre">CodeSmellDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thresholds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector" title="Link to this definition"></a></dt>
@@ -390,20 +434,6 @@ providing a comprehensive report on potential issues in the codebase.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_refused_bequest">
-<span class="sig-name descname"><span class="pre">detect_refused_bequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_refused_bequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_refused_bequest" title="Link to this definition"></a></dt>
-<dd><p>Detect refused bequest in the given module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>astroid.Module</em>) – The parsed module to analyze.</p></li>
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file being analyzed.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_shotgun_surgery">
 <span class="sig-name descname"><span class="pre">detect_shotgun_surgery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_shotgun_surgery"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_shotgun_surgery" title="Link to this definition"></a></dt>
 <dd><p>Detect potential shotgun surgery in the given module.</p>
@@ -421,7 +451,8 @@ providing a comprehensive report on potential issues in the codebase.</p>
 <dt class="sig sig-object py" id="code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_smells">
 <span class="sig-name descname"><span class="pre">detect_smells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/code_quality_analyzer/code_smell_detector.html#CodeSmellDetector.detect_smells"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.code_smell_detector.CodeSmellDetector.detect_smells" title="Link to this definition"></a></dt>
 <dd><p>Detect code smells in the given file.</p>
-<p>This method reads the file, parses it using astroid, and runs all the smell detection methods.</p>
+<p>This method reads the file, parses it using astroid, and runs all the smell detection methods.
+If a parse error occurs, it prints the error message and continues with the analysis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>file_path</strong> (<em>str</em>) – The path to the file to be analyzed.</p>

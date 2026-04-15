@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>code_quality_analyzer.architectural_smell_detector &mdash; Project name not set  documentation</title>
+  <title>code_quality_analyzer.architectural_smell_detector &mdash; Code Quality Analyzer 0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
 
@@ -14,7 +14,7 @@
   
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/documentation_options.js?v=2709fde1"></script>
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -31,7 +31,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            Project name not set
+            Code Quality Analyzer
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -58,7 +58,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">Project name not set</a>
+          <a href="../../index.html">Code Quality Analyzer</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -82,6 +82,19 @@
 <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+<div class="viewcode-block" id="ArchitecturalSmell">
+<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">ArchitecturalSmell</span><span class="p">:</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">module_class</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">line_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></div>
+
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector">
 <a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector">[docs]</a>
@@ -98,6 +111,7 @@
 <span class="sd">        module_functions (defaultdict): A dictionary to store functions for each module.</span>
 <span class="sd">        api_usage (defaultdict): A dictionary to store API usage for each module.</span>
 <span class="sd">        thresholds (dict): A dictionary of threshold values for various smell detections.</span>
+<span class="sd">        file_paths (dict): A dictionary to store file paths for each module.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thresholds</span><span class="p">):</span>
@@ -112,6 +126,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">api_usage</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="n">thresholds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># New attribute to store file paths</span>
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.load_thresholds">
 <a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.load_thresholds">[docs]</a>
@@ -137,20 +152,24 @@
 <span class="sd">        Detect architectural smells in the given directory.</span>
 
 <span class="sd">        This method analyzes all Python files in the given directory and its subdirectories,</span>
-<span class="sd">        and runs various smell detection methods.</span>
+<span class="sd">        and runs various smell detection methods. If a parse error occurs, it prints the error</span>
+<span class="sd">        message and continues with the analysis.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            directory_path (str): The path to the directory to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">analyze_directory</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_hub_like_dependency</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_scattered_functionality</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_redundant_abstractions</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_god_objects</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_improper_api_usage</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_orphan_modules</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclic_dependencies</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_unstable_dependencies</span><span class="p">()</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">analyze_directory</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_hub_like_dependency</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_scattered_functionality</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_redundant_abstractions</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_god_objects</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_improper_api_usage</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_orphan_modules</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclic_dependencies</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detect_unstable_dependencies</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing directory </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.analyze_directory">
@@ -166,7 +185,10 @@
             <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.py&#39;</span><span class="p">):</span>
                     <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">analyze_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">analyze_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        
+        <span class="c1"># After analyzing all files, resolve external dependencies</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolve_external_dependencies</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.analyze_file">
@@ -181,24 +203,68 @@
 <span class="sd">        Args:</span>
 <span class="sd">            file_path (str): The path to the Python file to be analyzed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-            <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 
-        <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file_path</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>  <span class="c1"># Remove .py extension</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+            <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">file_path</span><span class="p">)))</span>
+            <span class="n">module_name</span> <span class="o">=</span> <span class="n">module_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>  <span class="c1"># Remove .py extension</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_path</span>
 
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Import</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">api_usage</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span></div>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Import</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">api_usage</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">SyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error in file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ArchitecturalSmellDetector.resolve_external_dependencies">
+<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.resolve_external_dependencies">[docs]</a>
+    <span class="k">def</span> <span class="nf">resolve_external_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve external dependencies by checking if imported modules exist in the project.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">all_modules</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="n">module</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">dependency</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_modules</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">remove_edge</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">dependency</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_edges</span><span class="p">(</span><span class="n">dependency</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_edges</span><span class="p">(</span><span class="n">dependency</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">remove_node</span><span class="p">(</span><span class="n">dependency</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ArchitecturalSmellDetector.add_smell">
+<a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.add_smell">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_smell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">module_class</span><span class="p">,</span> <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a detected architectural smell to the list of smells.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): The name of the architectural smell.</span>
+<span class="sd">            description (str): A description of the detected smell.</span>
+<span class="sd">            file_path (str): The path to the file where the smell was detected.</span>
+<span class="sd">            module_class (str): The module or class where the smell was detected.</span>
+<span class="sd">            line_number (int, optional): The line number where the smell was detected. Defaults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ArchitecturalSmell</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+            <span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
+            <span class="n">module_class</span><span class="o">=</span><span class="n">module_class</span><span class="p">,</span>
+            <span class="n">line_number</span><span class="o">=</span><span class="n">line_number</span>
+        <span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_hub_like_dependency">
@@ -210,11 +276,18 @@
 <span class="sd">        A hub-like dependency is a module that has high connectivity</span>
 <span class="sd">        (sum of in-degree and out-degree) relative to the total number of modules.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_modules</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HUB_LIKE_DEPENDENCY_THRESHOLD&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
             <span class="n">in_degree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
             <span class="n">out_degree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">in_degree</span> <span class="o">+</span> <span class="n">out_degree</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hub-like Dependency: Module &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; has high connectivity&quot;</span><span class="p">)</span></div>
+            <span class="k">if</span> <span class="p">(</span><span class="n">in_degree</span> <span class="o">+</span> <span class="n">out_degree</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_modules</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;Hub-like Dependency&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; has high connectivity (</span><span class="si">{</span><span class="n">in_degree</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">out_degree</span><span class="si">}</span><span class="s2"> connections)&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">node</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_scattered_functionality">
@@ -232,7 +305,12 @@
         
         <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">modules</span> <span class="ow">in</span> <span class="n">function_modules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scattered Functionality: Function &#39;</span><span class="si">{</span><span class="n">func</span><span class="si">}</span><span class="s2">&#39; appears in modules </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;Scattered Functionality&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Function &#39;</span><span class="si">{</span><span class="n">func</span><span class="si">}</span><span class="s2">&#39; appears in modules </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">modules</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">modules</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_redundant_abstractions">
@@ -250,7 +328,12 @@
         
         <span class="k">for</span> <span class="n">signature</span><span class="p">,</span> <span class="n">modules</span> <span class="ow">in</span> <span class="n">similar_modules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Potential Redundant Abstractions: Modules </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="si">}</span><span class="s2"> have similar functionalities&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;Potential Redundant Abstractions&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Modules </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="si">}</span><span class="s2"> have similar functionalities&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">modules</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">modules</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_god_objects">
@@ -263,7 +346,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">module</span><span class="p">,</span> <span class="n">functions</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;GOD_OBJECT_FUNCTIONS&#39;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;God Object: Module &#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">&#39; has too many functions (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;God Object&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">&#39; has too many functions (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> 
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_improper_api_usage">
@@ -276,39 +364,84 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">module</span><span class="p">,</span> <span class="n">api_calls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_usage</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">api_calls</span><span class="p">))</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">api_calls</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Potential Improper API Usage: Module &#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">&#39; has repetitive API calls&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;Potential Improper API Usage&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">&#39; has repetitive API calls&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">module</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_orphan_modules">
 <a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_orphan_modules">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_orphan_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect orphan modules in the project.</span>
+
+<span class="sd">        An orphan module is a module that has no incoming or outgoing dependencies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Orphan Module: &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; is not connected to other modules&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;Orphan Module&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; is not connected to other modules&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">node</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_cyclic_dependencies">
 <a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_cyclic_dependencies">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_cyclic_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect cyclic dependencies in the project.</span>
+
+<span class="sd">        A cyclic dependency occurs when two or more modules depend on each other in a circular manner.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cycles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">simple_cycles</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">cycle</span> <span class="ow">in</span> <span class="n">cycles</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cyclic Dependency: Modules </span><span class="si">{</span><span class="s1">&#39; -&gt; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span><span class="si">}</span><span class="s2"> form a dependency cycle&quot;</span><span class="p">)</span></div>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Ignore self-loops</span>
+                <span class="n">cycle_str</span> <span class="o">=</span> <span class="s1">&#39; -&gt; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cycle</span> <span class="o">+</span> <span class="p">[</span><span class="n">cycle</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>  <span class="c1"># Add the first node at the end to complete the cycle</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">&quot;Cyclic Dependency&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Modules form a dependency cycle: </span><span class="si">{</span><span class="n">cycle_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cycle</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">cycle</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_unstable_dependencies">
 <a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_unstable_dependencies">[docs]</a>
     <span class="k">def</span> <span class="nf">detect_unstable_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect unstable dependencies in the project.</span>
+
+<span class="sd">        An unstable dependency is a module with high instability, calculated as the ratio of</span>
+<span class="sd">        outgoing dependencies to total dependencies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
             <span class="n">in_degree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
             <span class="n">out_degree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">in_degree</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">out_degree</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">instability</span> <span class="o">=</span> <span class="n">out_degree</span> <span class="o">/</span> <span class="p">(</span><span class="n">in_degree</span> <span class="o">+</span> <span class="n">out_degree</span><span class="p">)</span>
+            <span class="n">total_dependencies</span> <span class="o">=</span> <span class="n">in_degree</span> <span class="o">+</span> <span class="n">out_degree</span>
+            <span class="k">if</span> <span class="n">total_dependencies</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">instability</span> <span class="o">=</span> <span class="n">out_degree</span> <span class="o">/</span> <span class="n">total_dependencies</span>
                 <span class="k">if</span> <span class="n">instability</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;UNSTABLE_DEPENDENCY_THRESHOLD&#39;</span><span class="p">]:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unstable Dependency: Module &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; has high instability (</span><span class="si">{</span><span class="n">instability</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                        <span class="s2">&quot;Unstable Dependency&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; has high instability (</span><span class="si">{</span><span class="n">instability</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="n">node</span>
+                    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.print_report">
 <a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.print_report">[docs]</a>
     <span class="k">def</span> <span class="nf">print_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print a report of all detected architectural smells.</span>
+
+<span class="sd">        If no smells are detected, it prints a message indicating so.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No architectural smells detected.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -317,9 +450,17 @@
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">smell</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 </div>
 
+
 <div class="viewcode-block" id="analyze_architecture">
 <a class="viewcode-back" href="../../api/architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.analyze_architecture">[docs]</a>
 <span class="k">def</span> <span class="nf">analyze_architecture</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">config_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Analyze the architecture of a Python project and detect architectural smells.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        directory_path (str): The path to the directory containing the Python project to analyze.</span>
+<span class="sd">        config_path (str): The path to the configuration file containing smell detection thresholds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">detector</span> <span class="o">=</span> <span class="n">ArchitecturalSmellDetector</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
     <span class="n">detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
     <span class="n">detector</span><span class="o">.</span><span class="n">print_report</span><span class="p">()</span></div>
@@ -342,7 +483,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright .</p>
+    <p>&#169; Copyright 2024, Anon.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
