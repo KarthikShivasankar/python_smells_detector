@@ -9,13 +9,29 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install sphinx sphinx-rtd-theme
+        if [ -f docs/requirements.txt ]; then pip install -r docs/requirements.txt; fi
+    
     - name: Build HTML
-      uses: ammaraskar/sphinx-action@master
+      working-directory: docs
+      run: |
+        sphinx-build -b html _source build/html
+    
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: html-docs
         path: docs/build/html/
+    
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
