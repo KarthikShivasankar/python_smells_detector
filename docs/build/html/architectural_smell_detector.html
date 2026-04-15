@@ -5,7 +5,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Architectural Smell Detection &mdash; Code Quality Analyzer 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
   
@@ -69,17 +69,10 @@
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell.module_class"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmell.module_class</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell.line_number"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmell.line_number</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell.severity"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmell.severity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell.__init__"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmell.__init__()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.architectural_smells"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.architectural_smells</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.module_dependencies"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.module_dependencies</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.module_functions"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.module_functions</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.api_usage"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.api_usage</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.thresholds"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.thresholds</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.file_paths"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.file_paths</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.external_dependencies"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.external_dependencies</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.function_calls"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.function_calls</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.__init__"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.__init__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.load_thresholds"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.load_thresholds()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_smells"><code class="docutils literal notranslate"><span class="pre">ArchitecturalSmellDetector.detect_smells()</span></code></a></li>
@@ -213,6 +206,26 @@
 <span class="sig-name descname"><span class="pre">severity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'medium'</span></em><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell.severity" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">severity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'medium'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmell.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
+<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -222,94 +235,20 @@
 <p>A class to detect architectural smells in Python projects.</p>
 <p>This class analyzes Python source code files within a directory to identify
 various architectural smells based on predefined thresholds.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.architectural_smells">
-<span class="sig-name descname"><span class="pre">architectural_smells</span></span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.architectural_smells" title="Link to this definition"></a></dt>
-<dd><p>A list to store detected architectural smells.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a></p>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>architectural_smells</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – A list to store detected architectural smells.</p></li>
+<li><p><strong>module_dependencies</strong> (<em>nx.DiGraph</em>) – A directed graph to represent module dependencies.</p></li>
+<li><p><strong>module_functions</strong> (<em>defaultdict</em>) – A dictionary to store functions for each module.</p></li>
+<li><p><strong>api_usage</strong> (<em>defaultdict</em>) – A dictionary to store API usage for each module.</p></li>
+<li><p><strong>thresholds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a>) – A dictionary of threshold values for various smell detections.</p></li>
+<li><p><strong>file_paths</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a>) – A dictionary to store file paths for each module.</p></li>
+<li><p><strong>external_dependencies</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a>) – A dictionary to store external dependencies for each module.</p></li>
+<li><p><strong>function_calls</strong> (<em>defaultdict</em>) – A dictionary to track inter-module function calls.</p></li>
+</ul>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.module_dependencies">
-<span class="sig-name descname"><span class="pre">module_dependencies</span></span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.module_dependencies" title="Link to this definition"></a></dt>
-<dd><p>A directed graph to represent module dependencies.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>nx.DiGraph</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.module_functions">
-<span class="sig-name descname"><span class="pre">module_functions</span></span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.module_functions" title="Link to this definition"></a></dt>
-<dd><p>A dictionary to store functions for each module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>defaultdict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.api_usage">
-<span class="sig-name descname"><span class="pre">api_usage</span></span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.api_usage" title="Link to this definition"></a></dt>
-<dd><p>A dictionary to store API usage for each module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>defaultdict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.thresholds">
-<span class="sig-name descname"><span class="pre">thresholds</span></span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.thresholds" title="Link to this definition"></a></dt>
-<dd><p>A dictionary of threshold values for various smell detections.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.file_paths">
-<span class="sig-name descname"><span class="pre">file_paths</span></span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.file_paths" title="Link to this definition"></a></dt>
-<dd><p>A dictionary to store file paths for each module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.external_dependencies">
-<span class="sig-name descname"><span class="pre">external_dependencies</span></span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.external_dependencies" title="Link to this definition"></a></dt>
-<dd><p>A dictionary to store external dependencies for each module.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.function_calls">
-<span class="sig-name descname"><span class="pre">function_calls</span></span><a class="headerlink" href="#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.function_calls" title="Link to this definition"></a></dt>
-<dd><p>A dictionary to track inter-module function calls.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>defaultdict</p>
-</dd>
-</dl>
-</dd></dl>
-
 <p>Initialize the ArchitecturalSmellDetector with given thresholds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
