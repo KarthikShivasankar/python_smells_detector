@@ -6,11 +6,11 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # Project information
 project = 'Code Quality Analyzer'
-copyright = '2025, Karthik Shivashankar'
+copyright = '2026, Karthik Shivashankar'
 author = 'Karthik Shivashankar'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.0'
+release = '0.2.1'
 
 # Extensions needed for API documentation
 extensions = [
