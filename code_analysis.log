@@ -1,0 +1,536 @@
+2024-11-27 10:23:26,101 - code_quality_analyzer.main - INFO - Loading configuration from: code_quality_config.yaml
+2024-11-27 10:23:26,128 - code_quality_analyzer.config_handler - INFO - Loading configuration from: code_quality_config.yaml
+2024-11-27 10:23:26,129 - code_quality_analyzer.config_handler - INFO - Loaded thresholds: {'code_smells': {'LONG_METHOD_LINES': 45, 'LARGE_CLASS_METHODS': 15, 'PRIMITIVE_OBSESSION_COUNT': 4, 'LONG_PARAMETER_LIST': 5, 'COMPLEX_CONDITIONAL': 3, 'DIVERGENT_CHANGE_PREFIXES': 4, 'SHOTGUN_SURGERY_CALLS': 5, 'EXCESSIVE_COMMENTS_RATIO': 0.3, 'LAZY_CLASS_METHODS': 4, 'FEATURE_ENVY_CALLS': 3, 'INAPPROPRIATE_INTIMACY_SHARED': 3, 'MESSAGE_CHAIN_LENGTH': 3, 'DATA_CLUMPS_THRESHOLD': 6, 'TEMPORARY_FIELD_THRESHOLD': 3, 'ALTERNATIVE_CLASSES_THRESHOLD': 3, 'DUPLICATE_CODE_THRESHOLD': 15, 'DEAD_CODE_THRESHOLD': 3, 'SPECULATIVE_GENERALITY_THRESHOLD': 4, 'MIDDLE_MAN_RATIO': 0.5, 'DIVERGENT_CHANGE_METHODS': 5, 'SHOTGUN_SURGERY_CONTEXTS': 3, 'DUPLICATE_CODE_MIN_LINES': 5, 'LARGE_COMMENT_BLOCKS': 5}, 'architectural_smells': {'GOD_OBJECT_FUNCTIONS': 20, 'UNSTABLE_DEPENDENCY_THRESHOLD': 0.8, 'HUB_LIKE_DEPENDENCY_RATIO': 0.3, 'REDUNDANT_ABSTRACTION_SIMILARITY': 0.7, 'IMPROPER_API_USAGE_RATIO': 0.7, 'CYCLIC_DEPENDENCY_MAX_LENGTH': 3}, 'structural_smells': {'NOM_THRESHOLD': 10, 'WMPC1_THRESHOLD': 20, 'WMPC2_THRESHOLD': 20, 'SIZE2_THRESHOLD': 15, 'WAC_THRESHOLD': 10, 'LCOM_THRESHOLD': 10, 'RFC_THRESHOLD': 20, 'NOCC_THRESHOLD': 10, 'DIT_THRESHOLD': 3, 'LOC_THRESHOLD': 150, 'MPC_THRESHOLD': 25, 'CBO_THRESHOLD': 5, 'NOC_THRESHOLD': 7, 'CYCLOMATIC_COMPLEXITY_THRESHOLD': 10, 'MAX_FANOUT': 15, 'MAX_FANIN': 15, 'MAX_FILE_LENGTH': 250, 'MAX_BRANCHES': 10, 'MAX_NESTING_DEPTH': 4}}
+2024-11-27 10:23:26,523 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\architectural_smell_detector.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 10:23:26,548 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\architectural_smell_detector.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 10:23:26,550 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\architectural_smell_detector.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: None
+2024-11-27 10:23:26,638 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\code_smell_detector.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 10:23:26,641 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\code_smell_detector.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 10:23:26,644 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\code_smell_detector.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: None
+2024-11-27 10:23:26,653 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\config_handler.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 10:23:26,654 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\config_handler.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 10:23:26,660 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\config_handler.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: None
+2024-11-27 10:23:26,664 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\exceptions.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 10:23:26,667 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\exceptions.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 10:23:26,669 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\exceptions.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: None
+2024-11-27 10:23:26,827 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\structural_smell_detector.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 10:23:26,829 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\structural_smell_detector.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 10:23:26,836 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\structural_smell_detector.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: None
+2024-11-27 10:23:26,854 - code_quality_analyzer.main - WARNING - Errors encountered during code smell analysis:
+2024-11-27 10:23:26,855 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 10:23:26,857 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\code_smell_detector.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 10:23:26,860 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\config_handler.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 10:23:26,861 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\exceptions.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 10:23:26,863 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\structural_smell_detector.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 10:23:26,865 - code_quality_analyzer.architectural_smell_detector - INFO - Analyzing directory structure: src
+2024-11-27 10:23:28,370 - numexpr.utils - INFO - Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2024-11-27 10:23:28,372 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2024-11-27 10:23:29,360 - code_quality_analyzer.structural_smell_detector - INFO - Analyzing directory structure: src
+2024-11-27 10:23:29,360 - code_quality_analyzer.structural_smell_detector - INFO - Starting analysis of directory: src
+2024-11-27 10:23:29,642 - code_quality_analyzer.structural_smell_detector - INFO - 
+Analysis Summary:
+----------------
+Files analyzed: 7
+Files with errors: 0
+Success rate: 100.0%
+        
+2024-11-27 10:23:29,644 - code_quality_analyzer.structural_smell_detector - INFO - Detecting NOM smells with threshold: 10
+2024-11-27 10:23:29,645 - code_quality_analyzer.structural_smell_detector - INFO - Detected NOM smell in code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector: 15 methods
+2024-11-27 10:23:29,646 - code_quality_analyzer.structural_smell_detector - INFO - Detected NOM smell in code_quality_analyzer.code_smell_detector.CodeSmellDetector: 24 methods
+2024-11-27 10:23:29,647 - code_quality_analyzer.structural_smell_detector - INFO - Detected NOM smell in code_quality_analyzer.structural_smell_detector.StructuralSmellDetector: 34 methods
+2024-11-27 10:23:29,836 - code_quality_analyzer.structural_smell_detector - INFO - Analysis complete. Found 94 structural smells.
+2024-11-27 10:23:29,836 - code_quality_analyzer.main - INFO - Structural smell analysis complete. Found 94 smells.
+2024-11-27 10:23:29,843 - code_quality_analyzer.main - INFO - CSV report generated and saved to code_quality_report.csv
+2024-11-27 16:05:33,733 - code_quality_analyzer.main - INFO - Loading configuration from: code_quality_config.yaml
+2024-11-27 16:05:33,760 - code_quality_analyzer.config_handler - INFO - Loading configuration from: code_quality_config.yaml
+2024-11-27 16:05:33,762 - code_quality_analyzer.config_handler - INFO - Loaded thresholds: {'code_smells': {'LONG_METHOD_LINES': 45, 'LARGE_CLASS_METHODS': 15, 'PRIMITIVE_OBSESSION_COUNT': 4, 'LONG_PARAMETER_LIST': 5, 'COMPLEX_CONDITIONAL': 3, 'DIVERGENT_CHANGE_PREFIXES': 4, 'SHOTGUN_SURGERY_CALLS': 5, 'EXCESSIVE_COMMENTS_RATIO': 0.3, 'LAZY_CLASS_METHODS': 4, 'FEATURE_ENVY_CALLS': 3, 'INAPPROPRIATE_INTIMACY_SHARED': 3, 'MESSAGE_CHAIN_LENGTH': 3, 'DATA_CLUMPS_THRESHOLD': 6, 'TEMPORARY_FIELD_THRESHOLD': 3, 'ALTERNATIVE_CLASSES_THRESHOLD': 3, 'DUPLICATE_CODE_THRESHOLD': 15, 'DEAD_CODE_THRESHOLD': 3, 'SPECULATIVE_GENERALITY_THRESHOLD': 4, 'MIDDLE_MAN_RATIO': 0.5, 'DIVERGENT_CHANGE_METHODS': 5, 'SHOTGUN_SURGERY_CONTEXTS': 3, 'DUPLICATE_CODE_MIN_LINES': 5, 'LARGE_COMMENT_BLOCKS': 5}, 'architectural_smells': {'GOD_OBJECT_FUNCTIONS': 20, 'UNSTABLE_DEPENDENCY_THRESHOLD': 0.8, 'HUB_LIKE_DEPENDENCY_RATIO': 0.3, 'REDUNDANT_ABSTRACTION_SIMILARITY': 0.7, 'IMPROPER_API_USAGE_RATIO': 0.7, 'CYCLIC_DEPENDENCY_MAX_LENGTH': 3}, 'structural_smells': {'NOM_THRESHOLD': 10, 'WMPC1_THRESHOLD': 20, 'WMPC2_THRESHOLD': 20, 'SIZE2_THRESHOLD': 15, 'WAC_THRESHOLD': 10, 'LCOM_THRESHOLD': 10, 'RFC_THRESHOLD': 20, 'NOCC_THRESHOLD': 10, 'DIT_THRESHOLD': 3, 'LOC_THRESHOLD': 150, 'MPC_THRESHOLD': 25, 'CBO_THRESHOLD': 5, 'NOC_THRESHOLD': 7, 'CYCLOMATIC_COMPLEXITY_THRESHOLD': 10, 'MAX_FANOUT': 15, 'MAX_FANIN': 15, 'MAX_FILE_LENGTH': 250, 'MAX_BRANCHES': 10, 'MAX_NESTING_DEPTH': 4}}
+2024-11-27 16:05:34,253 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\architectural_smell_detector.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 16:05:34,289 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\architectural_smell_detector.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 16:05:34,300 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\architectural_smell_detector.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: None
+2024-11-27 16:05:34,429 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\code_smell_detector.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 16:05:34,432 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\code_smell_detector.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 16:05:34,438 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\code_smell_detector.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: None
+2024-11-27 16:05:34,450 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\config_handler.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 16:05:34,455 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\config_handler.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 16:05:34,461 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\config_handler.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: None
+2024-11-27 16:05:34,468 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\exceptions.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 16:05:34,472 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\exceptions.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 16:05:34,480 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\exceptions.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: None
+2024-11-27 16:05:34,638 - code_quality_analyzer.code_smell_detector - ERROR - Error in detect_speculative_generality analyzing src\code_quality_analyzer\structural_smell_detector.py: 'UNUSED_PARAMETERS_THRESHOLD'
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+2024-11-27 16:05:34,642 - code_quality_analyzer.code_smell_detector - ERROR - Unexpected error analyzing src\code_quality_analyzer\structural_smell_detector.py: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 91, in detect_smells
+    detect_method(module, file_path)
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 868, in detect_speculative_generality
+    len(unused_params) >= self.thresholds["UNUSED_PARAMETERS_THRESHOLD"]):
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'UNUSED_PARAMETERS_THRESHOLD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\users\karth\desktop\code_quality_analyser\python_smells_detector-90a0\src\code_quality_analyzer\code_smell_detector.py", line 97, in detect_smells
+    raise CodeAnalysisError(
+code_quality_analyzer.exceptions.CodeAnalysisError: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+2024-11-27 16:05:34,650 - code_quality_analyzer.main - ERROR - Error analyzing src\code_quality_analyzer\structural_smell_detector.py: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: None
+2024-11-27 16:05:34,657 - code_quality_analyzer.main - WARNING - Errors encountered during code smell analysis:
+2024-11-27 16:05:34,657 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\architectural_smell_detector.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 16:05:34,660 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\code_smell_detector.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\code_smell_detector.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 16:05:34,663 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\config_handler.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\config_handler.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 16:05:34,666 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\exceptions.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\exceptions.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 16:05:34,671 - code_quality_analyzer.main - WARNING - 
+File: src\code_quality_analyzer\structural_smell_detector.py
+Error Type: CodeAnalysisError
+Error Message: Unexpected error: Error in detect_speculative_generality: 'UNUSED_PARAMETERS_THRESHOLD'
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: detect_speculative_generality
+File: src\code_quality_analyzer\structural_smell_detector.py
+Line: None
+Function: None
+Detector: CodeSmellDetector
+Function: None
+            
+2024-11-27 16:05:34,675 - code_quality_analyzer.architectural_smell_detector - INFO - Analyzing directory structure: src
+2024-11-27 16:05:36,025 - numexpr.utils - INFO - Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2024-11-27 16:05:36,026 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2024-11-27 16:05:37,057 - code_quality_analyzer.structural_smell_detector - INFO - Analyzing directory structure: src
+2024-11-27 16:05:37,059 - code_quality_analyzer.structural_smell_detector - INFO - Starting analysis of directory: src
+2024-11-27 16:05:37,266 - code_quality_analyzer.structural_smell_detector - INFO - 
+Analysis Summary:
+----------------
+Files analyzed: 7
+Files with errors: 0
+Success rate: 100.0%
+        
+2024-11-27 16:05:37,268 - code_quality_analyzer.structural_smell_detector - INFO - Detecting NOM smells with threshold: 10
+2024-11-27 16:05:37,269 - code_quality_analyzer.structural_smell_detector - INFO - Detected NOM smell in code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector: 15 methods
+2024-11-27 16:05:37,270 - code_quality_analyzer.structural_smell_detector - INFO - Detected NOM smell in code_quality_analyzer.code_smell_detector.CodeSmellDetector: 24 methods
+2024-11-27 16:05:37,271 - code_quality_analyzer.structural_smell_detector - INFO - Detected NOM smell in code_quality_analyzer.structural_smell_detector.StructuralSmellDetector: 34 methods
+2024-11-27 16:05:37,435 - code_quality_analyzer.structural_smell_detector - INFO - Analysis complete. Found 94 structural smells.
+2024-11-27 16:05:37,437 - code_quality_analyzer.main - INFO - Structural smell analysis complete. Found 94 smells.
+2024-11-27 16:05:37,444 - code_quality_analyzer.main - INFO - CSV report generated and saved to code_quality_report.csv
