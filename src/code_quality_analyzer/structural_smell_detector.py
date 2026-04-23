@@ -404,9 +404,7 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
                 severity = 'High' if size2 > self.thresholds['SIZE2_THRESHOLD'] * 1.5 else 'Medium'
                 self.add_smell(
                     "Large Class (SIZE2)",
-                    f"Class '{class_name}' has {size2} significant members (methods: {
-                        len(significant_methods)}, fields: {
-                        len(significant_fields)})",
+                    f"Class '{class_name}' has {size2} significant members (methods: {len(significant_methods)}, fields: {len(significant_fields)})",
                     self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
                     class_name,
                     severity=severity
