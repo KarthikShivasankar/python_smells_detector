@@ -44,6 +44,7 @@ A comprehensive Python static analysis tool that detects **code smells**, **arch
 - [Architecture](#architecture)
 - [Contributing](#contributing)
 - [License](#license)
+- [Citation](#citation)
 - [Acknowledgments](#acknowledgments)
 
 ---
@@ -158,7 +159,7 @@ Run all three detectors and read the architectural smells report first — cycli
 
 ## Requirements
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - [uv](https://docs.astral.sh/uv/) (recommended) or pip
 
 ---
@@ -740,6 +741,25 @@ Contributions are welcome. Please open an issue before submitting large changes.
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## Citation
+
+If you use PyExamine in academic work, please cite the following paper:
+
+```bibtex
+@inproceedings{shivashankar2025pyexamine,
+  title     = {PyExamine: A Comprehensive, Un-Opinionated Smell Detection Tool for Python},
+  author    = {Shivashankar, Karthik and Martini, Antonio},
+  booktitle = {2025 IEEE/ACM 22nd International Conference on Mining Software Repositories (MSR)},
+  pages     = {763--774},
+  year      = {2025},
+  publisher = {IEEE}
+}
+```
+
+> Shivashankar, K., & Martini, A. (2025, April). PyExamine: A Comprehensive, Un-Opinionated Smell Detection Tool for Python. In *2025 IEEE/ACM 22nd International Conference on Mining Software Repositories (MSR)* (pp. 763–774). IEEE.
 
 ---
 
