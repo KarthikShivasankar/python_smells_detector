@@ -1,5 +1,10 @@
 # Code Quality Analyzer (PyExamine)
 
+[![CI](https://github.com/KarthikShivasankar/python_smells_detector/actions/workflows/ci.yml/badge.svg)](https://github.com/KarthikShivasankar/python_smells_detector/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/code-quality-analyzer.svg)](https://pypi.org/project/code-quality-analyzer/)
+[![Python versions](https://img.shields.io/pypi/pyversions/code-quality-analyzer.svg)](https://pypi.org/project/code-quality-analyzer/)
+[![License: MIT](https://img.shields.io/pypi/l/code-quality-analyzer.svg)](LICENSE)
+
 A comprehensive Python static analysis tool that detects **code smells**, **architectural smells**, and **structural smells** in Python projects. Helps developers identify maintainability issues and technical debt before they compound.
 
 ---
@@ -38,8 +43,10 @@ A comprehensive Python static analysis tool that detects **code smells**, **arch
   - [Setup](#setup)
   - [Running tests](#running-tests)
   - [Linting](#linting)
-  - [Building docs](#building-docs)
-  - [Building and publishing to PyPI](#building-and-publishing-to-pypi)
+  - [Verifying across Python versions](#verifying-across-python-versions)
+  - [Updating the documentation](#updating-the-documentation)
+  - [Continuous integration (CI/CD)](#continuous-integration-cicd)
+  - [Maintaining & releasing the package](#maintaining--releasing-the-package)
 - [Troubleshooting](#troubleshooting)
 - [Architecture](#architecture)
 - [Contributing](#contributing)
@@ -647,53 +654,66 @@ interpreter without touching your project venv:
 uv run --no-project --python 3.10 --with . --with pytest python -m pytest tests/
 ```
 
-### Building docs
+### Updating the documentation
+
+Documentation lives in `docs/source/` as reStructuredText and is built with
+[Sphinx](https://www.sphinx-doc.org/) (config in `docs/source/conf.py`). The API
+reference is generated from docstrings via autodoc, so updating a docstring
+updates the docs.
 
 ```bash
-# Build HTML docs with Sphinx
-uv run sphinx-build docs/source docs/build/html
+# Build the HTML docs (sphinx ships in the dev extra). Expect zero warnings.
+uv run --extra dev sphinx-build docs/source docs/build/html
 
 # Windows legacy script
 cd docs && make.bat html
 ```
 
-### Building and publishing to PyPI
+What to update when you change docs:
+
+1. Edit the relevant `docs/source/*.rst` (or the docstring being rendered).
+2. If you add a new page, add it to the toctree in `docs/source/index.rst`.
+3. Bump `release` in `docs/source/conf.py` when the version changes.
+4. Rebuild with the command above and confirm **no warnings**.
+5. Commit both the `docs/source/` change and the regenerated `docs/build/html/`
+   (the built HTML is tracked in this repo).
+
+> **Read the Docs:** `.readthedocs.yaml` drives the hosted docs build, which
+> happens automatically from `docs/source/` on push — you do not need to commit
+> `docs/build/` for Read the Docs, only for the in-repo copy.
+
+### Continuous integration (CI/CD)
+
+Workflows live in `.github/workflows/`:
+
+| Workflow | File | Trigger | What it does |
+|----------|------|---------|--------------|
+| **CI** | `ci.yml` | push / PR to `main`/`dev` | Lints with ruff, runs the test suite on Python 3.10–3.13, audits dependencies (`pip-audit`), then builds and `twine check`s the distribution. |
+| **CodeQL** | `codeql.yml` | push / PR + weekly | GitHub static security analysis of the Python source. |
+| **Publish** | `publish.yml` | GitHub Release published | Builds, validates, and uploads to PyPI via Trusted Publishing (OIDC). |
+
+[Dependabot](https://docs.github.com/code-security/dependabot) (`.github/dependabot.yml`)
+opens weekly PRs for outdated Python deps and GitHub Actions. `.github/CODEOWNERS`
+auto-requests review from the maintainer.
+
+A change is "green" when **CI passes on all four Python versions**. Run the same
+checks locally before pushing:
 
 ```bash
-# 1. Build the wheel and source distribution
-uv build
-# → creates dist/code_quality_analyzer-0.2.2-py3-none-any.whl
-# → creates dist/code_quality_analyzer-0.2.2.tar.gz
-
-# (optional) validate the artifacts before uploading
-uv run --with twine python -m twine check dist/*
-
-# 2a. Test on TestPyPI first (optional but recommended)
-uv publish --index https://test.pypi.org/simple/
-
-# 2b. Publish to PyPI
-uv publish
+uv run ruff check src/ tests/
+uv run python -m pytest tests/
+uv build && uv run --with twine python -m twine check dist/*
 ```
 
-**Authentication:** create an API token at [pypi.org → Account Settings → API tokens](https://pypi.org/manage/account/#api-tokens), then:
+### Maintaining & releasing the package
 
-```bash
-# Set once in your shell profile to avoid being prompted every time
-export UV_PUBLISH_TOKEN=pypi-xxxxxxxxxxxx   # Linux / macOS
-$env:UV_PUBLISH_TOKEN="pypi-xxxxxxxxxxxx"   # Windows PowerShell
-```
+The package is `code-quality-analyzer` on PyPI; the import name is
+`code_quality_analyzer`. Releases are automated through Trusted Publishing — no
+API token is stored anywhere.
 
-Or pass it inline:
-
-```bash
-UV_PUBLISH_TOKEN=pypi-xxxx uv publish
-```
-
-**Recommended: Trusted Publishing (no token).** This repo ships a
-`.github/workflows/publish.yml` that publishes via PyPI
-[Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC) whenever
-a GitHub Release is published — no API token is ever stored. One-time PyPI setup
-(Project → Settings → Publishing → Add a pending/trusted publisher):
+**One-time setup** — add a trusted publisher at
+PyPI → Project → Settings → Publishing
+([docs](https://docs.pypi.org/trusted-publishers/)):
 
 | Field | Value |
 |-------|-------|
@@ -702,8 +722,36 @@ a GitHub Release is published — no API token is ever stored. One-time PyPI set
 | Workflow name | `publish.yml` |
 | Environment name | `pypi` |
 
-After that, bump the version in `pyproject.toml`, push a tag, and publish a
-GitHub Release — CI builds, validates, and uploads automatically.
+**Release checklist:**
+
+1. Make sure `main` is green (CI passing).
+2. Bump the version in **both** `pyproject.toml` (`version`) and
+   `docs/source/conf.py` (`release`). This project uses
+   [semantic versioning](https://semver.org/).
+3. Rebuild the docs (`uv run --extra dev sphinx-build docs/source docs/build/html`).
+4. Commit and push: `git commit -am "chore: bump version to X.Y.Z" && git push`.
+5. Tag and publish a GitHub Release — this triggers `publish.yml`:
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   gh release create vX.Y.Z --title "vX.Y.Z" --notes "..."
+   ```
+6. Watch the **Publish** workflow; confirm the new version appears at
+   <https://pypi.org/project/code-quality-analyzer/>.
+
+> **Note:** PyPI versions are immutable — you cannot re-upload an existing
+> version. If a release is broken, bump to the next patch version and
+> [yank](https://pypi.org/help/#yanked) the bad one in the PyPI UI
+> (Project → Releases → Options → Yank). Yanking hides it from new installs
+> without breaking existing pins.
+
+**Manual publish (fallback, if Trusted Publishing isn't set up):**
+
+```bash
+uv build
+uv run --with twine python -m twine check dist/*
+uv publish --token pypi-xxxxxxxx          # or set UV_PUBLISH_TOKEN
+```
 
 ---
 

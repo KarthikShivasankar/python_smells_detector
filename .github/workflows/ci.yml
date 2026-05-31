@@ -36,6 +36,24 @@ jobs:
       - name: Run tests
         run: uv run --python ${{ matrix.python-version }} python -m pytest tests/ -q
 
+  audit:
+    name: Dependency audit (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Audit dependencies for known vulnerabilities
+        # Non-blocking: surfaces advisories without failing PRs on new CVEs.
+        continue-on-error: true
+        run: |
+          uv export --format requirements-txt --no-emit-project --no-dev -o requirements.txt
+          uvx pip-audit -r requirements.txt
+
   build:
     name: Build & verify distribution
     runs-on: ubuntu-latest

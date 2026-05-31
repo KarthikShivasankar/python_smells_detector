@@ -1,0 +1,5 @@
+# Code owners for python_smells_detector / code-quality-analyzer.
+# These owners are requested for review on any PR that touches matching paths.
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+* @KarthikShivasankar
