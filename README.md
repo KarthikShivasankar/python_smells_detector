@@ -273,7 +273,7 @@ analyze_code_quality /path/to/project \
 |----------|------|-------------|---------|
 | `directory` | positional | Path to the project directory to analyze | *(required)* |
 | `--type` | option | Limit analysis to `code`, `architectural`, or `structural` | all three |
-| `--config` | option | Path to a YAML threshold configuration file | `code_quality_config.yaml` |
+| `--config` | option | Path to a YAML threshold configuration file. If omitted and no `code_quality_config.yaml` exists in the current directory, the config bundled with the package is used. | `code_quality_config.yaml` |
 | `--output` | option | Base name for output files — generates `<name>.txt` + `<name>.csv` | print to stdout |
 | `--ignore` | option (repeatable) | Directory names to skip during traversal | none |
 | `--debug` | flag | Enable verbose debug logging to console and `code_analysis.log` | off |
@@ -436,7 +436,7 @@ code-quality:
 
 ## Configuration
 
-All detection thresholds are defined in `code_quality_config.yaml`. The tool looks for this file in the current working directory by default; use `--config` to point to a different file.
+All detection thresholds are defined in `code_quality_config.yaml`. The tool looks for this file in the current working directory by default, and if it isn't found there it falls back to the configuration bundled with the installed package — so a fresh `pip install code-quality-analyzer` works out of the box with no config file present. Use `--config` to point to a different file.
 
 Copy the file and edit the `value` fields to tune sensitivity for your project:
 
@@ -571,8 +571,8 @@ Total Architectural Smells: 2
 ### Setup
 
 ```bash
-git clone https://github.com/KarthikShivasankar/code_quality_analyzer
-cd code_quality_analyzer
+git clone https://github.com/KarthikShivasankar/python_smells_detector
+cd python_smells_detector
 
 # Install runtime + dev dependencies (pytest, sphinx, etc.)
 uv sync --extra dev
@@ -646,8 +646,11 @@ cd docs && make.bat html
 ```bash
 # 1. Build the wheel and source distribution
 uv build
-# → creates dist/code_quality_analyzer-0.2.0-py3-none-any.whl
-# → creates dist/code_quality_analyzer-0.2.0.tar.gz
+# → creates dist/code_quality_analyzer-0.2.1-py3-none-any.whl
+# → creates dist/code_quality_analyzer-0.2.1.tar.gz
+
+# (optional) validate the artifacts before uploading
+uv run --with twine python -m twine check dist/*
 
 # 2a. Test on TestPyPI first (optional but recommended)
 uv publish --index https://test.pypi.org/simple/

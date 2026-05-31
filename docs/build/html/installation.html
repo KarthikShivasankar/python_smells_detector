@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; Code Quality Analyzer 0.2.0 documentation</title>
+  <title>Installation &mdash; Code Quality Analyzer 0.2.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/documentation_options.js?v=37f418d5"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation-methods">Installation Methods</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#using-uv-recommended">Using uv (Recommended)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#from-pypi">From PyPI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-uv-recommended-from-source">Using uv (Recommended, from source)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#using-pip">Using pip</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#development-installation">Development Installation</a></li>
 </ul>
@@ -97,14 +98,25 @@
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
 <p>Before installing Code Quality Analyzer, ensure you have:</p>
 <ul class="simple">
-<li><p>Python 3.8 or higher</p></li>
+<li><p>Python 3.10 or higher</p></li>
 <li><p>pip or <a class="reference external" href="https://docs.astral.sh/uv/">uv</a> package manager</p></li>
 </ul>
 </section>
 <section id="installation-methods">
 <h2>Installation Methods<a class="headerlink" href="#installation-methods" title="Link to this heading"></a></h2>
-<section id="using-uv-recommended">
-<h3>Using uv (Recommended)<a class="headerlink" href="#using-uv-recommended" title="Link to this heading"></a></h3>
+<section id="from-pypi">
+<h3>From PyPI<a class="headerlink" href="#from-pypi" title="Link to this heading"></a></h3>
+<p>Install the published package directly:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># with uv (installs the analyze_code_quality command globally)</span>
+uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>code-quality-analyzer
+
+<span class="c1"># or with pip</span>
+pip<span class="w"> </span>install<span class="w"> </span>code-quality-analyzer
+</pre></div>
+</div>
+</section>
+<section id="using-uv-recommended-from-source">
+<h3>Using uv (Recommended, from source)<a class="headerlink" href="#using-uv-recommended-from-source" title="Link to this heading"></a></h3>
 <p><a class="reference external" href="https://docs.astral.sh/uv/">uv</a> is the recommended way to install and manage the project:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/KarthikShivasankar/python_smells_detector.git
 <span class="nb">cd</span><span class="w"> </span>python_smells_detector
@@ -145,7 +157,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Karthik Shivashankar.</p>
+    <p>&#169; Copyright 2026, Karthik Shivashankar.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -6,7 +6,7 @@ The Code Quality Analyzer uses a YAML configuration file to set thresholds for v
 Configuration File
 ------------------
 
-The default configuration file is ``code_quality_config.yaml``. You can specify a custom configuration file using the ``--config`` option.
+The default configuration file is ``code_quality_config.yaml``. The tool looks for it in the current working directory; if it is not found there, the configuration bundled with the installed package is used automatically, so the tool works out of the box after a fresh install. You can specify a custom configuration file using the ``--config`` option.
 
 Example Configuration
 ---------------------

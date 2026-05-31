@@ -2,11 +2,14 @@ import os
 import argparse
 import csv
 import logging
+from importlib import resources
 from .code_smell_detector import CodeSmellDetector
 from .architectural_smell_detector import ArchitecturalSmellDetector
 from .structural_smell_detector import StructuralSmellDetector
 from .config_handler import ConfigHandler
 from .exceptions import CodeAnalysisError
+
+DEFAULT_CONFIG_NAME = "code_quality_config.yaml"
 
 # Set up logging
 logging.basicConfig(
@@ -24,8 +27,10 @@ def create_parser():
     """Create and return the argument parser for the CLI."""
     parser = argparse.ArgumentParser(description="Analyze code quality in Python projects.")
     parser.add_argument("directory", help="Directory path to analyze")
-    parser.add_argument("--config", default="code_quality_config.yaml",
-                        help="Path to the configuration file")
+    parser.add_argument("--config", default=DEFAULT_CONFIG_NAME,
+                        help="Path to the configuration file. If omitted and no "
+                             f"'{DEFAULT_CONFIG_NAME}' exists in the current directory, "
+                             "the config bundled with the package is used.")
     parser.add_argument("--output",
                         help="Path to the output file (supports .txt and .csv extensions)")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
@@ -35,6 +40,40 @@ def create_parser():
                         metavar="DIR",
                         help="Folder names to ignore during analysis (e.g. --ignore tests docs)")
     return parser
+
+
+def resolve_config_path(config_arg):
+    """Resolve which configuration file to load.
+
+    Precedence:
+    1. An existing file at ``config_arg`` is always used.
+    2. If ``config_arg`` is the default name and is absent from the current
+       working directory, fall back to the config bundled inside the installed
+       package so the tool works out-of-the-box after ``pip install``.
+    3. Otherwise return ``config_arg`` unchanged (a missing explicit path will
+       surface as a clear FileNotFoundError from ConfigHandler).
+
+    Args:
+        config_arg (str): The config path supplied on the command line.
+
+    Returns:
+        str: The path that should be handed to ConfigHandler.
+    """
+    if os.path.isfile(config_arg):
+        return config_arg
+
+    if config_arg == DEFAULT_CONFIG_NAME:
+        try:
+            packaged = resources.files("code_quality_analyzer").joinpath(DEFAULT_CONFIG_NAME)
+            if packaged.is_file():
+                logger.info(
+                    f"No '{DEFAULT_CONFIG_NAME}' found in the current directory; "
+                    "using the configuration bundled with the package.")
+                return str(packaged)
+        except (FileNotFoundError, ModuleNotFoundError):
+            pass
+
+    return config_arg
 
 
 def analyze_code_smells(directory_path, detector, ignore_dirs=None):
@@ -248,8 +287,9 @@ def analyze_project():
         output_csv = "code_quality_report.csv"
 
     try:
-        logger.info(f"Loading configuration from: {args.config}")
-        config_handler = ConfigHandler(args.config)
+        config_path = resolve_config_path(args.config)
+        logger.info(f"Loading configuration from: {config_path}")
+        config_handler = ConfigHandler(config_path)
 
         code_smells = []
         architectural_smells = []

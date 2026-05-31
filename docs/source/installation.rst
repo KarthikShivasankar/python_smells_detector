@@ -6,14 +6,27 @@ Prerequisites
 
 Before installing Code Quality Analyzer, ensure you have:
 
-* Python 3.8 or higher
+* Python 3.10 or higher
 * pip or `uv <https://docs.astral.sh/uv/>`_ package manager
 
 Installation Methods
 --------------------
 
-Using uv (Recommended)
-^^^^^^^^^^^^^^^^^^^^^^^
+From PyPI
+^^^^^^^^^
+
+Install the published package directly:
+
+.. code-block:: bash
+
+   # with uv (installs the analyze_code_quality command globally)
+   uv tool install code-quality-analyzer
+
+   # or with pip
+   pip install code-quality-analyzer
+
+Using uv (Recommended, from source)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `uv <https://docs.astral.sh/uv/>`_ is the recommended way to install and manage the project:
 

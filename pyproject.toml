@@ -46,9 +46,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/KarthikShivasankar/code_quality_analyzer"
-Repository = "https://github.com/KarthikShivasankar/code_quality_analyzer"
-"Bug Tracker" = "https://github.com/KarthikShivasankar/code_quality_analyzer/issues"
+Homepage = "https://github.com/KarthikShivasankar/python_smells_detector"
+Repository = "https://github.com/KarthikShivasankar/python_smells_detector"
+"Bug Tracker" = "https://github.com/KarthikShivasankar/python_smells_detector/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/code_quality_analyzer"]

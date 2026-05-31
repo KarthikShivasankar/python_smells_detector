@@ -12,6 +12,8 @@ from code_quality_analyzer.main import (
     analyze_structural_smells,
     generate_report,
     generate_csv_report,
+    resolve_config_path,
+    DEFAULT_CONFIG_NAME,
 )
 from code_quality_analyzer.code_smell_detector import CodeSmellDetector, CodeSmell
 from code_quality_analyzer.structural_smell_detector import StructuralSmellDetector, StructuralSmell
@@ -60,6 +62,33 @@ class TestCreateParser:
         parser = create_parser()
         args = parser.parse_args(['/p', '--output', 'my_report'])
         assert args.output == 'my_report'
+
+
+# ---------------------------------------------------------------------------
+# resolve_config_path
+# ---------------------------------------------------------------------------
+
+class TestResolveConfigPath:
+    def test_existing_explicit_path_is_used(self, tmp_path):
+        cfg = tmp_path / "custom.yaml"
+        cfg.write_text("code_smells: {}\n")
+        assert resolve_config_path(str(cfg)) == str(cfg)
+
+    def test_default_in_cwd_is_used(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / DEFAULT_CONFIG_NAME).write_text("code_smells: {}\n")
+        assert resolve_config_path(DEFAULT_CONFIG_NAME) == DEFAULT_CONFIG_NAME
+
+    def test_default_missing_falls_back_to_packaged(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        resolved = resolve_config_path(DEFAULT_CONFIG_NAME)
+        assert resolved != DEFAULT_CONFIG_NAME
+        assert resolved.endswith(DEFAULT_CONFIG_NAME)
+        assert os.path.isfile(resolved)
+
+    def test_missing_explicit_path_returned_unchanged(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        assert resolve_config_path("nonexistent_custom.yaml") == "nonexistent_custom.yaml"
 
 
 # ---------------------------------------------------------------------------
