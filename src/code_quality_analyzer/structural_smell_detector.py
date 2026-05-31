@@ -1,10 +1,12 @@
-import os
 import ast
-import networkx as nx
+import logging
+import os
 from collections import defaultdict
 from dataclasses import dataclass
+
+import networkx as nx
 import yaml
-import logging
+
 from .exceptions import CodeAnalysisError
 
 # Set up logger
@@ -575,9 +577,7 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
                 severity = 'High' if rfc > self.thresholds['RFC_THRESHOLD'] * 1.5 else 'Medium'
                 self.add_smell(
                     "High Response for a Class (RFC)",
-                    f"Class '{class_name}' has RFC of {rfc} (methods: {
-                        len(significant_methods)}, external calls: {
-                        len(external_calls)})",
+                    f"Class '{class_name}' has RFC of {rfc} (methods: {len(significant_methods)}, external calls: {len(external_calls)})",
                     self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
                     class_name,
                     severity=severity
@@ -630,8 +630,7 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
                 severity = 'High' if count > adjusted_threshold * 1.5 else 'Medium'
                 self.add_smell(
                     "High Number of Classes (NOCC)",
-                    f"Module '{module_name}' has {count} significant classes (avg complexity: {
-                        avg_weight:.1f})",
+                    f"Module '{module_name}' has {count} significant classes (avg complexity: {avg_weight:.1f})",
                     self.file_paths.get(module_name, "Unknown"),
                     module_name,
                     severity=severity
@@ -850,13 +849,7 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
                     "High Message Passing Coupling (MPC)",
                     f"Class '{class_name}' has weighted MPC of {weighted_mpc:.1f}\n"
                     f"(External calls: {external_mpc}, Internal calls: {internal_mpc})\n"
-                    f"Most frequent external calls: {
-                        dict(
-                            sorted(
-                                method_calls.items(),
-                                key=lambda x: x[1],
-                                reverse=True)[
-                                :3])}",
+                    f"Most frequent external calls: {dict(sorted(method_calls.items(),key=lambda x: x[1],reverse=True)[:3])}",
                     self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
                     class_name,
                     severity=severity

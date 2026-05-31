@@ -627,8 +627,24 @@ uv run python -m pytest tests/ -q && echo "All tests passed"
 
 ### Linting
 
+Linting is handled by [ruff](https://docs.astral.sh/ruff/) (configured in `pyproject.toml`):
+
 ```bash
-uv run flake8 src/ --max-line-length=100
+uv run ruff check src/ tests/
+uv run ruff check src/ tests/ --fix   # auto-fix
+```
+
+> Ruff is pinned to `target-version = "py310"`, which guards against
+> accidentally introducing Python 3.12-only f-string syntax (line breaks inside
+> `{...}` replacement fields) that would break the package on Python 3.10/3.11.
+
+### Verifying across Python versions
+
+The package supports Python 3.10–3.13. To run the suite against a specific
+interpreter without touching your project venv:
+
+```bash
+uv run --no-project --python 3.10 --with . --with pytest python -m pytest tests/
 ```
 
 ### Building docs
@@ -646,8 +662,8 @@ cd docs && make.bat html
 ```bash
 # 1. Build the wheel and source distribution
 uv build
-# → creates dist/code_quality_analyzer-0.2.1-py3-none-any.whl
-# → creates dist/code_quality_analyzer-0.2.1.tar.gz
+# → creates dist/code_quality_analyzer-0.2.2-py3-none-any.whl
+# → creates dist/code_quality_analyzer-0.2.2.tar.gz
 
 # (optional) validate the artifacts before uploading
 uv run --with twine python -m twine check dist/*
@@ -672,6 +688,22 @@ Or pass it inline:
 ```bash
 UV_PUBLISH_TOKEN=pypi-xxxx uv publish
 ```
+
+**Recommended: Trusted Publishing (no token).** This repo ships a
+`.github/workflows/publish.yml` that publishes via PyPI
+[Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC) whenever
+a GitHub Release is published — no API token is ever stored. One-time PyPI setup
+(Project → Settings → Publishing → Add a pending/trusted publisher):
+
+| Field | Value |
+|-------|-------|
+| Owner | `KarthikShivasankar` |
+| Repository name | `python_smells_detector` |
+| Workflow name | `publish.yml` |
+| Environment name | `pypi` |
+
+After that, bump the version in `pyproject.toml`, push a tag, and publish a
+GitHub Release — CI builds, validates, and uploads automatically.
 
 ---
 
@@ -735,8 +767,8 @@ Contributions are welcome. Please open an issue before submitting large changes.
 1. Fork the repository and create a feature branch
 2. Set up the dev environment: `uv sync --extra dev`
 3. Make your changes and add or update tests
-4. `uv run pytest tests/` — all tests must pass
-5. `uv run flake8 src/ --max-line-length=100` — no new lint errors
+4. `uv run python -m pytest tests/` — all tests must pass
+5. `uv run ruff check src/ tests/` — no lint errors
 6. Open a pull request with a clear description
 
 ---

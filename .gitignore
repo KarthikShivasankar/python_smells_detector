@@ -31,6 +31,11 @@ docs/_build/
 # IDE-specific files
 .vscode/
 .idea/
+.cursor/
+
+# Tooling caches
+.ruff_cache/
+.mypy_cache/
 
 # System files
 .DS_Store

@@ -1,13 +1,14 @@
-import os
 import argparse
 import csv
 import logging
+import os
 from importlib import resources
-from .code_smell_detector import CodeSmellDetector
+
 from .architectural_smell_detector import ArchitecturalSmellDetector
-from .structural_smell_detector import StructuralSmellDetector
+from .code_smell_detector import CodeSmellDetector
 from .config_handler import ConfigHandler
 from .exceptions import CodeAnalysisError
+from .structural_smell_detector import StructuralSmellDetector
 
 DEFAULT_CONFIG_NAME = "code_quality_config.yaml"
 

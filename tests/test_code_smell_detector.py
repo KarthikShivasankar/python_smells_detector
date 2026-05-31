@@ -6,8 +6,8 @@ smell IS detected when the code clearly violates the threshold; negative tests
 verify that clean code does NOT trigger a false positive.
 """
 import pytest
-from code_quality_analyzer.code_smell_detector import CodeSmellDetector
 
+from code_quality_analyzer.code_smell_detector import CodeSmellDetector
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -195,7 +195,6 @@ class TestSwitchStatements:
         # detect_switch_statements counts If nodes directly inside node.orelse.
         # Threshold COMPLEX_CONDITIONAL=3 → need count > 3 (i.e. >=4 If siblings).
         # Also must NOT be a guard clause (body > 2 lines OR non-Compare test).
-        from code_quality_analyzer.code_smell_detector import CodeSmellDetector
         detector = CodeSmellDetector({**__import__('conftest').CODE_SMELL_THRESHOLDS,
                                       'COMPLEX_CONDITIONAL': 1})
         # Outer if: body has 3 statements (not guard clause), orelse has 3 If nodes → count=4 > 1

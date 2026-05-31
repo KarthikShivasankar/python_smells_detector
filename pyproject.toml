@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "code-quality-analyzer"
-version = "0.2.1"
+version = "0.2.2"
 description = "Detect code smells, architectural smells, and structural smells in Python projects"
 readme = "README.md"
 license = { text = "MIT" }
@@ -43,12 +43,27 @@ dev = [
     "myst-parser",
     "pytest>=7.0",
     "pytest-cov",
+    "ruff>=0.6",
 ]
 
 [project.urls]
 Homepage = "https://github.com/KarthikShivasankar/python_smells_detector"
 Repository = "https://github.com/KarthikShivasankar/python_smells_detector"
 "Bug Tracker" = "https://github.com/KarthikShivasankar/python_smells_detector/issues"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# F = pyflakes (undefined names, unused imports), E/W = pycodestyle, I = isort.
+# Ruff always reports syntax errors regardless of selection, so target-version
+# py310 above guards against re-introducing 3.12-only f-string line breaks.
+select = ["E", "F", "W", "I"]
+# E501 (line-too-long) is intentionally not enforced: the detector modules
+# carry many pre-existing long lines. Tighten this incrementally over time.
+ignore = ["E501"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/code_quality_analyzer"]

@@ -2,10 +2,11 @@
 Tests for ConfigHandler — config loading, validation, and threshold access.
 """
 import os
+
 import pytest
 import yaml
-from code_quality_analyzer.config_handler import ConfigHandler
 
+from code_quality_analyzer.config_handler import ConfigHandler
 
 # ---------------------------------------------------------------------------
 # Helpers

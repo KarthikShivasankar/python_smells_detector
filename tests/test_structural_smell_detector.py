@@ -5,9 +5,7 @@ Tests verify the twelve metric-based structural smell detectors.
 Each test writes real Python source files into a tmp_path directory,
 runs detect_smells(), then asserts the expected smell was (or was not) found.
 """
-import pytest
 from code_quality_analyzer.structural_smell_detector import StructuralSmellDetector
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -213,7 +211,6 @@ class TestDIT:
         # builds a graph where each phantom base node is a direct child of "object".
         # So deep.E's shortest path from object is always 2 regardless of chain depth.
         # Use DIT_THRESHOLD=1 so that path-length 2 > 1 triggers the smell.
-        from code_quality_analyzer.structural_smell_detector import StructuralSmellDetector
         thresholds = {**__import__('conftest').STRUCTURAL_THRESHOLDS, 'DIT_THRESHOLD': 1}
         detector = StructuralSmellDetector(thresholds)
         f = tmp_path / "deep.py"

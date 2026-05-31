@@ -1,10 +1,13 @@
-import astroid
-from astroid import nodes, exceptions as astroid_exceptions
+import logging
+import re
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import combinations, product
-import re
-import logging
+
+import astroid
+from astroid import exceptions as astroid_exceptions
+from astroid import nodes
+
 from .exceptions import CodeAnalysisError
 
 # Set up logger
@@ -152,8 +155,7 @@ class CodeSmellDetector:
                 display_name = f"{parent_class}.{node.name}" if parent_class else node.name
                 self.code_smells.append(CodeSmell(
                     name="Long Method",
-                    description=f"'{display_name}' has {actual_lines} lines in {file_path} at line {
-                        node.lineno}",
+                    description=f"'{display_name}' has {actual_lines} lines in {file_path} at line {node.lineno}",
                     file_path=file_path,
                     module_class=display_name,
                     line_number=node.lineno
@@ -201,9 +203,7 @@ class CodeSmellDetector:
             if len(non_trivial_methods) > self.thresholds["LARGE_CLASS_METHODS"]:
                 self.add_smell(
                     name="Large Class",
-                    description=f"'{
-                        node.name}' has {
-                        len(non_trivial_methods)} non-trivial methods in {file_path}",
+                    description=f"'{node.name}' has {len(non_trivial_methods)} non-trivial methods in {file_path}",
                     file_path=file_path,
                     module_class=node.name,
                     line_number=node.lineno
@@ -240,9 +240,7 @@ class CodeSmellDetector:
                     primitive_ratio > 0.7):  # More than 70% primitives
                 self.code_smells.append(CodeSmell(
                     name="Primitive Obsession",
-                    description=f"'{
-                        node.name}' has {
-                        len(primitives)} primitive parameters in {file_path}",
+                    description=f"'{node.name}' has {len(primitives)} primitive parameters in {file_path}",
                     file_path=file_path,
                     module_class=node.name,
                     line_number=node.lineno
@@ -315,9 +313,7 @@ class CodeSmellDetector:
                     len(params) >= self.thresholds["DATA_CLUMPS_THRESHOLD"]):
                 self.add_smell(
                     name="Data Clumps",
-                    description=f"Parameters {
-                        ', '.join(params)} appear together in functions: {
-                        ', '.join(functions)} in {file_path}",
+                    description=f"Parameters {', '.join(params)} appear together in functions: {', '.join(functions)} in {file_path}",
                     file_path=file_path,
                     module_class=', '.join(functions),
                     line_number=None,
@@ -364,8 +360,7 @@ class CodeSmellDetector:
                     not is_type_check):
                 self.code_smells.append(CodeSmell(
                     name="Switch Statements",
-                    description=f"Complex conditional with {condition_count} branches at line {
-                        node.lineno} in {file_path}",
+                    description=f"Complex conditional with {condition_count} branches at line {node.lineno} in {file_path}",
                     file_path=file_path,
                     module_class=None,
                     line_number=node.lineno,
@@ -427,10 +422,7 @@ class CodeSmellDetector:
             if len(temp_fields) >= self.thresholds["TEMPORARY_FIELD_THRESHOLD"]:
                 self.add_smell(
                     name="Temporary Field",
-                    description=f"Potentially unused fields {
-                        ', '.join(temp_fields)} in class '{
-                        node.name}' at line {
-                        node.lineno} in {file_path}",
+                    description=f"Potentially unused fields {', '.join(temp_fields)} in class '{node.name}' at line {node.lineno} in {file_path}",
                     file_path=file_path,
                     module_class=node.name,
                     line_number=node.lineno,
@@ -491,9 +483,7 @@ class CodeSmellDetector:
                 if not share_base_class:
                     self.add_smell(
                         name="Alternative Classes with Different Interfaces",
-                        description=f"Classes {
-                            ', '.join(classes)} share similar methods {
-                            ', '.join(methods)} in {file_path}",
+                        description=f"Classes {', '.join(classes)} share similar methods {', '.join(methods)} in {file_path}",
                         file_path=file_path,
                         module_class=', '.join(classes),
                         line_number=None,
@@ -566,10 +556,7 @@ class CodeSmellDetector:
                     len(method_prefixes) > self.thresholds["DIVERGENT_CHANGE_METHODS"]):
                 self.add_smell(
                     name="Potential Divergent Change",
-                    description=f"Class '{
-                        node.name}' has {
-                        len(unique_prefixes)} different method prefixes: {
-                        ', '.join(unique_prefixes)} in {file_path}",
+                    description=f"Class '{node.name}' has {len(unique_prefixes)} different method prefixes: {', '.join(unique_prefixes)} in {file_path}",
                     file_path=file_path,
                     module_class=node.name,
                     line_number=node.lineno,
@@ -620,10 +607,7 @@ class CodeSmellDetector:
             if parallel_hierarchies:
                 self.add_smell(
                     name="Parallel Inheritance Hierarchies",
-                    description=f"Parallel hierarchies detected: {
-                        ' and '.join(
-                            [
-                                ' -> '.join(h) for h in parallel_hierarchies])} in {file_path}",
+                    description=f"Parallel hierarchies detected: {' and '.join([' -> '.join(h) for h in parallel_hierarchies])} in {file_path}",
                     file_path=file_path,
                     module_class=None,
                     line_number=None,
@@ -657,8 +641,7 @@ class CodeSmellDetector:
                     unique_contexts > self.thresholds["SHOTGUN_SURGERY_CONTEXTS"]):
                 self.code_smells.append(CodeSmell(
                     name="Potential Shotgun Surgery",
-                    description=f"Method '{method}' called in {unique_contexts} different contexts across {
-                        len(calls)} locations in {file_path}",
+                    description=f"Method '{method}' called in {unique_contexts} different contexts across {len(calls)} locations in {file_path}",
                     file_path=file_path,
                     module_class=method,
                     line_number=calls[0][0],
@@ -704,8 +687,7 @@ class CodeSmellDetector:
                 large_comment_blocks > self.thresholds["LARGE_COMMENT_BLOCKS"]):
             self.code_smells.append(CodeSmell(
                 name="Excessive Comments",
-                description=f"File has {
-                    comment_ratio:.1%} comment ratio with {large_comment_blocks} large comment blocks in {file_path}",
+                description=f"File has {comment_ratio:.1%} comment ratio with {large_comment_blocks} large comment blocks in {file_path}",
                 file_path=file_path,
                 module_class=None,
                 line_number=None,
@@ -745,9 +727,7 @@ class CodeSmellDetector:
                 total_lines = sum(lines for _, lines in functions)
                 self.code_smells.append(CodeSmell(
                     name="Duplicate Code",
-                    description=f"Similar code found in functions: {
-                        ', '.join(
-                            f[0] for f in functions)} ({total_lines} total lines) in {file_path}",
+                    description=f"Similar code found in functions: {', '.join(f[0] for f in functions)} ({total_lines} total lines) in {file_path}",
                     file_path=file_path,
                     module_class=', '.join(f[0] for f in functions),
                     line_number=None,
@@ -797,8 +777,7 @@ class CodeSmellDetector:
                         not node.name.endswith(('DTO', 'Model', 'Entity', 'Record'))):
                     self.code_smells.append(CodeSmell(
                         name="Data Class",
-                        description=f"Class '{
-                            node.name}' has {getters} getters and {setters} setters with no other methods in {file_path}",
+                        description=f"Class '{node.name}' has {getters} getters and {setters} setters with no other methods in {file_path}",
                         file_path=file_path,
                         module_class=node.name,
                         line_number=node.lineno,
@@ -889,9 +868,7 @@ class CodeSmellDetector:
                         total_lines <= self.thresholds["LAZY_CLASS_LINES"]):
                     self.code_smells.append(CodeSmell(
                         name="Lazy Class",
-                        description=f"Class '{
-                            node.name}' has only {
-                            len(methods)} non-trivial methods with {total_lines} total lines in {file_path}",
+                        description=f"Class '{node.name}' has only {len(methods)} non-trivial methods with {total_lines} total lines in {file_path}",
                         file_path=file_path,
                         module_class=node.name,
                         line_number=node.lineno,
@@ -928,14 +905,10 @@ class CodeSmellDetector:
                 description = []
                 if abstract_methods:
                     description.append(
-                        f"has {
-                            len(abstract_methods)} empty methods: {
-                            ', '.join(abstract_methods)}")
+                        f"has {len(abstract_methods)} empty methods: {', '.join(abstract_methods)}")
                 if unused_params:
                     description.append(
-                        f"has {
-                            len(unused_params)} unused parameters: {
-                            ', '.join(unused_params)}")
+                        f"has {len(unused_params)} unused parameters: {', '.join(unused_params)}")
 
                 self.code_smells.append(CodeSmell(
                     name="Speculative Generality",
@@ -995,8 +968,7 @@ class CodeSmellDetector:
                         max_calls > local_calls * 2):  # At least twice as many external calls
                     self.add_smell(
                         name="Feature Envy",
-                        description=f"Method '{
-                            node.name}' makes {max_calls} calls to '{max_class}' but only {local_calls} local calls in {file_path}",
+                        description=f"Method '{node.name}' makes {max_calls} calls to '{max_class}' but only {local_calls} local calls in {file_path}",
                         file_path=file_path,
                         module_class=node.name,
                         line_number=node.lineno,
@@ -1196,8 +1168,7 @@ class CodeSmellDetector:
                 primary_delegate = max(delegate_targets.items(), key=lambda x: len(x[1]))
                 self.add_smell(
                     name="Middle Man",
-                    description=f"Class '{
-                        node.name}' delegates {delegating_methods}/{total_methods} methods "
+                    description=f"Class '{node.name}' delegates {delegating_methods}/{total_methods} methods "
                     f"({delegation_ratio:.1%}), mainly to {primary_delegate[0]} in {file_path}",
                     file_path=file_path,
                     module_class=node.name,
@@ -1227,9 +1198,7 @@ class CodeSmellDetector:
                 class_list = [f"{cls} ({fp})" for cls, fp in entries]
                 self.add_smell(
                     name="Alternative Classes with Different Interfaces",
-                    description=f"Classes {
-                        ', '.join(class_list)} share similar methods {
-                        ', '.join(methods)} across files",
+                    description=f"Classes {', '.join(class_list)} share similar methods {', '.join(methods)} across files",
                     file_path=", ".join(files_seen),
                     module_class=", ".join(cls for cls, _ in entries),
                     line_number=None,
@@ -1247,9 +1216,7 @@ class CodeSmellDetector:
                 func_list = [f"{fn} ({fp})" for fn, fp in entries]
                 self.add_smell(
                     name="Data Clumps",
-                    description=f"Parameters {
-                        ', '.join(params)} appear together across files in: {
-                        ', '.join(func_list)}",
+                    description=f"Parameters {', '.join(params)} appear together across files in: {', '.join(func_list)}",
                     file_path=", ".join(files_seen),
                     module_class=", ".join(fn for fn, _ in entries),
                     line_number=None,
@@ -1266,8 +1233,7 @@ class CodeSmellDetector:
                 func_list = [f"{fn} ({fp})" for fn, fp, _ in entries]
                 self.add_smell(
                     name="Duplicate Code",
-                    description=f"Similar code found across files in functions: {
-                        ', '.join(func_list)} ({total_lines} total lines)",
+                    description=f"Similar code found across files in functions: {', '.join(func_list)} ({total_lines} total lines)",
                     file_path=", ".join(files_seen),
                     module_class=", ".join(fn for fn, _, _ in entries),
                     line_number=None,

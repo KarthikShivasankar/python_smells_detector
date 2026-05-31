@@ -1,13 +1,15 @@
-import os
 import ast
-import networkx as nx
-from collections import defaultdict
-import yaml
-from dataclasses import dataclass
-import sys
 import importlib.util
 import logging
+import os
+import sys
+from collections import defaultdict
+from dataclasses import dataclass
+
+import networkx as nx
+import yaml
 from tqdm import tqdm
+
 from .exceptions import CodeAnalysisError
 
 # Set up logger
@@ -374,10 +376,7 @@ class ArchitecturalSmellDetector:
                         if similarity >= similarity_threshold:
                             self.add_smell(
                                 "Potential Redundant Abstractions",
-                                f"Modules {
-                                    modules[i]} and {
-                                    modules[j]} have {
-                                    similarity:.1%} similar functionalities",
+                                f"Modules {modules[i]} and {modules[j]} have {similarity:.1%} similar functionalities",
                                 self.file_paths.get(modules[i], "Unknown"),
                                 modules[i]
                             )

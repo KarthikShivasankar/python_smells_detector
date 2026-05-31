@@ -2,24 +2,28 @@
 Tests for main.py orchestration: analyze_code_smells, analyze_architectural_smells,
 analyze_structural_smells, generate_report, generate_csv_report, and create_parser.
 """
-import os
 import csv
-import pytest
-from code_quality_analyzer.main import (
-    create_parser,
-    analyze_code_smells,
-    analyze_architectural_smells,
-    analyze_structural_smells,
-    generate_report,
-    generate_csv_report,
-    resolve_config_path,
-    DEFAULT_CONFIG_NAME,
-)
-from code_quality_analyzer.code_smell_detector import CodeSmellDetector, CodeSmell
-from code_quality_analyzer.structural_smell_detector import StructuralSmellDetector, StructuralSmell
-from code_quality_analyzer.architectural_smell_detector import ArchitecturalSmellDetector, ArchitecturalSmell
-from conftest import CODE_SMELL_THRESHOLDS, STRUCTURAL_THRESHOLDS, ARCHITECTURAL_THRESHOLDS
+import os
 
+import pytest
+
+from code_quality_analyzer.architectural_smell_detector import (
+    ArchitecturalSmell,
+    ArchitecturalSmellDetector,
+)
+from code_quality_analyzer.code_smell_detector import CodeSmell, CodeSmellDetector
+from code_quality_analyzer.main import (
+    DEFAULT_CONFIG_NAME,
+    analyze_architectural_smells,
+    analyze_code_smells,
+    analyze_structural_smells,
+    create_parser,
+    generate_csv_report,
+    generate_report,
+    resolve_config_path,
+)
+from code_quality_analyzer.structural_smell_detector import StructuralSmell, StructuralSmellDetector
+from conftest import ARCHITECTURAL_THRESHOLDS, CODE_SMELL_THRESHOLDS, STRUCTURAL_THRESHOLDS
 
 # ---------------------------------------------------------------------------
 # CLI parser

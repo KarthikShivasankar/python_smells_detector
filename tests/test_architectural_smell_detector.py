@@ -5,8 +5,6 @@ Each test class targets one of the eight architectural smell detectors.
 Tests write real Python files into tmp_path directories so the detector
 exercises its actual file-parsing and graph-building logic.
 """
-import pytest
-from code_quality_analyzer.architectural_smell_detector import ArchitecturalSmellDetector
 
 
 # ---------------------------------------------------------------------------
@@ -114,7 +112,7 @@ class TestRedundantAbstraction:
 class TestImproperAPIUsage:
     def test_detects_repetitive_api_calls(self, architectural_smell_detector, tmp_path):
         # 12 calls to api.method1 — repetition ratio will exceed threshold
-        calls = "\n".join(f"    api.method1()" for _ in range(12))
+        calls = "\n".join("    api.method1()" for _ in range(12))
         f = tmp_path / "api_abuse.py"
         f.write_text(f"def do_stuff(api):\n{calls}\n")
         architectural_smell_detector.detect_smells(str(tmp_path))
