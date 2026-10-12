@@ -473,10 +473,10 @@ analyze_code_quality /path/to/project --config my_project_thresholds.yaml
 | `INAPPROPRIATE_INTIMACY_SHARED` | `3` | Class pairs sharing more internals than this are flagged |
 | `MESSAGE_CHAIN_LENGTH` | `3` | Call chains longer than this are flagged |
 | `MIDDLE_MAN_RATIO` | `0.5` | Classes where more than this fraction of methods only delegate are flagged |
-| `DATA_CLUMPS_THRESHOLD` | `6` | Parameter groups appearing together more than this many times are flagged |
+| `DATA_CLUMPS_THRESHOLD` | `6` | Minimum number of parameters two or more functions must share to be flagged. Only the maximal shared group is reported (not every subset), and a cross-file finding replaces the per-file finding for the same group |
 | `TEMPORARY_FIELD_THRESHOLD` | `3` | Fields used in fewer methods than this are flagged as temporary |
-| `ALTERNATIVE_CLASSES_THRESHOLD` | `3` | Classes with more shared methods than this are checked for identical interfaces |
-| `DUPLICATE_CODE_THRESHOLD` | `15` | Functions with more shared lines than this are flagged as duplicates |
+| `ALTERNATIVE_CLASSES_THRESHOLD` | `3` | Minimum number of classes with an identical public method set to be flagged |
+| `DUPLICATE_CODE_THRESHOLD` | `15` | Minimum number of functions with identical normalized bodies to be flagged |
 | `DUPLICATE_CODE_MIN_LINES` | `5` | Minimum block length (lines) to consider when detecting duplicate code |
 | `DEAD_CODE_THRESHOLD` | `3` | Functions not called more than this many times are flagged as dead code |
 | `SPECULATIVE_GENERALITY_THRESHOLD` | `4` | Abstract classes with fewer concrete subclasses than this are flagged |
@@ -556,7 +556,7 @@ Code Smells:
 - Large Class: 'DataManager' has 22 non-trivial methods in src/data_manager.py at line 10
 - Long Method: 'DataManager.transform' has 68 lines in src/data_manager.py at line 145
 - Feature Envy: Method 'calculate_metrics' makes 8 calls to 'stats' but only 1 local call
-- Data Clumps: Parameters user_id, user_name, user_email appear together in 7 functions
+- Data Clumps: Parameters database, host, password, port, timeout, username appear together in functions: create, connect in src/db.py
 
 Architectural Smells:
 ---------------------

@@ -48,10 +48,13 @@ class CodeSmellDetector:
         self.thresholds = thresholds
         # Cross-file accumulation for smells needing multi-file context
         self._global_class_methods = defaultdict(list)
-        self._global_param_groups = defaultdict(list)
+        self._global_param_funcs = []  # (func_name, file_path, frozenset(params))
         self._global_code_blocks = defaultdict(list)
         self._global_class_info = {}
         self._global_class_hierarchies = defaultdict(list)
+        # (smell name, group key, file_path) -> per-file finding, so a cross-file
+        # finding for the same group can replace it instead of double counting
+        self._file_findings = {}
 
     def detect_smells(self, file_path):
         """
@@ -284,8 +287,12 @@ class CodeSmellDetector:
     def detect_data_clumps(self, module, file_path):
         """
         Detect data clumps in the given module.
+
+        A data clump is a maximal set of at least DATA_CLUMPS_THRESHOLD parameters
+        shared by two or more functions. Only maximal shared sets are reported,
+        not each of their subsets.
         """
-        parameter_groups = defaultdict(list)
+        funcs = []
         for node in module.nodes_of_class(nodes.FunctionDef):
             # Skip if it's a constructor or property
             if node.name == '__init__' or (node.decorators and
@@ -294,36 +301,42 @@ class CodeSmellDetector:
                 continue
 
             # Get parameters excluding self
-            params = [arg.name for arg in node.args.args
-                      if isinstance(arg, nodes.AssignName) and arg.name != 'self']
+            params = frozenset(arg.name for arg in node.args.args
+                               if isinstance(arg, nodes.AssignName) and arg.name != 'self')
 
             # Skip if too few parameters
             if len(params) < self.thresholds["DATA_CLUMPS_THRESHOLD"]:
                 continue
 
-            # Create combinations of parameters that appear together
-            for size in range(3, len(params) + 1):
-                for combo in combinations(sorted(params), size):
-                    parameter_groups[combo].append(node.name)
+            funcs.append((node.name, params))
+            self._global_param_funcs.append((node.name, file_path, params))
 
-        for params, functions in parameter_groups.items():
-            # Only report if parameters appear together in multiple functions
-            # and represent a significant portion of each function's parameters
-            if (len(functions) > 1 and
-                    len(params) >= self.thresholds["DATA_CLUMPS_THRESHOLD"]):
-                self.add_smell(
-                    name="Data Clumps",
-                    description=f"Parameters {', '.join(params)} appear together in functions: {', '.join(functions)} in {file_path}",
-                    file_path=file_path,
-                    module_class=', '.join(functions),
-                    line_number=None,
-                    severity='medium'
-                )
+        for params, members in self._maximal_param_groups([p for _, p in funcs]).items():
+            names = [funcs[i][0] for i in members]
+            self._file_findings[("Data Clumps", params, file_path)] = self.add_smell(
+                name="Data Clumps",
+                description=f"Parameters {', '.join(sorted(params))} appear together in functions: {', '.join(names)} in {file_path}",
+                file_path=file_path,
+                module_class=', '.join(names),
+                line_number=None,
+                severity='medium'
+            )
 
-        # Accumulate for cross-file detection
-        for params, func_names in parameter_groups.items():
-            for func_name in func_names:
-                self._global_param_groups[params].append((func_name, file_path))
+    def _maximal_param_groups(self, param_sets):
+        """
+        Map each maximal shared parameter set (size >= DATA_CLUMPS_THRESHOLD) to the
+        indices of every function whose parameters contain it.
+
+        Every such set is the intersection of some pair of functions, so pairwise
+        intersections enumerate them all without generating subsets.
+        """
+        # ponytail: O(n^2) over functions with >= threshold params; fine since those are rare
+        groups = {}
+        for i, j in combinations(range(len(param_sets)), 2):
+            shared = param_sets[i] & param_sets[j]
+            if len(shared) >= self.thresholds["DATA_CLUMPS_THRESHOLD"] and shared not in groups:
+                groups[shared] = [k for k, p in enumerate(param_sets) if shared <= p]
+        return groups
 
     def detect_switch_statements(self, module, file_path):
         """
@@ -481,7 +494,7 @@ class CodeSmellDetector:
                                         for base in n.bases if isinstance(base, nodes.Name)}) > 0
 
                 if not share_base_class:
-                    self.add_smell(
+                    self._file_findings[("Alternative Classes", methods, file_path)] = self.add_smell(
                         name="Alternative Classes with Different Interfaces",
                         description=f"Classes {', '.join(classes)} share similar methods {', '.join(methods)} in {file_path}",
                         file_path=file_path,
@@ -725,14 +738,14 @@ class CodeSmellDetector:
         for block, functions in code_blocks.items():
             if len(functions) >= self.thresholds["DUPLICATE_CODE_THRESHOLD"]:
                 total_lines = sum(lines for _, lines in functions)
-                self.code_smells.append(CodeSmell(
+                self._file_findings[("Duplicate Code", block, file_path)] = self.add_smell(
                     name="Duplicate Code",
                     description=f"Similar code found in functions: {', '.join(f[0] for f in functions)} ({total_lines} total lines) in {file_path}",
                     file_path=file_path,
                     module_class=', '.join(f[0] for f in functions),
                     line_number=None,
                     severity='high'
-                ))
+                )
 
         # Accumulate for cross-file detection
         for normalized_code, functions in code_blocks.items():
@@ -1191,10 +1204,11 @@ class CodeSmellDetector:
         for methods, entries in self._global_class_methods.items():
             if len(methods) < 2:
                 continue
-            files_seen = {fp for _, fp in entries}
+            files_seen = sorted({fp for _, fp in entries})
             if len(files_seen) < 2:
                 continue
             if len(entries) >= self.thresholds["ALTERNATIVE_CLASSES_THRESHOLD"]:
+                self._drop_file_findings("Alternative Classes", methods, files_seen)
                 class_list = [f"{cls} ({fp})" for cls, fp in entries]
                 self.add_smell(
                     name="Alternative Classes with Different Interfaces",
@@ -1206,29 +1220,36 @@ class CodeSmellDetector:
                 )
 
     def _cross_file_data_clumps(self):
-        for params, entries in self._global_param_groups.items():
-            if len(params) < self.thresholds["DATA_CLUMPS_THRESHOLD"]:
-                continue
-            files_seen = {fp for _, fp in entries}
+        entries = self._global_param_funcs
+        for params, members in self._maximal_param_groups([p for _, _, p in entries]).items():
+            files_seen = sorted({entries[i][1] for i in members})
             if len(files_seen) < 2:
                 continue
-            if len(entries) > 1:
-                func_list = [f"{fn} ({fp})" for fn, fp in entries]
-                self.add_smell(
-                    name="Data Clumps",
-                    description=f"Parameters {', '.join(params)} appear together across files in: {', '.join(func_list)}",
-                    file_path=", ".join(files_seen),
-                    module_class=", ".join(fn for fn, _ in entries),
-                    line_number=None,
-                    severity='medium'
-                )
+            self._drop_file_findings("Data Clumps", params, files_seen)
+            func_list = [f"{entries[i][0]} ({entries[i][1]})" for i in members]
+            self.add_smell(
+                name="Data Clumps",
+                description=f"Parameters {', '.join(sorted(params))} appear together across files in: {', '.join(func_list)}",
+                file_path=", ".join(files_seen),
+                module_class=", ".join(entries[i][0] for i in members),
+                line_number=None,
+                severity='medium'
+            )
+
+    def _drop_file_findings(self, name, key, files):
+        """Remove per-file findings superseded by a cross-file finding for the same group."""
+        for fp in files:
+            smell = self._file_findings.pop((name, key, fp), None)
+            if smell is not None:
+                self.code_smells.remove(smell)
 
     def _cross_file_duplicate_code(self):
         for normalized_code, entries in self._global_code_blocks.items():
-            files_seen = {fp for _, fp, _ in entries}
+            files_seen = sorted({fp for _, fp, _ in entries})
             if len(files_seen) < 2:
                 continue
             if len(entries) >= self.thresholds["DUPLICATE_CODE_THRESHOLD"]:
+                self._drop_file_findings("Duplicate Code", normalized_code, files_seen)
                 total_lines = sum(nl for _, _, nl in entries)
                 func_list = [f"{fn} ({fp})" for fn, fp, _ in entries]
                 self.add_smell(
@@ -1301,7 +1322,7 @@ class CodeSmellDetector:
                                         f"Parallel cross-file hierarchies: "
                                         f"{' -> '.join(h1)} and {' -> '.join(h2)}"
                                     ),
-                                    file_path=", ".join(all_files),
+                                    file_path=", ".join(sorted(all_files)),
                                     module_class=None,
                                     line_number=None,
                                     severity='high'
@@ -1333,11 +1354,13 @@ class CodeSmellDetector:
             line_number (int, optional): The line number where the smell was detected
             severity (str, optional): The severity level of the smell (default: 'medium')
         """
-        self.code_smells.append(CodeSmell(
+        smell = CodeSmell(
             name=name,
             description=description,
             file_path=file_path,
             module_class=module_class,
             line_number=line_number,
             severity=severity
-        ))
+        )
+        self.code_smells.append(smell)
+        return smell

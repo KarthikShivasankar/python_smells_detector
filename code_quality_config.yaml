@@ -49,7 +49,7 @@ code_smells:
 
   DATA_CLUMPS_THRESHOLD:
     value: 6
-    explanation: "Groups of parameters appearing together in multiple functions may indicate data clumps."
+    explanation: "Minimum number of parameters shared by two or more functions to report a data clump. Only the maximal shared group is reported."
 
   TEMPORARY_FIELD_THRESHOLD:
     value: 3
@@ -57,11 +57,11 @@ code_smells:
 
   ALTERNATIVE_CLASSES_THRESHOLD:
     value: 3
-    explanation: "Classes with identical sets of methods may be alternative classes with different interfaces."
+    explanation: "Minimum number of classes with identical public method sets to report alternative classes."
 
   DUPLICATE_CODE_THRESHOLD:
     value: 15
-    explanation: "Functions with identical code may indicate duplication that should be refactored."
+    explanation: "Minimum number of functions with identical normalized bodies to report duplicate code."
 
   DEAD_CODE_THRESHOLD:
     value: 3

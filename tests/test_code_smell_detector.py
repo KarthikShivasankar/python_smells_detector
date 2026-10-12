@@ -470,6 +470,39 @@ class TestDataClumps:
         code_smell_detector.detect_smells(str(f))
         assert not smells_named(code_smell_detector, "Data Clumps")
 
+    def test_reports_only_maximal_group(self, code_smell_detector, tmp_path):
+        # 10 shared params used to yield C(10,6)+...+C(10,10) = 386 subset findings
+        params = ", ".join(f"p{i}" for i in range(10))
+        f = tmp_path / "wide.py"
+        f.write_text(f"def f1({params}): pass\ndef f2({params}): pass\n")
+        code_smell_detector.detect_smells(str(f))
+        assert len(smells_named(code_smell_detector, "Data Clumps")) == 1
+
+    def test_distinct_maximal_groups_reported_separately(self, code_smell_detector, tmp_path):
+        # f1/f2 share 8 params; f3 shares only 6 of them with both
+        f = tmp_path / "nested.py"
+        f.write_text(
+            "def f1(a, b, c, d, e, g, h, i): pass\n"
+            "def f2(a, b, c, d, e, g, h, i): pass\n"
+            "def f3(a, b, c, d, e, g, x, y): pass\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        found = sorted(s.module_class for s in smells_named(code_smell_detector, "Data Clumps"))
+        assert found == ["f1, f2", "f1, f2, f3"]
+
+    def test_cross_file_clump_replaces_file_finding(self, code_smell_detector, tmp_path):
+        params = ", ".join(f"p{i}" for i in range(6))
+        a = tmp_path / "a.py"
+        a.write_text(f"def f1({params}): pass\ndef f2({params}): pass\n")
+        b = tmp_path / "b.py"
+        b.write_text(f"def g({params}): pass\n")
+        code_smell_detector.detect_smells(str(a))
+        code_smell_detector.detect_smells(str(b))
+        code_smell_detector.detect_cross_file_smells()
+        clumps = smells_named(code_smell_detector, "Data Clumps")
+        assert len(clumps) == 1
+        assert clumps[0].module_class == "f1, f2, g"
+
 
 # ---------------------------------------------------------------------------
 # Excessive Comments
@@ -624,6 +657,22 @@ class TestCrossFileSmells:
         code_smell_detector.detect_cross_file_smells()
         assert smells_named(code_smell_detector, "Duplicate Code"), \
             "Expected cross-file Duplicate Code"
+
+    def test_cross_file_duplicate_code_not_double_counted(self, code_smell_detector, tmp_path):
+        body = "\n".join(
+            [f"    x{i} = {i}" for i in range(6)] +
+            ["    return x0 + x1 + x2"]
+        )
+        a = tmp_path / "a.py"
+        a.write_text("\n".join(f"def f{i}():\n{body}" for i in range(3)) + "\n")
+        b = tmp_path / "b.py"
+        b.write_text(f"def g():\n{body}\n")
+        code_smell_detector.detect_smells(str(a))
+        code_smell_detector.detect_smells(str(b))
+        code_smell_detector.detect_cross_file_smells()
+        dupes = smells_named(code_smell_detector, "Duplicate Code")
+        assert len(dupes) == 1
+        assert dupes[0].module_class == "f0, f1, f2, g"
 
 
 # ---------------------------------------------------------------------------
