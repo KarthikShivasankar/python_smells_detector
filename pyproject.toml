@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "code-quality-analyzer"
-version = "0.2.2"
+version = "0.2.3"
 description = "Detect code smells, architectural smells, and structural smells in Python projects"
 readme = "README.md"
 license = { text = "MIT" }

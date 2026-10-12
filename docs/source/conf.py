@@ -10,7 +10,7 @@ copyright = '2026, Karthik Shivashankar'
 author = 'Karthik Shivashankar'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.2'
+release = '0.2.3'
 
 # Extensions needed for API documentation
 extensions = [
