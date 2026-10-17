@@ -405,6 +405,13 @@ class TestMessageChains:
         assert smells_named(code_smell_detector, "Message Chains"), \
             "Expected Message Chains for 5-level attribute chain"
 
+    def test_chain_reported_once(self, code_smell_detector, tmp_path):
+        # Regression for #24: every sub-chain above the threshold was reported too
+        f = tmp_path / "chain_once.py"
+        f.write_text("def port(s):\n    return s.services.database.primary.endpoint.port\n")
+        code_smell_detector.detect_smells(str(f))
+        assert len(smells_named(code_smell_detector, "Message Chains")) == 1
+
     def test_short_chain_not_flagged(self, code_smell_detector, tmp_path):
         f = tmp_path / "short_chain.py"
         f.write_text("def func():\n    x = obj.attr.value\n")

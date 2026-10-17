@@ -1127,6 +1127,9 @@ class CodeSmellDetector:
                        for pattern in common_patterns.values())
 
         for node in module.nodes_of_class(nodes.Attribute):
+            # Measure each chain once, from its outermost attribute
+            if isinstance(node.parent, nodes.Attribute) and node.parent.expr is node:
+                continue
             chain_length, chain = get_chain_length(node)
 
             # Skip if it's a valid pattern
