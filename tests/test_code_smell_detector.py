@@ -325,6 +325,17 @@ class TestShotgunSurgery:
         assert smells_named(code_smell_detector, "Shotgun Surgery"), \
             "Expected Shotgun Surgery for method called across 7 contexts"
 
+    def test_builtin_calls_not_flagged(self, code_smell_detector, tmp_path):
+        # Regression for #25: builtins such as int() or ValueError() cannot be changed
+        funcs = "\n".join(
+            f"def parse{i}(text):\n    if not text:\n        raise ValueError(text)\n    return int(text)"
+            for i in range(7)
+        )
+        f = tmp_path / "builtins_calls.py"
+        f.write_text(funcs)
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Shotgun Surgery")
+
     def test_infrequent_call_not_flagged(self, code_smell_detector, tmp_path):
         f = tmp_path / "clean.py"
         f.write_text(

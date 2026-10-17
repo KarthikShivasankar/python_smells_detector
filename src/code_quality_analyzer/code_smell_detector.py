@@ -1,3 +1,4 @@
+import builtins
 import logging
 import re
 from collections import defaultdict
@@ -648,9 +649,10 @@ class CodeSmellDetector:
         for node in module.body:
             for call in node.nodes_of_class(nodes.Call):
                 if isinstance(call.func, nodes.Name):
-                    # Skip common utility methods and logging
-                    if call.func.name.lower() in {'log', 'print', 'str',
-                                                  'len', 'isinstance', 'super'}:
+                    # Skip common utility methods, logging and builtins
+                    if (call.func.name.lower() in {'log', 'print', 'str',
+                                                   'len', 'isinstance', 'super'} or
+                            call.func.name in vars(builtins)):
                         continue
 
                     # Store both line number and context
