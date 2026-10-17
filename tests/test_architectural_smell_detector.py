@@ -151,6 +151,15 @@ class TestImproperAPIUsage:
         assert not smells_named(architectural_smell_detector, "Improper API Usage"), \
             "Varied API calls should not trigger Improper API Usage"
 
+    def test_configured_ratio_is_used(self, architectural_smell_detector, tmp_path):
+        # Regression for #33: IMPROPER_API_USAGE_RATIO (0.7) was ignored in favour of a
+        # hard-coded 0.4; 5 of 10 calls repeated (50%) is below the configured ratio
+        calls = ["    out.append(1)"] * 5 + [f"    a.m{i}()" for i in range(5)]
+        f = tmp_path / "builder.py"
+        f.write_text("def build(a):\n    out = []\n" + "\n".join(calls) + "\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(architectural_smell_detector, "Improper API Usage")
+
 
 # ---------------------------------------------------------------------------
 # Orphan Module

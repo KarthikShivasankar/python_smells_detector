@@ -275,7 +275,7 @@ class ArchitecturalSmellDetector:
         if total_modules < 3:  # Skip analysis for very small projects
             return
 
-        threshold = self.thresholds.get('HUB_LIKE_DEPENDENCY_THRESHOLD', 0.5)
+        threshold = self.thresholds.get('HUB_LIKE_DEPENDENCY_RATIO', 0.5)
         min_connections = self.thresholds.get('MIN_HUB_CONNECTIONS', 5)
 
         for node in self.module_dependencies.nodes():
@@ -358,7 +358,7 @@ class ArchitecturalSmellDetector:
                     signature = frozenset(public_functions)
                     similar_modules[signature].append(module)
 
-        similarity_threshold = self.thresholds.get('REDUNDANT_SIMILARITY_THRESHOLD', 0.8)
+        similarity_threshold = self.thresholds.get('REDUNDANT_ABSTRACTION_SIMILARITY', 0.8)
         for signature, modules in similar_modules.items():
             if len(modules) > 1 and len(signature) >= min_functions:
                 # Calculate similarity score between modules
@@ -404,7 +404,7 @@ class ArchitecturalSmellDetector:
         Detect potential improper API usage in the project.
         """
         min_calls = self.thresholds.get('MIN_API_CALLS', 10)  # Minimum calls to consider
-        repetition_threshold = self.thresholds.get('API_REPETITION_THRESHOLD', 0.4)
+        repetition_threshold = self.thresholds.get('IMPROPER_API_USAGE_RATIO', 0.4)
 
         for module, api_calls in self.api_usage.items():
             if len(api_calls) >= min_calls:
