@@ -3,7 +3,9 @@ Tests for main.py orchestration: analyze_code_smells, analyze_architectural_smel
 analyze_structural_smells, generate_report, generate_csv_report, and create_parser.
 """
 import csv
+import json
 import os
+import sys
 
 import pytest
 
@@ -14,8 +16,10 @@ from code_quality_analyzer.architectural_smell_detector import (
 from code_quality_analyzer.code_smell_detector import CodeSmell, CodeSmellDetector
 from code_quality_analyzer.main import (
     DEFAULT_CONFIG_NAME,
+    analyze,
     analyze_architectural_smells,
     analyze_code_smells,
+    analyze_project,
     analyze_structural_smells,
     create_parser,
     generate_csv_report,
@@ -284,3 +288,42 @@ class TestGenerateCSVReport:
         with open(csv_path, newline='') as f:
             rows = list(csv.DictReader(f))
         assert rows == []
+
+
+# ---------------------------------------------------------------------------
+# Machine-readable interfaces (library API and --format json)
+# ---------------------------------------------------------------------------
+
+BAD_CODE = "def f(a, b, c, d, e, f, g):\n    return a\n"
+FINDING_KEYS = {'type', 'name', 'description', 'file_path', 'module_class',
+                'line_number', 'severity'}
+
+
+class TestMachineReadable:
+    def test_format_flag(self):
+        parser = create_parser()
+        assert parser.parse_args(["/tmp"]).format == "text"
+        assert parser.parse_args(["/tmp", "--format", "json"]).format == "json"
+
+    def test_analyze_returns_plain_dicts(self, tmp_path, capsys):
+        (tmp_path / "bad.py").write_text(BAD_CODE)
+        findings = analyze(str(tmp_path), types=["code"])
+        assert capsys.readouterr().out == "", "library call must not print to stdout"
+        assert any(f["name"] == "Long Parameter List" for f in findings)
+        assert all(set(f) == FINDING_KEYS and f["type"] == "Code" for f in findings)
+        json.dumps(findings)
+
+    def test_analyze_rejects_unknown_type(self, tmp_path):
+        with pytest.raises(ValueError):
+            analyze(str(tmp_path), types=["codes"])
+
+    def test_cli_json_stdout_is_pure_json(self, tmp_path, monkeypatch, capsys):
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "bad.py").write_text(BAD_CODE)
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(sys, "argv", ["analyze_code_quality", str(src), "--format", "json"])
+        analyze_project()
+        report = json.loads(capsys.readouterr().out)
+        assert report["summary"]["Code"] == sum(f["type"] == "Code" for f in report["findings"])
+        assert any(f["name"] == "Long Parameter List" for f in report["findings"])

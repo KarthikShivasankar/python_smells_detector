@@ -21,7 +21,7 @@ pip install -e ".[dev]"
 ## Core commands
 
 ```bash
-# Tests (full suite is 127 tests)
+# Tests (full suite is 157 tests)
 uv run python -m pytest tests/
 uv run python -m pytest tests/test_main.py::TestResolveConfigPath   # single class
 
@@ -39,6 +39,15 @@ uv run --with twine python -m twine check dist/*
 # Build docs (Sphinx, zero warnings expected)
 uv run --extra dev sphinx-build docs/source docs/build/html
 ```
+
+## Using PyExamine from an agent or harness
+
+- Python: `from code_quality_analyzer import analyze; analyze(path, types=["code"], ignore=["tests"])`
+  returns a list of JSON-serialisable dicts with keys `type`, `name`, `description`,
+  `file_path`, `module_class`, `line_number`, `severity`. No stdout output, no files written.
+- CLI: `analyze_code_quality PATH --format json [--type code] [--output out.json]` prints one
+  JSON document `{"findings": [...], "summary": {...}}` to stdout; all progress and logs go
+  to stderr.
 
 ## Critical gotchas (read before editing)
 

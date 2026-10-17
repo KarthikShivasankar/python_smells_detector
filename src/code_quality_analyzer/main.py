@@ -1,7 +1,11 @@
 import argparse
+import contextlib
 import csv
+import dataclasses
+import json
 import logging
 import os
+import sys
 from importlib import resources
 
 from .architectural_smell_detector import ArchitecturalSmellDetector
@@ -11,17 +15,21 @@ from .exceptions import CodeAnalysisError
 from .structural_smell_detector import StructuralSmellDetector
 
 DEFAULT_CONFIG_NAME = "code_quality_config.yaml"
+SMELL_TYPES = ('code', 'architectural', 'structural')
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('code_analysis.log'),
-        logging.StreamHandler()
-    ]
-)
 logger = logging.getLogger(__name__)
+
+
+def _configure_cli_logging():
+    """Log to code_analysis.log and stderr. Only the CLI does this, not library imports."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('code_analysis.log'),
+            logging.StreamHandler()
+        ]
+    )
 
 
 def create_parser():
@@ -40,7 +48,66 @@ def create_parser():
     parser.add_argument("--ignore", nargs='*', default=[],
                         metavar="DIR",
                         help="Folder names to ignore during analysis (e.g. --ignore tests docs)")
+    parser.add_argument("--format", choices=['text', 'json'], default='text',
+                        help="Report format. 'json' prints {findings, summary} to stdout "
+                             "(or to --output) and sends all progress output to stderr.")
     return parser
+
+
+def run_detectors(directory, config_handler, types=SMELL_TYPES, ignore_dirs=()):
+    """
+    Run the selected detectors over a directory.
+
+    Returns:
+        tuple: (code_smells, architectural_smells, structural_smells)
+    """
+    ignore_dirs = set(ignore_dirs or [])
+    code_smells, architectural_smells, structural_smells = [], [], []
+
+    if 'code' in types:
+        print("Analyzing Code Smells...")
+        code_detector = CodeSmellDetector(config_handler.get_thresholds('code_smells'))
+        code_smells = analyze_code_smells(directory, code_detector, ignore_dirs)
+
+    if 'architectural' in types:
+        print("Analyzing Architectural Smells...")
+        arch_detector = ArchitecturalSmellDetector(
+            config_handler.get_thresholds('architectural_smells'))
+        architectural_smells = analyze_architectural_smells(directory, arch_detector, ignore_dirs)
+
+    if 'structural' in types:
+        print("Analyzing Structural Smells...")
+        struct_detector = StructuralSmellDetector(
+            config_handler.get_thresholds('structural_smells'))
+        structural_smells = analyze_structural_smells(directory, struct_detector, ignore_dirs)
+
+    return code_smells, architectural_smells, structural_smells
+
+
+def analyze(directory, types=SMELL_TYPES, config=DEFAULT_CONFIG_NAME, ignore=()):
+    """
+    Library entry point for scripts, agents and test harnesses.
+
+    Runs the selected detectors and returns every finding as a JSON-serialisable dict
+    with the keys ``type`` (``Code``/``Architectural``/``Structural``), ``name``,
+    ``description``, ``file_path``, ``module_class``, ``line_number`` and ``severity``.
+    Progress output goes to stderr; no report files are written.
+
+    Args:
+        directory (str): Project directory to analyze.
+        types (iterable): Any of ``'code'``, ``'architectural'``, ``'structural'``.
+        config (str): Threshold YAML; falls back to the bundled config like the CLI.
+        ignore (iterable): Directory names to skip.
+    """
+    unknown = set(types) - set(SMELL_TYPES)
+    if unknown:
+        raise ValueError(f"Unknown smell types {sorted(unknown)}; expected {SMELL_TYPES}")
+    config_handler = ConfigHandler(resolve_config_path(config))
+    with contextlib.redirect_stdout(sys.stderr):
+        groups = run_detectors(directory, config_handler, types, ignore)
+    return [{'type': label, **dataclasses.asdict(smell)}
+            for label, smells in zip(('Code', 'Architectural', 'Structural'), groups)
+            for smell in smells]
 
 
 def resolve_config_path(config_arg):
@@ -270,6 +337,7 @@ def analyze_project():
     """
     parser = create_parser()
     args = parser.parse_args()
+    _configure_cli_logging()
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -278,6 +346,20 @@ def analyze_project():
     ignore_dirs = set(args.ignore or [])
     if ignore_dirs:
         logger.info(f"Ignoring directories: {ignore_dirs}")
+
+    types = (args.type,) if args.type else SMELL_TYPES
+
+    if args.format == 'json':
+        findings = analyze(args.directory, types, args.config, ignore_dirs)
+        summary = {label: sum(f['type'] == label for f in findings)
+                   for label in ('Code', 'Architectural', 'Structural')}
+        report = json.dumps({'findings': findings, 'summary': summary}, indent=2)
+        if args.output:
+            with open(args.output, 'w') as f:
+                f.write(report + "\n")
+        else:
+            print(report)
+        return
 
     if args.output:
         base_name = os.path.splitext(args.output)[0]
@@ -292,28 +374,8 @@ def analyze_project():
         logger.info(f"Loading configuration from: {config_path}")
         config_handler = ConfigHandler(config_path)
 
-        code_smells = []
-        architectural_smells = []
-        structural_smells = []
-
-        if args.type in (None, 'code'):
-            print("Analyzing Code Smells...")
-            code_detector = CodeSmellDetector(config_handler.get_thresholds('code_smells'))
-            code_smells = analyze_code_smells(args.directory, code_detector, ignore_dirs)
-
-        if args.type in (None, 'architectural'):
-            print("Analyzing Architectural Smells...")
-            arch_detector = ArchitecturalSmellDetector(
-                config_handler.get_thresholds('architectural_smells'))
-            architectural_smells = analyze_architectural_smells(
-                args.directory, arch_detector, ignore_dirs)
-
-        if args.type in (None, 'structural'):
-            print("Analyzing Structural Smells...")
-            struct_detector = StructuralSmellDetector(
-                config_handler.get_thresholds('structural_smells'))
-            structural_smells = analyze_structural_smells(
-                args.directory, struct_detector, ignore_dirs)
+        code_smells, architectural_smells, structural_smells = run_detectors(
+            args.directory, config_handler, types, ignore_dirs)
 
         generate_report(code_smells, architectural_smells, structural_smells,
                         output_txt, output_csv)
