@@ -356,6 +356,25 @@ class TestFeatureEnvy:
         assert smells_named(code_smell_detector, "Feature Envy"), \
             "Expected Feature Envy for method making 5 calls to external object"
 
+    def test_module_access_not_flagged(self, code_smell_detector, tmp_path):
+        # Regression for #20: calls on imported modules are not envy of another object
+        f = tmp_path / "modules.py"
+        f.write_text(
+            "import math\n"
+            "import os.path\n"
+            "import numpy as np\n"
+            "from os import path as p\n"
+            "class Stats:\n"
+            "    def summary(self):\n"
+            "        a = math.fsum(self.values)\n"
+            "        b = math.sqrt(a) + math.floor(a) + math.ceil(a)\n"
+            "        c = np.mean(a) + np.std(a) + np.min(a) + np.max(a)\n"
+            "        d = os.sep + os.sep + os.sep + os.sep\n"
+            "        return p.join(p.sep, p.sep, p.sep, p.sep), b, c, d\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Feature Envy")
+
     def test_balanced_calls_not_flagged(self, code_smell_detector, tmp_path):
         f = tmp_path / "balanced.py"
         f.write_text(

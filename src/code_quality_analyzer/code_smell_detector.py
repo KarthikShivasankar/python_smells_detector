@@ -936,6 +936,7 @@ class CodeSmellDetector:
         """
         Detect feature envy in the given module.
         """
+        module_names = self._imported_names(module)
         for node in module.nodes_of_class(nodes.FunctionDef):
             # Skip property methods and simple delegators
             is_property = False
@@ -966,7 +967,7 @@ class CodeSmellDetector:
                 if isinstance(sub_node.expr, nodes.Name):
                     if sub_node.expr.name == 'self':
                         local_calls += 1
-                    else:
+                    elif sub_node.expr.name not in module_names:
                         # Skip common utility objects
                         if sub_node.expr.name.lower() not in {
                                 'logger', 'config', 'utils', 'helper'}:
@@ -987,6 +988,18 @@ class CodeSmellDetector:
                         line_number=node.lineno,
                         severity='medium'
                     )
+
+    @staticmethod
+    def _imported_names(module):
+        """Names bound by import statements anywhere in the module (modules, not objects)."""
+        names = set()
+        for node in module.nodes_of_class((nodes.Import, nodes.ImportFrom)):
+            for name, alias in node.names:
+                if isinstance(node, nodes.Import):
+                    names.add(alias or name.split('.')[0])
+                else:
+                    names.add(alias or name)
+        return names
 
     def detect_inappropriate_intimacy(self, module, file_path):
         """
