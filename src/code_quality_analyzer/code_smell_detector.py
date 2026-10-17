@@ -1195,11 +1195,12 @@ class CodeSmellDetector:
                 # Check if method is just delegating
                 if len(method.body) == 1 and isinstance(method.body[0], nodes.Return):
                     return_value = method.body[0].value
-                    if isinstance(return_value, nodes.Call):
+                    func = return_value.func if isinstance(return_value, nodes.Call) else None
+                    # Delegation forwards to another object: return <obj>.<method>(...),
+                    # not a plain function call and not a call to one of self's own methods
+                    if isinstance(func, nodes.Attribute) and func.expr.as_string() != 'self':
                         delegating_methods += 1
-                        # Track which object we're delegating to
-                        if isinstance(return_value.func, nodes.Attribute):
-                            delegate_targets[return_value.func.expr.as_string()].append(method.name)
+                        delegate_targets[func.expr.as_string()].append(method.name)
 
             delegation_ratio = delegating_methods / total_methods if total_methods > 0 else 0
             if (delegation_ratio > self.thresholds["MIDDLE_MAN_RATIO"] and

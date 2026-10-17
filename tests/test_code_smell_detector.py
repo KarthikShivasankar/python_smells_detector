@@ -434,6 +434,31 @@ class TestMiddleMan:
         assert smells_named(code_smell_detector, "Middle Man"), \
             "Expected Middle Man for class delegating 5/5 methods"
 
+    def test_function_calls_and_self_calls_not_delegation(self, code_smell_detector, tmp_path):
+        # Regression for #23: 'return len(...)' crashed the analysis (max() of an empty
+        # dict) and 'return self._helper()' counted as delegation to self
+        f = tmp_path / "not_middleman.py"
+        f.write_text(
+            "class Basket:\n"
+            "    def __init__(self, items):\n"
+            "        self.items = items\n"
+            "    def count(self): return len(self.items)\n"
+            "    def total(self): return sum(self.items)\n"
+            "    def biggest(self): return max(self.items)\n"
+            "    def smallest(self): return min(self.items)\n"
+            "class Pricing:\n"
+            "    def __init__(self, rate):\n"
+            "        self.rate = rate\n"
+            "    def net(self, x): return self._apply(x, 1)\n"
+            "    def gross(self, x): return self._apply(x, 2)\n"
+            "    def half(self, x): return self._apply(x, 0.5)\n"
+            "    def _apply(self, x, f):\n"
+            "        value = x * f\n"
+            "        return round(value, 2)\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Middle Man")
+
     def test_proxy_class_not_flagged(self, code_smell_detector, tmp_path):
         # Classes ending in Proxy are explicitly excluded
         f = tmp_path / "proxy.py"
