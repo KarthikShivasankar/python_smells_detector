@@ -263,8 +263,8 @@ class CodeSmellDetector:
             if node.name == '__init__':
                 continue
 
-            # Skip 'self' in method parameter count
-            if args and args[0].name == 'self':
+            # Skip 'self' / 'cls' in method parameter count
+            if args and args[0].name in ('self', 'cls'):
                 args = args[1:]
 
             # Check for **kwargs or *args
@@ -303,9 +303,9 @@ class CodeSmellDetector:
                                                for d in node.decorators.nodes)):
                 continue
 
-            # Get parameters excluding self
+            # Get parameters excluding self / cls
             params = frozenset(arg.name for arg in node.args.args
-                               if isinstance(arg, nodes.AssignName) and arg.name != 'self')
+                               if isinstance(arg, nodes.AssignName) and arg.name not in ('self', 'cls'))
 
             # Skip if too few parameters
             if len(params) < self.thresholds["DATA_CLUMPS_THRESHOLD"]:

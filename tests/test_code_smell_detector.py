@@ -177,6 +177,18 @@ class TestLongParameterList:
         assert not smells_named(code_smell_detector, "Long Parameter List"), \
             "varargs should raise the threshold by 2"
 
+    def test_cls_not_counted(self, code_smell_detector, tmp_path):
+        # Regression for #30: classmethod 'cls' was counted as a parameter
+        f = tmp_path / "cls_params.py"
+        f.write_text(
+            "class Point:\n"
+            "    @classmethod\n"
+            "    def build(cls, x, y, z, w, t):\n"
+            "        return (x, y, z, w, t)\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Long Parameter List")
+
     def test_clean_function_not_flagged(self, code_smell_detector, tmp_path):
         f = tmp_path / "clean.py"
         f.write_text("def func(a, b, c): pass\n")
@@ -617,6 +629,18 @@ class TestDataClumps:
         f.write_text(
             "def a(x, y): pass\n"
             "def b(x, y): pass\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Data Clumps")
+
+    def test_cls_not_part_of_clump(self, code_smell_detector, tmp_path):
+        # Regression for #30: 5 shared parameters + cls is below the threshold of 6
+        params = "cls, origin, target, weight, volume, priority"
+        f = tmp_path / "cls_clump.py"
+        f.write_text(
+            "class Shipment:\n"
+            f"    @classmethod\n    def by_road({params}):\n        return origin\n"
+            f"    @classmethod\n    def by_rail({params}):\n        return origin\n"
         )
         code_smell_detector.detect_smells(str(f))
         assert not smells_named(code_smell_detector, "Data Clumps")
