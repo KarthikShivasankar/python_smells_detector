@@ -671,6 +671,25 @@ class TestParallelInheritance:
         assert smells_named(code_smell_detector, "Parallel Inheritance"), \
             "Expected Parallel Inheritance Hierarchies"
 
+    def test_unrelated_names_not_flagged(self, code_smell_detector, tmp_path):
+        # Regression for #22: the naming check compared children with the first child,
+        # so any two hierarchies sharing a method name were reported
+        f = tmp_path / "unrelated.py"
+        f.write_text(
+            "class Animal:\n    pass\n"
+            "class Dog(Animal):\n"
+            "    def move(self): return 'walk'\n"
+            "    def eat(self): return 'bone'\n"
+            "class Cat(Animal):\n    def move(self): return 'slink'\n"
+            "class Vehicle:\n    pass\n"
+            "class Car(Vehicle):\n"
+            "    def move(self): return 'drive'\n"
+            "    def park(self): return 'garage'\n"
+            "class Truck(Vehicle):\n    def move(self): return 'haul'\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Parallel Inheritance")
+
 
 # ---------------------------------------------------------------------------
 # Cross-file smells

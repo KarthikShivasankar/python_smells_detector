@@ -605,11 +605,10 @@ class CodeSmellDetector:
 
         if len(class_hierarchies) > 1:
             parallel_hierarchies = []
-            for h1, h2 in combinations(class_hierarchies.values(), 2):
+            for (b1, h1), (b2, h2) in combinations(class_hierarchies.items(), 2):
                 if len(h1) > 1 and len(h2) > 1:
                     # Check for naming patterns
-                    if any(c1.replace(h1[0], '') == c2.replace(h2[0], '')
-                           for c1, c2 in product(h1, h2)):
+                    if self._names_correspond(b1, h1, b2, h2):
                         # Check for method similarity
                         if (h1[0] in class_info and h2[0] in class_info and
                                 (class_info[h1[0]] or class_info[h2[0]])):  # Ensure at least one set has methods
@@ -628,6 +627,18 @@ class CodeSmellDetector:
                     line_number=None,
                     severity='high'
                 )
+
+    @staticmethod
+    def _names_correspond(b1, h1, b2, h2):
+        """
+        True if a child of base b1 and a child of base b2 share a name stem once the
+        base name is removed (XmlReader/XmlWriter, Dog/DogOwner).
+        """
+        for c1, c2 in product(h1, h2):
+            s1, s2 = c1.replace(b1, ''), c2.replace(b2, '')
+            if s1 and s2 and (s1.startswith(s2) or s2.startswith(s1)):
+                return True
+        return False
 
     def detect_shotgun_surgery(self, module, file_path):
         """
@@ -1326,8 +1337,7 @@ class CodeSmellDetector:
             if len(all_files) < 2:
                 continue
             if len(h1) > 1 and len(h2) > 1:
-                if any(c1.replace(h1[0], '') == c2.replace(h2[0], '')
-                       for c1, c2 in product(h1, h2)):
+                if self._names_correspond(b1, h1, b2, h2):
                     if h1[0] in class_info and h2[0] in class_info:
                         union_size = len(class_info[h1[0]] | class_info[h2[0]])
                         if union_size > 0:
