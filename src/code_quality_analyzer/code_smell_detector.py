@@ -48,6 +48,7 @@ class CodeSmellDetector:
         self.thresholds = thresholds
         # Cross-file accumulation for smells needing multi-file context
         self._global_class_methods = defaultdict(list)
+        self._global_class_bases = {}  # (class_name, file_path) -> frozenset of base names
         self._global_param_funcs = []  # (func_name, file_path, frozenset(params))
         self._global_code_blocks = defaultdict(list)
         self._global_class_info = {}
@@ -447,6 +448,7 @@ class CodeSmellDetector:
         Detect alternative classes with different interfaces in the given module.
         """
         class_methods = defaultdict(list)
+        class_bases = {}
         for node in module.nodes_of_class(nodes.ClassDef):
             # Skip data classes, exceptions, and abstract base classes
             is_excluded = False
@@ -483,17 +485,11 @@ class CodeSmellDetector:
                 continue
 
             class_methods[methods].append(node.name)
+            class_bases[node.name] = frozenset(b.as_string() for b in node.bases) - {'object'}
 
         for methods, classes in class_methods.items():
             if len(classes) >= self.thresholds["ALTERNATIVE_CLASSES_THRESHOLD"]:
-                # Check if classes share a common base class
-                class_nodes = [
-                    n for n in module.nodes_of_class(
-                        nodes.ClassDef) if n.name in classes]
-                share_base_class = len({base.name for n in class_nodes
-                                        for base in n.bases if isinstance(base, nodes.Name)}) > 0
-
-                if not share_base_class:
+                if not self._share_base(class_bases[c] for c in classes):
                     self._file_findings[("Alternative Classes", methods, file_path)] = self.add_smell(
                         name="Alternative Classes with Different Interfaces",
                         description=f"Classes {', '.join(classes)} share similar methods {', '.join(methods)} in {file_path}",
@@ -507,6 +503,12 @@ class CodeSmellDetector:
         for methods, class_names in class_methods.items():
             for class_name in class_names:
                 self._global_class_methods[methods].append((class_name, file_path))
+                self._global_class_bases[(class_name, file_path)] = class_bases[class_name]
+
+    @staticmethod
+    def _share_base(base_sets):
+        """True if all classes in a group have at least one base class in common."""
+        return bool(frozenset.intersection(*base_sets))
 
     def detect_divergent_change(self, module, file_path):
         """
@@ -1219,6 +1221,8 @@ class CodeSmellDetector:
                 continue
             files_seen = sorted({fp for _, fp in entries})
             if len(files_seen) < 2:
+                continue
+            if self._share_base(self._global_class_bases[e] for e in entries):
                 continue
             if len(entries) >= self.thresholds["ALTERNATIVE_CLASSES_THRESHOLD"]:
                 self._drop_file_findings("Alternative Classes", methods, files_seen)

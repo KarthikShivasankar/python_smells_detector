@@ -627,6 +627,19 @@ class TestAlternativeClasses:
             "Classes sharing a base should not trigger Alternative Classes"
 
 
+    def test_unrelated_bases_do_not_count_as_shared(self, code_smell_detector, tmp_path):
+        classes = "\n".join(
+            f"class Impl{i}(Base{i}):\n"
+            f"    def process(self):\n        return {i}\n"
+            f"    def validate(self):\n        return True\n"
+            for i in range(3)
+        )
+        f = tmp_path / "unrelated_bases.py"
+        f.write_text(classes)
+        code_smell_detector.detect_smells(str(f))
+        assert smells_named(code_smell_detector, "Alternative Classes")
+
+
 # ---------------------------------------------------------------------------
 # Parallel Inheritance Hierarchies
 # ---------------------------------------------------------------------------
@@ -677,6 +690,19 @@ class TestCrossFileSmells:
         code_smell_detector.detect_cross_file_smells()
         assert smells_named(code_smell_detector, "Alternative Classes"), \
             "Expected cross-file Alternative Classes for 3 services with same interface"
+
+    def test_cross_file_subclasses_of_shared_base_not_flagged(self, code_smell_detector, tmp_path):
+        # Regression for #21: one subclass per file implementing a shared base is polymorphism
+        for name in ("Circle", "Square", "Triangle"):
+            f = tmp_path / f"{name.lower()}.py"
+            f.write_text(
+                f"class {name}(Shape):\n"
+                f"    def area(self):\n        return 1\n"
+                f"    def perimeter(self):\n        return 2\n"
+            )
+            code_smell_detector.detect_smells(str(f))
+        code_smell_detector.detect_cross_file_smells()
+        assert not smells_named(code_smell_detector, "Alternative Classes")
 
     def test_cross_file_duplicate_code(self, code_smell_detector, tmp_path):
         body = "\n".join(
