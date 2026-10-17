@@ -909,8 +909,10 @@ class CodeSmellDetector:
         Detect speculative generality in the given module.
         """
         for node in module.nodes_of_class(nodes.ClassDef):
-            # Skip legitimate abstract base classes
+            # Skip legitimate abstract base classes and typing.Protocol interfaces
             if (any(base.name.endswith('ABC') for base in node.bases if isinstance(base, nodes.Name)) or
+                    any(base.as_string().split('[')[0].split('.')[-1] == 'Protocol'
+                        for base in node.bases) or
                     node.name.endswith(('Interface', 'Base', 'Abstract'))):
                 continue
 
@@ -918,6 +920,12 @@ class CodeSmellDetector:
             unused_params = []
 
             for method in node.mymethods():
+                # Abstract and overload stubs declare parameters they do not use
+                if method.decorators and any(
+                        d.as_string().split('.')[-1] in {'abstractmethod', 'overload'}
+                        for d in method.decorators.nodes):
+                    continue
+
                 # Check for empty/pass methods
                 if method.body and isinstance(method.body[0], nodes.Pass):
                     abstract_methods.append(method.name)

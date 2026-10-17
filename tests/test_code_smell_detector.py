@@ -569,6 +569,32 @@ class TestSpeculativeGenerality:
         assert not smells_named(code_smell_detector, "Speculative Generality"), \
             "ABC subclasses should not be flagged"
 
+    def test_protocol_and_abstract_stubs_not_flagged(self, code_smell_detector, tmp_path):
+        # Regression for #29: interface stubs declare parameters they do not use
+        f = tmp_path / "stubs.py"
+        f.write_text(
+            "import abc\n"
+            "from typing import Protocol\n"
+            "class Store(Protocol):\n"
+            "    def get(self, key: str) -> bytes: ...\n"
+            "    def put(self, key: str, value: bytes) -> None: ...\n"
+            "    def delete(self, key: str) -> None: ...\n"
+            "    def scan(self, prefix: str, limit: int) -> list: ...\n"
+            "class Repo(metaclass=abc.ABCMeta):\n"
+            "    @abc.abstractmethod\n"
+            "    def load(self, key, version, default): ...\n"
+            "    @abc.abstractmethod\n"
+            "    def save(self, key, value, version): ...\n"
+            "    @abc.abstractmethod\n"
+            "    def drop(self, key):\n"
+            "        pass\n"
+            "    @abc.abstractmethod\n"
+            "    def keys(self):\n"
+            "        pass\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Speculative Generality")
+
 
 # ---------------------------------------------------------------------------
 # Data Clumps
