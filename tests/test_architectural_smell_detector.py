@@ -45,6 +45,19 @@ class TestGodObject:
         assert not smells_named(architectural_smell_detector, "God Object"), \
             "Private functions should not count toward God Object"
 
+    def test_methods_and_imported_names_not_counted(self, architectural_smell_detector, tmp_path):
+        # Regression for #32: class methods counted as module functions, and names
+        # imported from a package outside the project produced a God Object for it
+        classes = "\n".join(
+            f"class C{c}:\n" + "\n".join(f"    def m{c}_{i}(self):\n        return {i}" for i in range(8))
+            for c in range(3)
+        )
+        (tmp_path / "classes.py").write_text(classes + "\n")
+        names = ", ".join(f"Name{i}" for i in range(21))
+        (tmp_path / "importer.py").write_text(f"from extlib import {names}\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(architectural_smell_detector, "God Object")
+
 
 # ---------------------------------------------------------------------------
 # Scattered Functionality
@@ -78,6 +91,17 @@ class TestScatteredFunctionality:
         architectural_smell_detector.detect_smells(str(tmp_path))
         assert not smells_named(architectural_smell_detector, "Scattered Functionality"), \
             "'main' is a common name and should be excluded"
+
+    def test_same_method_in_classes_not_flagged(self, architectural_smell_detector, tmp_path):
+        # Regression for #32: polymorphic methods are not scattered module functions
+        for name in ("users", "orders", "invoices"):
+            (tmp_path / f"{name}.py").write_text(
+                f"class {name.title()}Record:\n"
+                "    def to_dict(self):\n        return {}\n"
+                "    def validate(self):\n        return True\n"
+            )
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(architectural_smell_detector, "Scattered Functionality")
 
 
 # ---------------------------------------------------------------------------

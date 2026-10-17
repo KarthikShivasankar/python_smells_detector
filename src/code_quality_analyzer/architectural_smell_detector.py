@@ -152,6 +152,10 @@ class ArchitecturalSmellDetector:
             self.module_dependencies.add_node(module_name)
             self.file_paths[module_name] = file_path
 
+            # Module functions are its module-level defs, not methods, nested or imported names
+            self.module_functions[module_name].update(
+                n.name for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))
+
             # Track local imports and their line numbers
             local_imports = []
 
@@ -178,14 +182,6 @@ class ArchitecturalSmellDetector:
 
                         local_imports.append((import_name, node.lineno))
                         self.module_dependencies.add_edge(module_name, import_name)
-
-                        # Track imported names for more detailed dependency analysis
-                        for alias in node.names:
-                            if alias.name != '*':
-                                self.module_functions[import_name].add(alias.name)
-
-                elif isinstance(node, ast.FunctionDef):
-                    self.module_functions[module_name].add(node.name)
 
                 elif isinstance(node, ast.Call):
                     if isinstance(node.func, ast.Attribute):
