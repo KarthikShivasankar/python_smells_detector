@@ -7,8 +7,6 @@ verify that clean code does NOT trigger a false positive.
 """
 import pytest
 
-from code_quality_analyzer.code_smell_detector import CodeSmellDetector
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -191,29 +189,35 @@ class TestLongParameterList:
 # ---------------------------------------------------------------------------
 
 class TestSwitchStatements:
-    def test_detects_complex_nested_conditions(self, tmp_path):
-        # detect_switch_statements counts If nodes directly inside node.orelse.
-        # Threshold COMPLEX_CONDITIONAL=3 → need count > 3 (i.e. >=4 If siblings).
-        # Also must NOT be a guard clause (body > 2 lines OR non-Compare test).
-        detector = CodeSmellDetector({**__import__('conftest').CODE_SMELL_THRESHOLDS,
-                                      'COMPLEX_CONDITIONAL': 1})
-        # Outer if: body has 3 statements (not guard clause), orelse has 3 If nodes → count=4 > 1
+    def test_detects_long_elif_chain(self, code_smell_detector, tmp_path):
+        # 5 conditions (if + 4 elif) > COMPLEX_CONDITIONAL (3); reported once, not per elif
+        arms = "".join(f"    elif code == {i}:\n        return '{i}'\n" for i in range(2, 6))
         f = tmp_path / "switch.py"
+        f.write_text(
+            "def label(code):\n"
+            "    if code == 1:\n        return '1'\n"
+            f"{arms}"
+            "    else:\n        return 'many'\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert len(smells_named(code_smell_detector, "Switch Statements")) == 1
+
+    def test_independent_ifs_in_else_not_flagged(self, code_smell_detector, tmp_path):
+        # Regression for #27: unrelated ifs inside an else block are not switch branches
+        f = tmp_path / "else_ifs.py"
         f.write_text(
             "def func(flag, a, b, c, d):\n"
             "    if flag:\n"
             "        x = 1\n"
-            "        y = 2\n"
-            "        z = 3\n"
             "    else:\n"
             "        if a:\n            x = 10\n"
             "        if b:\n            x = 20\n"
             "        if c:\n            x = 30\n"
             "        if d:\n            x = 40\n"
+            "    return x\n"
         )
-        detector.detect_smells(str(f))
-        assert smells_named(detector, "Switch Statements"), \
-            "Expected Switch Statements for if with 4 If nodes in orelse"
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Switch Statements")
 
     def test_simple_if_else_not_flagged(self, code_smell_detector, tmp_path):
         f = tmp_path / "simple_if.py"

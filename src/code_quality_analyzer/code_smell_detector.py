@@ -345,18 +345,21 @@ class CodeSmellDetector:
         """
         Detect switch statements in the given module.
         """
+        def is_elif(node):
+            parent = node.parent
+            return isinstance(parent, nodes.If) and len(parent.orelse) == 1 and parent.orelse[0] is node
+
         def count_conditions(node):
-            count = 1  # Start with 1 for the initial if
-            for else_node in node.orelse:
-                if isinstance(else_node, nodes.If):
-                    count += 1
-                elif isinstance(else_node, nodes.Expr):
-                    continue  # Skip comments or docstrings
+            """Number of conditions (if + each elif) in the chain starting at node."""
+            count = 1
+            while len(node.orelse) == 1 and isinstance(node.orelse[0], nodes.If):
+                node = node.orelse[0]
+                count += 1
             return count
 
         for node in module.nodes_of_class(nodes.If):
-            # Skip simple if/else statements
-            if not node.orelse:
+            # Skip simple if statements and elif links (each chain is measured from its head)
+            if not node.orelse or is_elif(node):
                 continue
 
             # Check if this is part of a try/except block
@@ -365,15 +368,12 @@ class CodeSmellDetector:
 
             condition_count = count_conditions(node)
 
-            # Check for common valid patterns
-            is_guard_clause = len(node.body) <= 2 and isinstance(node.test, nodes.Compare)
+            # Check for common valid patterns (a node with an else is never a guard clause)
             is_type_check = isinstance(
                 node.test, nodes.Call) and getattr(
                 node.test.func, 'name', '') == 'isinstance'
 
-            if (condition_count > self.thresholds["COMPLEX_CONDITIONAL"] and
-                not is_guard_clause and
-                    not is_type_check):
+            if condition_count > self.thresholds["COMPLEX_CONDITIONAL"] and not is_type_check:
                 self.code_smells.append(CodeSmell(
                     name="Switch Statements",
                     description=f"Complex conditional with {condition_count} branches at line {node.lineno} in {file_path}",
