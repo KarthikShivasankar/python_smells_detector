@@ -405,6 +405,51 @@ class TestFeatureEnvy:
 
 
 # ---------------------------------------------------------------------------
+# Inappropriate Intimacy
+# ---------------------------------------------------------------------------
+
+class TestInappropriateIntimacy:
+    def test_detects_access_to_other_class_fields(self, code_smell_detector, tmp_path):
+        f = tmp_path / "intimate.py"
+        f.write_text(
+            "class Account:\n"
+            "    def __init__(self):\n"
+            "        self._balance = 0\n"
+            "        self._limit = 0\n"
+            "        self._owner = None\n"
+            "        self._frozen = False\n"
+            "class Auditor:\n"
+            "    def audit(self, account):\n"
+            "        account._balance = 0\n"
+            "        account._limit = account._balance\n"
+            "        return account._owner, account._frozen\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        smells = smells_named(code_smell_detector, "Inappropriate Intimacy")
+        assert [s.module_class for s in smells] == ["Auditor"]
+
+    def test_matching_names_without_access_not_flagged(self, code_smell_detector, tmp_path):
+        # Regression for #28: method names of one class equal to field names of
+        # another class were reported although neither class touches the other
+        f = tmp_path / "names_only.py"
+        f.write_text(
+            "class Timer:\n"
+            "    def start(self): return 1\n"
+            "    def stop(self): return 2\n"
+            "    def reset(self): return 3\n"
+            "    def elapsed(self): return 4\n"
+            "class Race:\n"
+            "    def __init__(self):\n"
+            "        self.start = 'north'\n"
+            "        self.stop = 'south'\n"
+            "        self.reset = False\n"
+            "        self.elapsed = 0.0\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Inappropriate Intimacy")
+
+
+# ---------------------------------------------------------------------------
 # Message Chains
 # ---------------------------------------------------------------------------
 

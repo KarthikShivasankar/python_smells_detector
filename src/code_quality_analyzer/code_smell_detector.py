@@ -4,7 +4,7 @@ import logging
 import re
 from collections import defaultdict
 from dataclasses import dataclass
-from itertools import combinations, product
+from itertools import combinations, permutations, product
 
 import astroid
 from astroid import exceptions as astroid_exceptions
@@ -1017,13 +1017,22 @@ class CodeSmellDetector:
                     names.add(alias or name)
         return names
 
+    @staticmethod
+    def _root_name(node):
+        """Name at the root of an attribute chain (a for a.b.c), or None."""
+        while isinstance(node, (nodes.Attribute, nodes.AssignAttr)):
+            node = node.expr
+        return node.name if isinstance(node, nodes.Name) else None
+
     def detect_inappropriate_intimacy(self, module, file_path):
         """
         Detect inappropriate intimacy in the given module.
         """
         class_fields = defaultdict(set)
         class_methods = defaultdict(set)
+        class_accesses = defaultdict(set)  # attributes used on objects other than self
         class_relationships = defaultdict(set)  # Track inheritance and composition
+        module_names = self._imported_names(module)
 
         for node in module.nodes_of_class(nodes.ClassDef):
             # Skip data classes and utility classes
@@ -1051,9 +1060,12 @@ class CodeSmellDetector:
                 n.name for n in node.mymethods()
                 if not n.name.startswith('__')  # Skip magic methods
             }
-            class_fields[node.name] = {
-                name for name in node.instance_attrs.keys()
-                if not name.startswith('_')  # Skip private fields
+            class_fields[node.name] = set(node.instance_attrs)
+            # Attributes this class reads or writes on other objects (not self/cls, not modules)
+            class_accesses[node.name] = {
+                n.attrname for n in node.nodes_of_class((nodes.Attribute, nodes.AssignAttr))
+                if n.expr.as_string() not in {'self', 'cls'} and
+                self._root_name(n) not in module_names
             }
 
             # Track inheritance relationships
@@ -1072,12 +1084,13 @@ class CodeSmellDetector:
             self._global_class_info[key] = {
                 "fields": class_fields[class_name],
                 "methods": class_methods[class_name],
+                "accesses": class_accesses[class_name],
                 "relationships": class_relationships[class_name],
                 "class_name": class_name,
                 "file_path": file_path,
             }
 
-        for class_name, methods in class_methods.items():
+        for class_name in class_methods:
             for other_class, other_fields in class_fields.items():
                 if class_name != other_class:
                     # Skip if there's a valid relationship
@@ -1085,15 +1098,15 @@ class CodeSmellDetector:
                             class_name in class_relationships[other_class]):
                         continue
 
-                    shared = len(methods.intersection(other_fields))
-                    method_ratio = shared / len(methods) if methods else 0
+                    shared = len(class_accesses[class_name] & other_fields)
+                    field_ratio = shared / len(other_fields) if other_fields else 0
 
                     if (shared > self.thresholds["INAPPROPRIATE_INTIMACY_SHARED"] and
-                            method_ratio > 0.3):  # More than 30% of methods are shared
+                            field_ratio > 0.3):  # Uses more than 30% of the other's fields
                         self.add_smell(
                             name="Inappropriate Intimacy",
                             description=f"Class '{class_name}' might be too intimate with '{other_class}' "
-                            f"({shared} shared members, {method_ratio:.1%} of methods) in {file_path}",
+                            f"(uses {shared} of its fields, {field_ratio:.1%}) in {file_path}",
                             file_path=file_path,
                             module_class=class_name,
                             line_number=None,
@@ -1298,29 +1311,28 @@ class CodeSmellDetector:
 
     def _cross_file_inappropriate_intimacy(self):
         entries = list(self._global_class_info.values())
-        for i, a in enumerate(entries):
-            for b in entries[i + 1:]:
-                if a["file_path"] == b["file_path"]:
-                    continue
-                if (b["class_name"] in a["relationships"] or
-                        a["class_name"] in b["relationships"]):
-                    continue
-                shared = len(a["methods"].intersection(b["fields"]))
-                method_ratio = shared / len(a["methods"]) if a["methods"] else 0
-                if (shared > self.thresholds["INAPPROPRIATE_INTIMACY_SHARED"] and
-                        method_ratio > 0.3):
-                    self.add_smell(
-                        name="Inappropriate Intimacy",
-                        description=(
-                            f"Class '{a['class_name']}' ({a['file_path']}) might be too intimate "
-                            f"with '{b['class_name']}' ({b['file_path']}) "
-                            f"({shared} shared members, {method_ratio:.1%} of methods)"
-                        ),
-                        file_path=a["file_path"],
-                        module_class=a["class_name"],
-                        line_number=None,
-                        severity='medium'
-                    )
+        for a, b in permutations(entries, 2):
+            if a["file_path"] == b["file_path"]:
+                continue
+            if (b["class_name"] in a["relationships"] or
+                    a["class_name"] in b["relationships"]):
+                continue
+            shared = len(a["accesses"] & b["fields"])
+            field_ratio = shared / len(b["fields"]) if b["fields"] else 0
+            if (shared > self.thresholds["INAPPROPRIATE_INTIMACY_SHARED"] and
+                    field_ratio > 0.3):
+                self.add_smell(
+                    name="Inappropriate Intimacy",
+                    description=(
+                        f"Class '{a['class_name']}' ({a['file_path']}) might be too intimate "
+                        f"with '{b['class_name']}' ({b['file_path']}) "
+                        f"(uses {shared} of its fields, {field_ratio:.1%})"
+                    ),
+                    file_path=a["file_path"],
+                    module_class=a["class_name"],
+                    line_number=None,
+                    severity='medium'
+                )
 
     def _cross_file_parallel_inheritance(self):
         class_info = {}
