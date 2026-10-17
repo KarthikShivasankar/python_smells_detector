@@ -153,6 +153,22 @@ class TestCyclomaticComplexity:
         assert not smells_named(structural_smell_detector, "High Cyclomatic Complexity")
 
 
+    def test_elif_counted_once(self, structural_smell_detector, tmp_path):
+        # Regression for #31: if + 6 elif = complexity 8, was reported as 14
+        arms = "".join(f"        elif x == {i}:\n            return {i}\n" for i in range(2, 8))
+        f = tmp_path / "elif.py"
+        f.write_text(
+            "class Router:\n    def route(self, x):\n"
+            "        if x == 1:\n            return 1\n" + arms + "        return 0\n"
+        )
+        structural_smell_detector.detect_smells(str(tmp_path))
+        method = structural_smell_detector.class_info["elif.Router"]["methods"][0]
+        assert structural_smell_detector.calculate_cyclomatic_complexity(method) == 8
+        assert structural_smell_detector._analyze_branches(method) == {'count': 7, 'max_nesting': 1}
+        assert not smells_named(structural_smell_detector, "High Cyclomatic Complexity")
+        assert not smells_named(structural_smell_detector, "Too Many Branches")
+
+
 # ---------------------------------------------------------------------------
 # Too Many Branches
 # ---------------------------------------------------------------------------
@@ -178,6 +194,31 @@ class TestTooManyBranches:
         )
         structural_smell_detector.detect_smells(str(tmp_path))
         assert not smells_named(structural_smell_detector, "Too Many Branches")
+
+
+    def test_sequential_ifs_are_not_nested(self, structural_smell_detector, tmp_path):
+        # Regression for #31: four flat ifs were reported as nesting depth 4
+        ifs = "".join(f"        if {c}:\n            print({c})\n" for c in "abcd")
+        f = tmp_path / "flat.py"
+        f.write_text(f"class C:\n    def check(self, a, b, c, d):\n{ifs}")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(structural_smell_detector, "Too Many Branches")
+
+    def test_deep_nesting_detected(self, structural_smell_detector, tmp_path):
+        body = (
+            "        for a in x:\n"
+            "            if a:\n"
+            "                while a:\n"
+            "                    try:\n"
+            "                        a -= 1\n"
+            "                    except ValueError:\n"
+            "                        pass\n"
+        )
+        f = tmp_path / "deep.py"
+        f.write_text(f"class C:\n    def deep(self, x):\n{body}")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        smells = smells_named(structural_smell_detector, "Too Many Branches")
+        assert smells and "max nesting of 4" in smells[0].description
 
 
 # ---------------------------------------------------------------------------

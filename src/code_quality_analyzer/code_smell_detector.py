@@ -1,8 +1,10 @@
+import builtins
+import keyword
 import logging
 import re
 from collections import defaultdict
 from dataclasses import dataclass
-from itertools import combinations, product
+from itertools import combinations, permutations, product
 
 import astroid
 from astroid import exceptions as astroid_exceptions
@@ -48,6 +50,7 @@ class CodeSmellDetector:
         self.thresholds = thresholds
         # Cross-file accumulation for smells needing multi-file context
         self._global_class_methods = defaultdict(list)
+        self._global_class_bases = {}  # (class_name, file_path) -> frozenset of base names
         self._global_param_funcs = []  # (func_name, file_path, frozenset(params))
         self._global_code_blocks = defaultdict(list)
         self._global_class_info = {}
@@ -260,8 +263,8 @@ class CodeSmellDetector:
             if node.name == '__init__':
                 continue
 
-            # Skip 'self' in method parameter count
-            if args and args[0].name == 'self':
+            # Skip 'self' / 'cls' in method parameter count
+            if args and args[0].name in ('self', 'cls'):
                 args = args[1:]
 
             # Check for **kwargs or *args
@@ -300,9 +303,9 @@ class CodeSmellDetector:
                                                for d in node.decorators.nodes)):
                 continue
 
-            # Get parameters excluding self
+            # Get parameters excluding self / cls
             params = frozenset(arg.name for arg in node.args.args
-                               if isinstance(arg, nodes.AssignName) and arg.name != 'self')
+                               if isinstance(arg, nodes.AssignName) and arg.name not in ('self', 'cls'))
 
             # Skip if too few parameters
             if len(params) < self.thresholds["DATA_CLUMPS_THRESHOLD"]:
@@ -342,18 +345,21 @@ class CodeSmellDetector:
         """
         Detect switch statements in the given module.
         """
+        def is_elif(node):
+            parent = node.parent
+            return isinstance(parent, nodes.If) and len(parent.orelse) == 1 and parent.orelse[0] is node
+
         def count_conditions(node):
-            count = 1  # Start with 1 for the initial if
-            for else_node in node.orelse:
-                if isinstance(else_node, nodes.If):
-                    count += 1
-                elif isinstance(else_node, nodes.Expr):
-                    continue  # Skip comments or docstrings
+            """Number of conditions (if + each elif) in the chain starting at node."""
+            count = 1
+            while len(node.orelse) == 1 and isinstance(node.orelse[0], nodes.If):
+                node = node.orelse[0]
+                count += 1
             return count
 
         for node in module.nodes_of_class(nodes.If):
-            # Skip simple if/else statements
-            if not node.orelse:
+            # Skip simple if statements and elif links (each chain is measured from its head)
+            if not node.orelse or is_elif(node):
                 continue
 
             # Check if this is part of a try/except block
@@ -362,15 +368,12 @@ class CodeSmellDetector:
 
             condition_count = count_conditions(node)
 
-            # Check for common valid patterns
-            is_guard_clause = len(node.body) <= 2 and isinstance(node.test, nodes.Compare)
+            # Check for common valid patterns (a node with an else is never a guard clause)
             is_type_check = isinstance(
                 node.test, nodes.Call) and getattr(
                 node.test.func, 'name', '') == 'isinstance'
 
-            if (condition_count > self.thresholds["COMPLEX_CONDITIONAL"] and
-                not is_guard_clause and
-                    not is_type_check):
+            if condition_count > self.thresholds["COMPLEX_CONDITIONAL"] and not is_type_check:
                 self.code_smells.append(CodeSmell(
                     name="Switch Statements",
                     description=f"Complex conditional with {condition_count} branches at line {node.lineno} in {file_path}",
@@ -413,15 +416,15 @@ class CodeSmellDetector:
             for child in node.body:
                 if isinstance(child, nodes.FunctionDef):
                     if child.name == '__init__':
-                        for target in child.nodes_of_class(nodes.AssignName):
-                            # Check if field has a comment indicating it's for caching
-                            if any(isinstance(sibling, nodes.Expr) and
-                                   isinstance(sibling.value, nodes.Const) and
-                                   'cache' in str(sibling.value.value).lower()
-                                   for sibling in child.body):
-                                cached_fields.add(target.name)
-                            else:
-                                init_fields.add(target.name)
+                        # Check if __init__ has a comment indicating its fields are for caching
+                        is_cache = any(isinstance(sibling, nodes.Expr) and
+                                       isinstance(sibling.value, nodes.Const) and
+                                       'cache' in str(sibling.value.value).lower()
+                                       for sibling in child.body)
+                        # Fields are attributes assigned on self, not parameters or locals
+                        for target in child.nodes_of_class(nodes.AssignAttr):
+                            if isinstance(target.expr, nodes.Name) and target.expr.name == 'self':
+                                (cached_fields if is_cache else init_fields).add(target.attrname)
                     else:
                         used_fields.update(
                             n.attrname for n in child.nodes_of_class(nodes.Attribute)
@@ -447,6 +450,7 @@ class CodeSmellDetector:
         Detect alternative classes with different interfaces in the given module.
         """
         class_methods = defaultdict(list)
+        class_bases = {}
         for node in module.nodes_of_class(nodes.ClassDef):
             # Skip data classes, exceptions, and abstract base classes
             is_excluded = False
@@ -483,17 +487,11 @@ class CodeSmellDetector:
                 continue
 
             class_methods[methods].append(node.name)
+            class_bases[node.name] = frozenset(b.as_string() for b in node.bases) - {'object'}
 
         for methods, classes in class_methods.items():
             if len(classes) >= self.thresholds["ALTERNATIVE_CLASSES_THRESHOLD"]:
-                # Check if classes share a common base class
-                class_nodes = [
-                    n for n in module.nodes_of_class(
-                        nodes.ClassDef) if n.name in classes]
-                share_base_class = len({base.name for n in class_nodes
-                                        for base in n.bases if isinstance(base, nodes.Name)}) > 0
-
-                if not share_base_class:
+                if not self._share_base(class_bases[c] for c in classes):
                     self._file_findings[("Alternative Classes", methods, file_path)] = self.add_smell(
                         name="Alternative Classes with Different Interfaces",
                         description=f"Classes {', '.join(classes)} share similar methods {', '.join(methods)} in {file_path}",
@@ -507,6 +505,12 @@ class CodeSmellDetector:
         for methods, class_names in class_methods.items():
             for class_name in class_names:
                 self._global_class_methods[methods].append((class_name, file_path))
+                self._global_class_bases[(class_name, file_path)] = class_bases[class_name]
+
+    @staticmethod
+    def _share_base(base_sets):
+        """True if all classes in a group have at least one base class in common."""
+        return bool(frozenset.intersection(*base_sets))
 
     def detect_divergent_change(self, module, file_path):
         """
@@ -603,11 +607,10 @@ class CodeSmellDetector:
 
         if len(class_hierarchies) > 1:
             parallel_hierarchies = []
-            for h1, h2 in combinations(class_hierarchies.values(), 2):
+            for (b1, h1), (b2, h2) in combinations(class_hierarchies.items(), 2):
                 if len(h1) > 1 and len(h2) > 1:
                     # Check for naming patterns
-                    if any(c1.replace(h1[0], '') == c2.replace(h2[0], '')
-                           for c1, c2 in product(h1, h2)):
+                    if self._names_correspond(b1, h1, b2, h2):
                         # Check for method similarity
                         if (h1[0] in class_info and h2[0] in class_info and
                                 (class_info[h1[0]] or class_info[h2[0]])):  # Ensure at least one set has methods
@@ -627,6 +630,18 @@ class CodeSmellDetector:
                     severity='high'
                 )
 
+    @staticmethod
+    def _names_correspond(b1, h1, b2, h2):
+        """
+        True if a child of base b1 and a child of base b2 share a name stem once the
+        base name is removed (XmlReader/XmlWriter, Dog/DogOwner).
+        """
+        for c1, c2 in product(h1, h2):
+            s1, s2 = c1.replace(b1, ''), c2.replace(b2, '')
+            if s1 and s2 and (s1.startswith(s2) or s2.startswith(s1)):
+                return True
+        return False
+
     def detect_shotgun_surgery(self, module, file_path):
         """
         Detect potential shotgun surgery in the given module.
@@ -635,9 +650,10 @@ class CodeSmellDetector:
         for node in module.body:
             for call in node.nodes_of_class(nodes.Call):
                 if isinstance(call.func, nodes.Name):
-                    # Skip common utility methods and logging
-                    if call.func.name.lower() in {'log', 'print', 'str',
-                                                  'len', 'isinstance', 'super'}:
+                    # Skip common utility methods, logging and builtins
+                    if (call.func.name.lower() in {'log', 'print', 'str',
+                                                   'len', 'isinstance', 'super'} or
+                            call.func.name in vars(builtins)):
                         continue
 
                     # Store both line number and context
@@ -713,13 +729,13 @@ class CodeSmellDetector:
         """
         def normalize_code(node):
             """Normalize code by removing variable names and whitespace."""
+            # as_string() carries no comments, so only identifiers and whitespace need handling
             code = node.as_string()
-            # Replace variable names with placeholders
-            code = re.sub(r'\b[a-zA-Z_]\w*\b', 'VAR', code)
-            # Remove whitespace and comments
-            code = re.sub(r'\s+', '', code)
-            code = re.sub(r'#.*$', '', code, flags=re.MULTILINE)
-            return code
+            # Replace variable names (not keywords) with placeholders
+            code = re.sub(r'\b[a-zA-Z_]\w*\b',
+                          lambda m: m.group() if keyword.iskeyword(m.group()) else 'VAR', code)
+            # Remove whitespace
+            return re.sub(r'\s+', '', code)
 
         code_blocks = defaultdict(list)
         for node in module.nodes_of_class(nodes.FunctionDef):
@@ -893,8 +909,10 @@ class CodeSmellDetector:
         Detect speculative generality in the given module.
         """
         for node in module.nodes_of_class(nodes.ClassDef):
-            # Skip legitimate abstract base classes
+            # Skip legitimate abstract base classes and typing.Protocol interfaces
             if (any(base.name.endswith('ABC') for base in node.bases if isinstance(base, nodes.Name)) or
+                    any(base.as_string().split('[')[0].split('.')[-1] == 'Protocol'
+                        for base in node.bases) or
                     node.name.endswith(('Interface', 'Base', 'Abstract'))):
                 continue
 
@@ -902,6 +920,12 @@ class CodeSmellDetector:
             unused_params = []
 
             for method in node.mymethods():
+                # Abstract and overload stubs declare parameters they do not use
+                if method.decorators and any(
+                        d.as_string().split('.')[-1] in {'abstractmethod', 'overload'}
+                        for d in method.decorators.nodes):
+                    continue
+
                 # Check for empty/pass methods
                 if method.body and isinstance(method.body[0], nodes.Pass):
                     abstract_methods.append(method.name)
@@ -936,6 +960,7 @@ class CodeSmellDetector:
         """
         Detect feature envy in the given module.
         """
+        module_names = self._imported_names(module)
         for node in module.nodes_of_class(nodes.FunctionDef):
             # Skip property methods and simple delegators
             is_property = False
@@ -966,7 +991,7 @@ class CodeSmellDetector:
                 if isinstance(sub_node.expr, nodes.Name):
                     if sub_node.expr.name == 'self':
                         local_calls += 1
-                    else:
+                    elif sub_node.expr.name not in module_names:
                         # Skip common utility objects
                         if sub_node.expr.name.lower() not in {
                                 'logger', 'config', 'utils', 'helper'}:
@@ -988,13 +1013,34 @@ class CodeSmellDetector:
                         severity='medium'
                     )
 
+    @staticmethod
+    def _imported_names(module):
+        """Names bound by import statements anywhere in the module (modules, not objects)."""
+        names = set()
+        for node in module.nodes_of_class((nodes.Import, nodes.ImportFrom)):
+            for name, alias in node.names:
+                if isinstance(node, nodes.Import):
+                    names.add(alias or name.split('.')[0])
+                else:
+                    names.add(alias or name)
+        return names
+
+    @staticmethod
+    def _root_name(node):
+        """Name at the root of an attribute chain (a for a.b.c), or None."""
+        while isinstance(node, (nodes.Attribute, nodes.AssignAttr)):
+            node = node.expr
+        return node.name if isinstance(node, nodes.Name) else None
+
     def detect_inappropriate_intimacy(self, module, file_path):
         """
         Detect inappropriate intimacy in the given module.
         """
         class_fields = defaultdict(set)
         class_methods = defaultdict(set)
+        class_accesses = defaultdict(set)  # attributes used on objects other than self
         class_relationships = defaultdict(set)  # Track inheritance and composition
+        module_names = self._imported_names(module)
 
         for node in module.nodes_of_class(nodes.ClassDef):
             # Skip data classes and utility classes
@@ -1022,9 +1068,12 @@ class CodeSmellDetector:
                 n.name for n in node.mymethods()
                 if not n.name.startswith('__')  # Skip magic methods
             }
-            class_fields[node.name] = {
-                name for name in node.instance_attrs.keys()
-                if not name.startswith('_')  # Skip private fields
+            class_fields[node.name] = set(node.instance_attrs)
+            # Attributes this class reads or writes on other objects (not self/cls, not modules)
+            class_accesses[node.name] = {
+                n.attrname for n in node.nodes_of_class((nodes.Attribute, nodes.AssignAttr))
+                if n.expr.as_string() not in {'self', 'cls'} and
+                self._root_name(n) not in module_names
             }
 
             # Track inheritance relationships
@@ -1043,12 +1092,13 @@ class CodeSmellDetector:
             self._global_class_info[key] = {
                 "fields": class_fields[class_name],
                 "methods": class_methods[class_name],
+                "accesses": class_accesses[class_name],
                 "relationships": class_relationships[class_name],
                 "class_name": class_name,
                 "file_path": file_path,
             }
 
-        for class_name, methods in class_methods.items():
+        for class_name in class_methods:
             for other_class, other_fields in class_fields.items():
                 if class_name != other_class:
                     # Skip if there's a valid relationship
@@ -1056,15 +1106,15 @@ class CodeSmellDetector:
                             class_name in class_relationships[other_class]):
                         continue
 
-                    shared = len(methods.intersection(other_fields))
-                    method_ratio = shared / len(methods) if methods else 0
+                    shared = len(class_accesses[class_name] & other_fields)
+                    field_ratio = shared / len(other_fields) if other_fields else 0
 
                     if (shared > self.thresholds["INAPPROPRIATE_INTIMACY_SHARED"] and
-                            method_ratio > 0.3):  # More than 30% of methods are shared
+                            field_ratio > 0.3):  # Uses more than 30% of the other's fields
                         self.add_smell(
                             name="Inappropriate Intimacy",
                             description=f"Class '{class_name}' might be too intimate with '{other_class}' "
-                            f"({shared} shared members, {method_ratio:.1%} of methods) in {file_path}",
+                            f"(uses {shared} of its fields, {field_ratio:.1%}) in {file_path}",
                             file_path=file_path,
                             module_class=class_name,
                             line_number=None,
@@ -1101,6 +1151,9 @@ class CodeSmellDetector:
                        for pattern in common_patterns.values())
 
         for node in module.nodes_of_class(nodes.Attribute):
+            # Measure each chain once, from its outermost attribute
+            if isinstance(node.parent, nodes.Attribute) and node.parent.expr is node:
+                continue
             chain_length, chain = get_chain_length(node)
 
             # Skip if it's a valid pattern
@@ -1169,11 +1222,12 @@ class CodeSmellDetector:
                 # Check if method is just delegating
                 if len(method.body) == 1 and isinstance(method.body[0], nodes.Return):
                     return_value = method.body[0].value
-                    if isinstance(return_value, nodes.Call):
+                    func = return_value.func if isinstance(return_value, nodes.Call) else None
+                    # Delegation forwards to another object: return <obj>.<method>(...),
+                    # not a plain function call and not a call to one of self's own methods
+                    if isinstance(func, nodes.Attribute) and func.expr.as_string() != 'self':
                         delegating_methods += 1
-                        # Track which object we're delegating to
-                        if isinstance(return_value.func, nodes.Attribute):
-                            delegate_targets[return_value.func.expr.as_string()].append(method.name)
+                        delegate_targets[func.expr.as_string()].append(method.name)
 
             delegation_ratio = delegating_methods / total_methods if total_methods > 0 else 0
             if (delegation_ratio > self.thresholds["MIDDLE_MAN_RATIO"] and
@@ -1206,6 +1260,8 @@ class CodeSmellDetector:
                 continue
             files_seen = sorted({fp for _, fp in entries})
             if len(files_seen) < 2:
+                continue
+            if self._share_base(self._global_class_bases[e] for e in entries):
                 continue
             if len(entries) >= self.thresholds["ALTERNATIVE_CLASSES_THRESHOLD"]:
                 self._drop_file_findings("Alternative Classes", methods, files_seen)
@@ -1263,29 +1319,28 @@ class CodeSmellDetector:
 
     def _cross_file_inappropriate_intimacy(self):
         entries = list(self._global_class_info.values())
-        for i, a in enumerate(entries):
-            for b in entries[i + 1:]:
-                if a["file_path"] == b["file_path"]:
-                    continue
-                if (b["class_name"] in a["relationships"] or
-                        a["class_name"] in b["relationships"]):
-                    continue
-                shared = len(a["methods"].intersection(b["fields"]))
-                method_ratio = shared / len(a["methods"]) if a["methods"] else 0
-                if (shared > self.thresholds["INAPPROPRIATE_INTIMACY_SHARED"] and
-                        method_ratio > 0.3):
-                    self.add_smell(
-                        name="Inappropriate Intimacy",
-                        description=(
-                            f"Class '{a['class_name']}' ({a['file_path']}) might be too intimate "
-                            f"with '{b['class_name']}' ({b['file_path']}) "
-                            f"({shared} shared members, {method_ratio:.1%} of methods)"
-                        ),
-                        file_path=a["file_path"],
-                        module_class=a["class_name"],
-                        line_number=None,
-                        severity='medium'
-                    )
+        for a, b in permutations(entries, 2):
+            if a["file_path"] == b["file_path"]:
+                continue
+            if (b["class_name"] in a["relationships"] or
+                    a["class_name"] in b["relationships"]):
+                continue
+            shared = len(a["accesses"] & b["fields"])
+            field_ratio = shared / len(b["fields"]) if b["fields"] else 0
+            if (shared > self.thresholds["INAPPROPRIATE_INTIMACY_SHARED"] and
+                    field_ratio > 0.3):
+                self.add_smell(
+                    name="Inappropriate Intimacy",
+                    description=(
+                        f"Class '{a['class_name']}' ({a['file_path']}) might be too intimate "
+                        f"with '{b['class_name']}' ({b['file_path']}) "
+                        f"(uses {shared} of its fields, {field_ratio:.1%})"
+                    ),
+                    file_path=a["file_path"],
+                    module_class=a["class_name"],
+                    line_number=None,
+                    severity='medium'
+                )
 
     def _cross_file_parallel_inheritance(self):
         class_info = {}
@@ -1309,8 +1364,7 @@ class CodeSmellDetector:
             if len(all_files) < 2:
                 continue
             if len(h1) > 1 and len(h2) > 1:
-                if any(c1.replace(h1[0], '') == c2.replace(h2[0], '')
-                       for c1, c2 in product(h1, h2)):
+                if self._names_correspond(b1, h1, b2, h2):
                     if h1[0] in class_info and h2[0] in class_info:
                         union_size = len(class_info[h1[0]] | class_info[h2[0]])
                         if union_size > 0:

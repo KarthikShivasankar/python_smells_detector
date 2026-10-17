@@ -283,6 +283,7 @@ analyze_code_quality /path/to/project \
 | `--config` | option | Path to a YAML threshold configuration file. If omitted and no `code_quality_config.yaml` exists in the current directory, the config bundled with the package is used. | `code_quality_config.yaml` |
 | `--output` | option | Base name for output files — generates `<name>.txt` + `<name>.csv` | print to stdout |
 | `--ignore` | option (repeatable) | Directory names to skip during traversal | none |
+| `--format` | option | `text` (txt/csv reports) or `json` (one JSON document on stdout, or in the `--output` file; progress goes to stderr) | `text` |
 | `--debug` | flag | Enable verbose debug logging to console and `code_analysis.log` | off |
 
 ---
@@ -307,6 +308,28 @@ python -m code_quality_analyzer.main /path/to/project
 # or via uv
 uv run python -m code_quality_analyzer.main /path/to/project
 ```
+
+### Agents, scripts and test harnesses
+
+Two machine-readable entry points return the same finding records
+(`type`, `name`, `description`, `file_path`, `module_class`, `line_number`, `severity`):
+
+```bash
+# One JSON document on stdout: {"findings": [...], "summary": {"Code": n, "Architectural": n, "Structural": n}}
+analyze_code_quality /path/to/project --format json 2>/dev/null
+analyze_code_quality /path/to/project --type code --format json --output findings.json
+```
+
+```python
+from code_quality_analyzer import analyze
+
+findings = analyze("/path/to/project", types=["code", "structural"], ignore=["tests"])
+for f in findings:
+    print(f["type"], f["name"], f["file_path"], f["line_number"])
+```
+
+`analyze()` prints nothing to stdout, writes no files and does not configure logging;
+importing the package no longer creates `code_analysis.log` (only the CLI does).
 
 ### Python API
 
@@ -593,7 +616,7 @@ The test suite covers all three detectors (code, structural, architectural), the
 # Install dev dependencies first (includes pytest)
 uv sync --extra dev
 
-# Run the full test suite (123 tests)
+# Run the full test suite (157 tests)
 uv run python -m pytest tests/
 
 # Run a specific test file
@@ -616,7 +639,7 @@ uv run python -m pytest tests/ -v
 # Run with coverage report
 uv run python -m pytest tests/ --cov=src/code_quality_analyzer --cov-report=term-missing
 
-# Verify all 123 tests pass (exit 0 = success)
+# Verify all 157 tests pass (exit 0 = success)
 uv run python -m pytest tests/ -q && echo "All tests passed"
 ```
 
