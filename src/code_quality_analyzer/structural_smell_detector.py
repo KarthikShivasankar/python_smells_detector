@@ -1147,13 +1147,8 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
         complexity = 1  # Base complexity
 
         for node in ast.walk(method):
-            # Control flow statements
-            if isinstance(node, ast.If):
-                complexity += 1
-                # Count elif branches
-                complexity += len([1 for handler in node.orelse
-                                   if isinstance(handler, ast.If)])
-            elif isinstance(node, (ast.For, ast.While)):
+            # Control flow statements (ast.walk visits each elif as its own If node)
+            if isinstance(node, (ast.If, ast.For, ast.While)):
                 complexity += 1
             elif isinstance(node, ast.ExceptHandler):
                 complexity += 1
@@ -1309,31 +1304,30 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
             dict: Contains branch count and maximum nesting level
         """
         branch_count = 0
-        max_nesting = 0
-        current_nesting = 0
 
+        # ast.walk visits each elif as its own If node, so it is counted once here
         for node in ast.walk(method):
             if isinstance(node, (ast.If, ast.For, ast.While, ast.Try)):
                 branch_count += 1
-                current_nesting += 1
-                max_nesting = max(max_nesting, current_nesting)
-
-                # Add elif branches for if statements
-                if isinstance(node, ast.If):
-                    branch_count += len([1 for handler in node.orelse
-                                         if isinstance(handler, ast.If)])
                 # Add except blocks for try statements
-                elif isinstance(node, ast.Try):
+                if isinstance(node, ast.Try):
                     branch_count += len(node.handlers)
-
-            # Decrease nesting level when leaving a node
-            elif isinstance(node, ast.FunctionDef) and node != method:
-                current_nesting = max(0, current_nesting - 1)
 
         return {
             'count': branch_count,
-            'max_nesting': max_nesting
+            'max_nesting': self._max_nesting(method)
         }
+
+    @staticmethod
+    def _max_nesting(node, depth=0):
+        """Deepest nesting of If/For/While/Try below node; an elif does not add a level."""
+        deepest = depth
+        for child in ast.iter_child_nodes(node):
+            is_elif = (isinstance(node, ast.If) and len(node.orelse) == 1
+                       and node.orelse[0] is child and isinstance(child, ast.If))
+            nests = isinstance(child, (ast.If, ast.For, ast.While, ast.Try)) and not is_elif
+            deepest = max(deepest, StructuralSmellDetector._max_nesting(child, depth + nests))
+        return deepest
 
 
 def analyze_structure(directory_path, config):
