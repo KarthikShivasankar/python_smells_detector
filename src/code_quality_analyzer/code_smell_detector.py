@@ -1,4 +1,5 @@
 import builtins
+import keyword
 import logging
 import re
 from collections import defaultdict
@@ -728,13 +729,13 @@ class CodeSmellDetector:
         """
         def normalize_code(node):
             """Normalize code by removing variable names and whitespace."""
+            # as_string() carries no comments, so only identifiers and whitespace need handling
             code = node.as_string()
-            # Replace variable names with placeholders
-            code = re.sub(r'\b[a-zA-Z_]\w*\b', 'VAR', code)
-            # Remove whitespace and comments
-            code = re.sub(r'\s+', '', code)
-            code = re.sub(r'#.*$', '', code, flags=re.MULTILINE)
-            return code
+            # Replace variable names (not keywords) with placeholders
+            code = re.sub(r'\b[a-zA-Z_]\w*\b',
+                          lambda m: m.group() if keyword.iskeyword(m.group()) else 'VAR', code)
+            # Remove whitespace
+            return re.sub(r'\s+', '', code)
 
         code_blocks = defaultdict(list)
         for node in module.nodes_of_class(nodes.FunctionDef):

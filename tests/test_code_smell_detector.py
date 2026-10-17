@@ -636,6 +636,33 @@ class TestDuplicateCode:
         assert not smells_named(code_smell_detector, "Duplicate Code")
 
 
+    def test_hash_in_string_does_not_truncate(self, code_smell_detector, tmp_path):
+        # Regression for #26: everything after a '#' in a string literal was dropped
+        bodies = [
+            ["a = x.strip()", "b = a.upper()", "c = b + a", "return p + c"],
+            ["a = [x]", "a.append(x)", "b = len(a)", "return p * b"],
+            ["a = x.split()", "a.sort()", "b = ','.join(a)", "return p + b"],
+        ]
+        funcs = "\n".join(
+            f"def f{i}(x):\n    p = '#'\n" + "".join(f"    {line}\n" for line in body)
+            for i, body in enumerate(bodies)
+        )
+        f = tmp_path / "hash.py"
+        f.write_text(funcs)
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Duplicate Code")
+
+    def test_keywords_kept(self, code_smell_detector, tmp_path):
+        # Regression for #26: 'for a in b' and 'with a as b' normalized to the same tokens
+        tail = "        if y > 0:\n            r = y\n    n = n + 1\n    return r\n"
+        heads = ["for y in x:", "with x as y:", "for y in x:"]
+        bodies = [f"def f{i}(x):\n    r = None\n    n = 0\n    {h}\n{tail}" for i, h in enumerate(heads)]
+        f = tmp_path / "keywords.py"
+        f.write_text("\n".join(bodies))
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Duplicate Code")
+
+
 # ---------------------------------------------------------------------------
 # Alternative Classes
 # ---------------------------------------------------------------------------
