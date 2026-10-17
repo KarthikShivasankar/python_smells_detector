@@ -232,36 +232,50 @@ class TestSwitchStatements:
 
 class TestTemporaryField:
     def test_detects_unused_init_fields(self, code_smell_detector, tmp_path):
-        # The detector finds AssignName (local vars) in __init__ not accessed as
-        # self.xxx in other methods. 4 local vars, 0 used as self.xxx → temp_fields >=3.
+        # 3 self.xxx fields set in __init__ and never read by another method (>= threshold 3)
         f = tmp_path / "temp_field.py"
         f.write_text(
             "class C:\n"
             "    def __init__(self):\n"
-            "        alpha = setup_alpha()\n"
-            "        beta = setup_beta()\n"
-            "        gamma = setup_gamma()\n"
-            "        delta = setup_delta()\n"
+            "        self.title = 'r'\n"
+            "        self.alpha = None\n"
+            "        self.beta = None\n"
+            "        self.gamma = None\n"
             "    def method(self):\n"
-            "        return self.other_value\n"
+            "        return self.title\n"
         )
         code_smell_detector.detect_smells(str(f))
-        assert smells_named(code_smell_detector, "Temporary Field"), \
-            "Expected Temporary Field for 4 local vars in __init__ unused as self.xxx"
+        smells = smells_named(code_smell_detector, "Temporary Field")
+        assert len(smells) == 1
+        assert "title" not in smells[0].description
 
     def test_all_fields_used_not_flagged(self, code_smell_detector, tmp_path):
-        # When __init__ only has 1 local var not in used_fields, below threshold of 3
         f = tmp_path / "all_used.py"
         f.write_text(
             "class C:\n"
             "    def __init__(self):\n"
-            "        only_one = setup()\n"
+            "        self.value = setup()\n"
             "    def method(self):\n"
             "        return self.value\n"
         )
         code_smell_detector.detect_smells(str(f))
-        assert not smells_named(code_smell_detector, "Temporary Field"),\
-            "1 unused local var is below threshold"
+        assert not smells_named(code_smell_detector, "Temporary Field")
+
+    def test_params_and_locals_are_not_fields(self, code_smell_detector, tmp_path):
+        # Regression for #19: parameters passed to super() and local variables used
+        # to be reported as fields (including 'self').
+        f = tmp_path / "params.py"
+        f.write_text(
+            "class Binner(Base):\n"
+            "    def __init__(self, bins, precision, verbose):\n"
+            "        super().__init__(precision, verbose)\n"
+            "        scale = setup()\n"
+            "        self.bins = bins * scale\n"
+            "    def fit(self, data):\n"
+            "        return data[: self.bins]\n"
+        )
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Temporary Field")
 
 
 # ---------------------------------------------------------------------------

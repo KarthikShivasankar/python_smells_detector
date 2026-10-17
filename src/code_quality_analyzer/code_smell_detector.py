@@ -413,15 +413,15 @@ class CodeSmellDetector:
             for child in node.body:
                 if isinstance(child, nodes.FunctionDef):
                     if child.name == '__init__':
-                        for target in child.nodes_of_class(nodes.AssignName):
-                            # Check if field has a comment indicating it's for caching
-                            if any(isinstance(sibling, nodes.Expr) and
-                                   isinstance(sibling.value, nodes.Const) and
-                                   'cache' in str(sibling.value.value).lower()
-                                   for sibling in child.body):
-                                cached_fields.add(target.name)
-                            else:
-                                init_fields.add(target.name)
+                        # Check if __init__ has a comment indicating its fields are for caching
+                        is_cache = any(isinstance(sibling, nodes.Expr) and
+                                       isinstance(sibling.value, nodes.Const) and
+                                       'cache' in str(sibling.value.value).lower()
+                                       for sibling in child.body)
+                        # Fields are attributes assigned on self, not parameters or locals
+                        for target in child.nodes_of_class(nodes.AssignAttr):
+                            if isinstance(target.expr, nodes.Name) and target.expr.name == 'self':
+                                (cached_fields if is_cache else init_fields).add(target.attrname)
                     else:
                         used_fields.update(
                             n.attrname for n in child.nodes_of_class(nodes.Attribute)
