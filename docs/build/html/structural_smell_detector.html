@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Structural Smell Detection &mdash; Code Quality Analyzer 0.2.2 documentation</title>
+  <title>Structural Smell Detection &mdash; Code Quality Analyzer 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=000c92bf"></script>
+      <script src="_static/documentation_options.js?v=e259d695"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -77,6 +77,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_smells"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_smells()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_directory"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.analyze_directory()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_file"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.analyze_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._build_dependency_graph"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._build_dependency_graph()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_class"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.analyze_class()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_method"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.analyze_method()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.add_smell"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.add_smell()</span></code></a></li>
@@ -89,24 +90,26 @@
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_rfc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_rfc()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_nocc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_nocc()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_dit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._line_counts"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._line_counts()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_loc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_loc()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_mpc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_mpc()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_cbo()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._get_base_object"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._get_base_object()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._is_excluded_dependency"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._is_excluded_dependency()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._calculate_cbo_severity"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._calculate_cbo_severity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_noc"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_noc()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._adjust_noc_threshold"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._adjust_noc_threshold()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.print_report"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.print_report()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.resolve_base_class"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.resolve_base_class()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._get_attr_base"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._get_attr_base()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._functions"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._functions()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cyclomatic_complexity"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_cyclomatic_complexity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.calculate_cyclomatic_complexity"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.calculate_cyclomatic_complexity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._cyclomatic_complexity"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._cyclomatic_complexity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanout"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_fanout()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanin"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_fanin()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_file_length"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_file_length()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_branches"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector.detect_branches()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._analyze_branches"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._analyze_branches()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._count_branches"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._count_branches()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._max_nesting"><code class="docutils literal notranslate"><span class="pre">StructuralSmellDetector._max_nesting()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#code_quality_analyzer.structural_smell_detector.analyze_structure"><code class="docutils literal notranslate"><span class="pre">analyze_structure()</span></code></a></li>
@@ -180,58 +183,58 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmell">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">code_quality_analyzer.structural_smell_detector.</span></span><span class="sig-name descname"><span class="pre">StructuralSmell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">severity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Represents a detected structural smell in the code.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the structural smell.</p></li>
-<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – A description of the detected smell.</p></li>
-<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The path to the file where the smell was detected.</p></li>
-<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The module or class where the smell was detected.</p></li>
-<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – The line number where the smell was detected.</p></li>
-<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – The severity level of the smell.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The name of the structural smell.</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – A description of the detected smell.</p></li>
+<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The path to the file where the smell was detected.</p></li>
+<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The module or class where the smell was detected.</p></li>
+<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em>, </em><em>optional</em>) – The line number where the smell was detected.</p></li>
+<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>, </em><em>optional</em>) – The severity level of the smell.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmell.name">
-<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.name" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.name" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmell.description">
-<span class="sig-name descname"><span class="pre">description</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.description" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">description</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.description" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmell.file_path">
-<span class="sig-name descname"><span class="pre">file_path</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.file_path" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">file_path</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.file_path" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmell.module_class">
-<span class="sig-name descname"><span class="pre">module_class</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.module_class" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">module_class</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.module_class" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmell.line_number">
-<span class="sig-name descname"><span class="pre">line_number</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.line_number" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">line_number</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.line_number" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmell.severity">
-<span class="sig-name descname"><span class="pre">severity</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.severity" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">severity</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmell.severity" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -240,12 +243,12 @@
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -259,27 +262,27 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">code_quality_analyzer.structural_smell_detector.</span></span><span class="sig-name descname"><span class="pre">StructuralSmellDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A class to detect structural smells in Python code.</p>
 <p>This class analyzes Python source code files to identify various structural
 code smells based on predefined thresholds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structural_smells</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – A list to store detected structural smells.</p></li>
+<li><p><strong>structural_smells</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>) – A list to store detected structural smells.</p></li>
 <li><p><strong>class_info</strong> (<em>defaultdict</em>) – A dictionary to store information about classes.</p></li>
 <li><p><strong>module_info</strong> (<em>defaultdict</em>) – A dictionary to store information about modules.</p></li>
 <li><p><strong>dependency_graph</strong> (<em>nx.DiGraph</em>) – A directed graph to represent module dependencies.</p></li>
-<li><p><strong>thresholds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – A dictionary of threshold values for various smell detections.</p></li>
-<li><p><strong>project_root</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The root directory of the project being analyzed.</p></li>
-<li><p><strong>file_paths</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – A dictionary to store file paths of modules and classes.</p></li>
+<li><p><strong>thresholds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a>) – A dictionary of threshold values for various smell detections.</p></li>
+<li><p><strong>project_root</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The root directory of the project being analyzed.</p></li>
+<li><p><strong>file_paths</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a>) – A dictionary to store file paths of modules and classes.</p></li>
 </ul>
 </dd>
 </dl>
 <p>Initialize the StructuralSmellDetector with given configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Either a dictionary of thresholds or a path to a YAML config file.</p>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Either a dictionary of thresholds or a path to a YAML config file.</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -288,7 +291,7 @@ code smells based on predefined thresholds.</p>
 <dd><p>Initialize the StructuralSmellDetector with given configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Either a dictionary of thresholds or a path to a YAML config file.</p>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Either a dictionary of thresholds or a path to a YAML config file.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -299,16 +302,16 @@ code smells based on predefined thresholds.</p>
 <dd><p>Load threshold values from the given configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Either a dictionary of thresholds or a path to a YAML config file.</p>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Either a dictionary of thresholds or a path to a YAML config file.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A dictionary of threshold values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)">dict</a></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the config is neither a dictionary nor a valid file path.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – If the config is neither a dictionary nor a valid file path.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -320,7 +323,7 @@ code smells based on predefined thresholds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>directory_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The path to the directory to analyze.</p></li>
+<li><p><strong>directory_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The path to the directory to analyze.</p></li>
 <li><p><strong>ignore_dirs</strong> (<em>iterable</em>) – Directory names to skip during analysis.</p></li>
 </ul>
 </dd>
@@ -330,11 +333,11 @@ code smells based on predefined thresholds.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_directory">
 <span class="sig-name descname"><span class="pre">analyze_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.analyze_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.analyze_directory" title="Link to this definition"></a></dt>
-<dd><p>Analyze all Python files in the given directory and its subdirectories.</p>
+<dd><p>Analyze all Python files in the given directory (or the single given file).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>directory_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The path to the directory to be analyzed.</p></li>
+<li><p><strong>directory_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The path to the directory to be analyzed.</p></li>
 <li><p><strong>ignore_dirs</strong> (<em>iterable</em>) – Directory names to skip.</p></li>
 </ul>
 </dd>
@@ -347,9 +350,15 @@ code smells based on predefined thresholds.</p>
 <dd><p>Analyze a single Python file for structural information.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The path to the Python file to be analyzed.</p>
+<dd class="field-odd"><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The path to the Python file to be analyzed.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._build_dependency_graph">
+<span class="sig-name descname"><span class="pre">_build_dependency_graph</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._build_dependency_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._build_dependency_graph" title="Link to this definition"></a></dt>
+<dd><p>Edges to the project modules each module imports, and to external top-level packages.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -359,8 +368,8 @@ code smells based on predefined thresholds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>node</strong> (<a class="reference external" href="https://docs.python.org/3/library/ast.html#ast.ClassDef" title="(in Python v3.14)"><em>ast.ClassDef</em></a>) – The class definition node to analyze.</p></li>
-<li><p><strong>module_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the module containing the class.</p></li>
+<li><p><strong>node</strong> (<a class="reference external" href="https://docs.python.org/3/library/ast.html#ast.ClassDef" title="(in Python v3.15)"><em>ast.ClassDef</em></a>) – The class definition node to analyze.</p></li>
+<li><p><strong>module_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The name of the module containing the class.</p></li>
 </ul>
 </dd>
 </dl>
@@ -373,8 +382,8 @@ code smells based on predefined thresholds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>node</strong> (<a class="reference external" href="https://docs.python.org/3/library/ast.html#ast.FunctionDef" title="(in Python v3.14)"><em>ast.FunctionDef</em></a>) – The method definition node to analyze.</p></li>
-<li><p><strong>class_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the class containing the method.</p></li>
+<li><p><strong>node</strong> (<a class="reference external" href="https://docs.python.org/3/library/ast.html#ast.FunctionDef" title="(in Python v3.15)"><em>ast.FunctionDef</em></a>) – The method definition node to analyze.</p></li>
+<li><p><strong>class_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The name of the class containing the method.</p></li>
 </ul>
 </dd>
 </dl>
@@ -387,12 +396,12 @@ code smells based on predefined thresholds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the smell</p></li>
-<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Description of the smell</p></li>
-<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Path to the file containing the smell</p></li>
-<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The module or class containing the smell</p></li>
-<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – The line number where the smell was detected</p></li>
-<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – The severity level of the smell (default: ‘medium’)</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The name of the smell</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Description of the smell</p></li>
+<li><p><strong>file_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Path to the file containing the smell</p></li>
+<li><p><strong>module_class</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The module or class containing the smell</p></li>
+<li><p><strong>line_number</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em>, </em><em>optional</em>) – The line number where the smell was detected</p></li>
+<li><p><strong>severity</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>, </em><em>optional</em>) – The severity level of the smell (default: ‘medium’)</p></li>
 </ul>
 </dd>
 </dl>
@@ -471,12 +480,17 @@ Enhanced to consider:
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit">
 <span class="sig-name descname"><span class="pre">detect_dit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_dit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_dit" title="Link to this definition"></a></dt>
-<dd><p>Detect classes with a Deep Inheritance Tree (DIT).
-Enhanced to consider:
-- Framework/library base classes
-- Mixin classes
-- Interface-like classes
-- Abstract base classes</p>
+<dd><p>Detect classes with a Deep Inheritance Tree (DIT): the longest chain of base
+classes from a class up to object. A class without bases has DIT 1. Base names
+are resolved to project classes (same module first, then a unique class of that
+name elsewhere); unresolved bases count as one level. Builtins, mixins,
+interfaces and abstract bases are not counted as levels.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._line_counts">
+<span class="sig-name descname"><span class="pre">_line_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._line_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._line_counts" title="Link to this definition"></a></dt>
+<dd><p>(code, doc, import, blank) line counts of a module; comment lines count as none.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -500,51 +514,11 @@ Enhanced to consider:
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo">
 <span class="sig-name descname"><span class="pre">detect_cbo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_cbo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cbo" title="Link to this definition"></a></dt>
-<dd><p>Detect modules with high Coupling Between Object Classes (CBO).
-Enhanced to consider:
-- Direct vs indirect coupling
-- Framework/library dependencies
-- Test dependencies
-- Internal vs external coupling
-- Strength of coupling</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._get_base_object">
-<span class="sig-name descname"><span class="pre">_get_base_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._get_base_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._get_base_object" title="Link to this definition"></a></dt>
-<dd><p>Get the base object name from an attribute node.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>node</strong> (<a class="reference external" href="https://docs.python.org/3/library/ast.html#ast.AST" title="(in Python v3.14)"><em>ast.AST</em></a>) – The AST node to analyze.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The base object name, or None if it cannot be determined.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._is_excluded_dependency">
-<span class="sig-name descname"><span class="pre">_is_excluded_dependency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_libs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework_patterns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._is_excluded_dependency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._is_excluded_dependency" title="Link to this definition"></a></dt>
-<dd><p>Check if a dependency should be excluded from coupling calculations.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name to check.</p></li>
-<li><p><strong>standard_libs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><em>set</em></a>) – Set of standard library names.</p></li>
-<li><p><strong>framework_patterns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><em>set</em></a>) – Set of framework-specific patterns.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True if the dependency should be excluded, False otherwise.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
-</dd>
-</dl>
+<dd><p>Detect classes with high Coupling Between Object Classes (CBO): the number of
+distinct other classes and modules a class uses. Without type inference a
+coupling target is a name that is either imported into the module (from
+outside the standard library) or the name of a class defined in the project;
+local variables, parameters and builtins are not coupling targets.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -554,15 +528,15 @@ Enhanced to consider:
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>weighted_cbo</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The weighted CBO value.</p></li>
-<li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The CBO threshold.</p></li>
+<li><p><strong>weighted_cbo</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – The weighted CBO value.</p></li>
+<li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – The CBO threshold.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The severity level (‘Low’, ‘Medium’, or ‘High’).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -588,7 +562,7 @@ Enhanced to consider:
 <dd class="field-odd"><p>Adjusted threshold value</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)">float</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -614,7 +588,7 @@ Enhanced to consider:
 <dd class="field-even"><p>The resolved base class name</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -626,32 +600,38 @@ Enhanced to consider:
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._functions">
+<span class="sig-name descname"><span class="pre">_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._functions" title="Link to this definition"></a></dt>
+<dd><p>Yield (owner, function, file_path) for every method and module-level function.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cyclomatic_complexity">
 <span class="sig-name descname"><span class="pre">detect_cyclomatic_complexity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_cyclomatic_complexity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_cyclomatic_complexity" title="Link to this definition"></a></dt>
-<dd><p>Detect methods with high cyclomatic complexity.
-Uses a simplified calculation based on control flow statements.</p>
+<dd><p>Detect methods and functions with high cyclomatic complexity.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.calculate_cyclomatic_complexity">
 <span class="sig-name descname"><span class="pre">calculate_cyclomatic_complexity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.calculate_cyclomatic_complexity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.calculate_cyclomatic_complexity" title="Link to this definition"></a></dt>
-<dd><p>Calculate cyclomatic complexity using a simplified approach.</p>
-<p>Counts:
-- if statements
-- elif branches
-- for loops
-- while loops
-- except blocks
-- boolean operations (and, or)</p>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._cyclomatic_complexity">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_cyclomatic_complexity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._cyclomatic_complexity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._cyclomatic_complexity" title="Link to this definition"></a></dt>
+<dd><p>Calculate McCabe cyclomatic complexity: 1 plus one per decision point.</p>
+<p>Counts if/elif statements and conditional expressions, for/while loops
+(async too), except handlers, match cases other than a bare <code class="docutils literal notranslate"><span class="pre">case</span> <span class="pre">_</span></code>,
+each extra operand of and/or, and each for/if clause of a comprehension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/ast.html#ast.FunctionDef" title="(in Python v3.14)"><em>ast.FunctionDef</em></a>) – The method to analyze</p>
+<dd class="field-odd"><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/ast.html#ast.FunctionDef" title="(in Python v3.15)"><em>ast.FunctionDef</em></a>) – The method to analyze</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The cyclomatic complexity value</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -660,44 +640,40 @@ Uses a simplified calculation based on control flow statements.</p>
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanout">
 <span class="sig-name descname"><span class="pre">detect_fanout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_fanout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanout" title="Link to this definition"></a></dt>
 <dd><p>Detect modules with high fan-out (too many outgoing dependencies).
-Excludes standard library and test dependencies.</p>
+Excludes standard library dependencies and test modules.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanin">
 <span class="sig-name descname"><span class="pre">detect_fanin</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_fanin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_fanin" title="Link to this definition"></a></dt>
-<dd><p>Detect modules with high fan-in (too many incoming dependencies).
-Excludes utility classes and base classes which are meant to be widely used.</p>
+<dd><p>Detect project modules with high fan-in (imported by too many project modules).
+Excludes utility and base modules which are meant to be widely used.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_file_length">
 <span class="sig-name descname"><span class="pre">detect_file_length</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_file_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_file_length" title="Link to this definition"></a></dt>
-<dd><p>Detect files that are too long.</p>
+<dd><p>Detect files that are too long, counting code and import lines but not
+comments, docstrings or blank lines.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_branches">
 <span class="sig-name descname"><span class="pre">detect_branches</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector.detect_branches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector.detect_branches" title="Link to this definition"></a></dt>
-<dd><p>Detect methods with too many branches (if/else, loops).
-Excludes certain types of methods and considers nesting level.</p>
+<dd><p>Detect methods and functions with too many branches (Too Many Branches) or
+too deeply nested blocks (Deep Nesting, above MAX_NESTING_DEPTH).</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._analyze_branches">
-<span class="sig-name descname"><span class="pre">_analyze_branches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._analyze_branches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._analyze_branches" title="Link to this definition"></a></dt>
-<dd><p>Analyze branches in a method, considering both count and nesting level.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/ast.html#ast.FunctionDef" title="(in Python v3.14)"><em>ast.FunctionDef</em></a>) – The method to analyze</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Contains branch count and maximum nesting level</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._count_branches">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_count_branches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._count_branches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._count_branches" title="Link to this definition"></a></dt>
+<dd><p>if/elif, loops, try plus each except handler, and match cases.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._max_nesting">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_max_nesting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/structural_smell_detector.html#StructuralSmellDetector._max_nesting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.structural_smell_detector.StructuralSmellDetector._max_nesting" title="Link to this definition"></a></dt>
+<dd><p>Deepest nesting of block statements below node; an elif does not add a level.</p>
 </dd></dl>
 
 </dd></dl>
@@ -709,8 +685,8 @@ Excludes certain types of methods and considers nesting level.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>directory_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The path to the directory to analyze.</p></li>
-<li><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Either a dictionary of thresholds or a path to a YAML config file.</p></li>
+<li><p><strong>directory_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The path to the directory to analyze.</p></li>
+<li><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Either a dictionary of thresholds or a path to a YAML config file.</p></li>
 </ul>
 </dd>
 </dl>

@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tutorial &mdash; Code Quality Analyzer 0.2.2 documentation</title>
+  <title>Tutorial &mdash; Code Quality Analyzer 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=000c92bf"></script>
+      <script src="_static/documentation_options.js?v=e259d695"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -114,7 +114,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">code_smells</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">LONG_METHOD_LINES</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
-<span class="w">    </span><span class="nt">explanation</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Methods</span><span class="nv"> </span><span class="s">longer</span><span class="nv"> </span><span class="s">than</span><span class="nv"> </span><span class="s">this</span><span class="nv"> </span><span class="s">many</span><span class="nv"> </span><span class="s">lines</span><span class="nv"> </span><span class="s">may</span><span class="nv"> </span><span class="s">be</span><span class="nv"> </span><span class="s">too</span><span class="nv"> </span><span class="s">complex</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">should</span><span class="nv"> </span><span class="s">be</span><span class="nv"> </span><span class="s">refactored.&quot;</span>
+<span class="w">    </span><span class="nt">explanation</span><span class="p">:</span><span class="w"> </span><span class="s">"Methods</span><span class="nv"> </span><span class="s">longer</span><span class="nv"> </span><span class="s">than</span><span class="nv"> </span><span class="s">this</span><span class="nv"> </span><span class="s">many</span><span class="nv"> </span><span class="s">lines</span><span class="nv"> </span><span class="s">may</span><span class="nv"> </span><span class="s">be</span><span class="nv"> </span><span class="s">too</span><span class="nv"> </span><span class="s">complex</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">should</span><span class="nv"> </span><span class="s">be</span><span class="nv"> </span><span class="s">refactored."</span>
 
 <span class="c1"># ... add other configurations ...</span>
 </pre></div>
@@ -137,7 +137,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">code_smells</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">LONG_METHOD_LINES</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
-<span class="w">    </span><span class="nt">explanation</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Our</span><span class="nv"> </span><span class="s">project</span><span class="nv"> </span><span class="s">allows</span><span class="nv"> </span><span class="s">slightly</span><span class="nv"> </span><span class="s">longer</span><span class="nv"> </span><span class="s">methods.&quot;</span>
+<span class="w">    </span><span class="nt">explanation</span><span class="p">:</span><span class="w"> </span><span class="s">"Our</span><span class="nv"> </span><span class="s">project</span><span class="nv"> </span><span class="s">allows</span><span class="nv"> </span><span class="s">slightly</span><span class="nv"> </span><span class="s">longer</span><span class="nv"> </span><span class="s">methods."</span>
 </pre></div>
 </div>
 </section>
@@ -161,7 +161,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Set up Python</span>
 <span class="w">      </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
 <span class="w">      </span><span class="nt">with</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.x&#39;</span>
+<span class="w">        </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">'3.x'</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install dependencies</span>
 <span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install code-quality-analyzer</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run Code Quality Analyzer</span>

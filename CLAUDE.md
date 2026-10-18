@@ -39,16 +39,21 @@ uv run pytest tests/test_code_smell_detector.py           # single file
 uv run pytest tests/test_code_smell_detector.py::TestFoo  # single class
 ```
 
-### Build & publish
+### Build & release
 ```bash
 uv build                   # produces dist/*.whl and dist/*.tar.gz
-uv publish                 # upload to PyPI (requires UV_PUBLISH_TOKEN)
-uv publish --index https://test.pypi.org/simple/  # TestPyPI
+uvx twine check --strict dist/*
 ```
+Releases are published by `.github/workflows/publish.yml` when a GitHub Release
+`vX.Y.Z` is published: it checks the tag against `pyproject.toml` and
+`CHANGELOG.md`, runs the full `ci.yml` (reusable workflow), then uploads the
+tested `dist` to PyPI via Trusted Publishing. Never `uv publish` by hand.
 
 ### Documentation
 ```bash
 uv run --extra dev sphinx-build docs/source docs/build/html
+# exactly as Read the Docs / CI build it (warnings are errors):
+uv run --isolated --no-project --with . --with-requirements docs/requirements.txt sphinx-build -W -b html docs/source docs/_build/html
 # or the legacy way:
 cd docs && make.bat html   # Windows
 cd docs && make html       # Linux/Mac

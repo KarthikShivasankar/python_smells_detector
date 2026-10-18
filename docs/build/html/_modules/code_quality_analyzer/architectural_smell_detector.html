@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>code_quality_analyzer.architectural_smell_detector &mdash; Code Quality Analyzer 0.2.2 documentation</title>
+  <title>code_quality_analyzer.architectural_smell_detector &mdash; Code Quality Analyzer 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=000c92bf"></script>
+      <script src="../../_static/documentation_options.js?v=e259d695"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -81,18 +81,24 @@
              
   <h1>Source code for code_quality_analyzer.architectural_smell_detector</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodeAnalysisError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.project</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModuleIndex</span><span class="p">,</span>
+    <span class="n">external_kind</span><span class="p">,</span>
+    <span class="n">iter_imports</span><span class="p">,</span>
+    <span class="n">iter_python_files</span><span class="p">,</span>
+    <span class="n">module_parts</span><span class="p">,</span>
+    <span class="n">project_root</span><span class="p">,</span>
+    <span class="n">root_package</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.project</span><span class="w"> </span><span class="kn">import</span> <span class="n">module_name</span> <span class="k">as</span> <span class="n">project_module_name</span>
 
 <span class="c1"># Set up logger</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -107,14 +113,14 @@
     <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">module_class</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">line_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;medium&#39;</span></div>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'medium'</span></div>
 
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ArchitecturalSmellDetector</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A class to detect architectural smells in Python projects.</span>
 
 <span class="sd">    This class analyzes Python source code files within a directory to identify</span>
@@ -128,18 +134,18 @@
 <span class="sd">        thresholds (dict): A dictionary of threshold values for various smell detections.</span>
 <span class="sd">        file_paths (dict): A dictionary to store file paths for each module.</span>
 <span class="sd">        external_dependencies (dict): A dictionary to store external dependencies for each module.</span>
-<span class="sd">        function_calls (defaultdict): A dictionary to track inter-module function calls.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        errors (list): Files that could not be read or parsed.</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.__init__">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thresholds</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize the ArchitecturalSmellDetector with given thresholds.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            thresholds (dict): A dictionary of threshold values for various smell detections.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
@@ -147,58 +153,44 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="n">thresholds</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># New attribute to store file paths</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">external_dependencies</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">function_calls</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>  <span class="c1"># Track inter-module function calls</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Set once in analyze_directory for consistent module naming</span></div>
-
-
-<div class="viewcode-block" id="ArchitecturalSmellDetector.load_thresholds">
-<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.load_thresholds">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Load threshold values from a YAML configuration file.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            config_path (str): Path to the YAML configuration file.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict: A dictionary of threshold values for architectural smells.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-            <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;architectural_smells&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Set once in analyze_directory for consistent module naming</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_package</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># name of project_root when it is itself a package</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_imports</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># module -&gt; candidate-name lists, resolved once all files are known</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># files that could not be read or parsed</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_smells">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_smells">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_smells</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory_path</span><span class="p">,</span> <span class="n">ignore_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Detect architectural smells in the given directory.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            directory_path (str): The path to the directory to analyze.</span>
 <span class="sd">            ignore_dirs (iterable): Directory names to skip during analysis.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">detection_methods</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_hub_like_dependency</span><span class="p">,</span> <span class="s2">&quot;Hub-like Dependency&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_scattered_functionality</span><span class="p">,</span> <span class="s2">&quot;Scattered Functionality&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_redundant_abstractions</span><span class="p">,</span> <span class="s2">&quot;Redundant Abstractions&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_god_objects</span><span class="p">,</span> <span class="s2">&quot;God Objects&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_improper_api_usage</span><span class="p">,</span> <span class="s2">&quot;Improper API Usage&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_orphan_modules</span><span class="p">,</span> <span class="s2">&quot;Orphan Modules&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclic_dependencies</span><span class="p">,</span> <span class="s2">&quot;Cyclic Dependencies&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_unstable_dependencies</span><span class="p">,</span> <span class="s2">&quot;Unstable Dependencies&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_hub_like_dependency</span><span class="p">,</span> <span class="s2">"Hub-like Dependency"</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_scattered_functionality</span><span class="p">,</span> <span class="s2">"Scattered Functionality"</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_redundant_abstractions</span><span class="p">,</span> <span class="s2">"Redundant Abstractions"</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_god_objects</span><span class="p">,</span> <span class="s2">"God Objects"</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_improper_api_usage</span><span class="p">,</span> <span class="s2">"Improper API Usage"</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_orphan_modules</span><span class="p">,</span> <span class="s2">"Orphan Modules"</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_cyclic_dependencies</span><span class="p">,</span> <span class="s2">"Cyclic Dependencies"</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detect_unstable_dependencies</span><span class="p">,</span> <span class="s2">"Unstable Dependencies"</span><span class="p">),</span>
         <span class="p">]</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Analyzing directory structure: </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Analyzing directory structure: </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">analyze_directory</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">ignore_dirs</span><span class="o">=</span><span class="n">ignore_dirs</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">detect_method</span><span class="p">,</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">detection_methods</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Architectural checks&quot;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">detect_method</span><span class="p">,</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">detection_methods</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Architectural checks"</span><span class="p">,</span>
+                                                   <span class="n">disable</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Running </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                     <span class="n">detect_method</span><span class="p">()</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error in </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                     <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
                         <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
                         <span class="n">file_path</span><span class="o">=</span><span class="n">directory_path</span><span class="p">,</span>
@@ -206,7 +198,7 @@
                     <span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing directory </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error analyzing directory </span><span class="si">{</span><span class="n">directory_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">CodeAnalysisError</span><span class="p">(</span>
                 <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
                 <span class="n">file_path</span><span class="o">=</span><span class="n">directory_path</span>
@@ -216,149 +208,76 @@
 <div class="viewcode-block" id="ArchitecturalSmellDetector.analyze_directory">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.analyze_directory">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">analyze_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory_path</span><span class="p">,</span> <span class="n">ignore_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Analyze all Python files in the given directory and its subdirectories.</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Analyze all Python files in the given directory (or the single given file).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            directory_path (str): The path to the directory to be analyzed.</span>
 <span class="sd">            ignore_dirs (iterable): Directory names to skip.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
-        <span class="n">ignore_dirs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ignore_dirs</span> <span class="ow">or</span> <span class="p">[])</span>
-        <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">directory_path</span><span class="p">):</span>
-            <span class="n">dirs</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dirs</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ignore_dirs</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.py&#39;</span><span class="p">):</span>
-                    <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">analyze_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span> <span class="o">=</span> <span class="n">project_root</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_package</span> <span class="o">=</span> <span class="n">root_package</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">iter_python_files</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">ignore_dirs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">analyze_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
 
-        <span class="c1"># After analyzing all files, resolve external dependencies</span>
+        <span class="c1"># After analyzing all files, resolve imports to project modules or external ones</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolve_external_dependencies</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.analyze_file">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.analyze_file">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">analyze_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Analyze a single Python file for architectural information with improved</span>
-<span class="sd">        intra-project dependency detection.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Analyze a single Python file for architectural information. Files that cannot</span>
+<span class="sd">        be read or parsed are recorded in ``errors`` and skipped.</span>
+<span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
                 <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">SyntaxError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">RecursionError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Skipping </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">'file'</span><span class="p">:</span> <span class="n">file_path</span><span class="p">,</span> <span class="s1">'detector'</span><span class="p">:</span> <span class="s1">'ArchitecturalSmellDetector'</span><span class="p">,</span>
+                                <span class="s1">'error'</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">})</span>
+            <span class="k">return</span>
 
-            <span class="c1"># Get relative module path from consistent project root</span>
-            <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">file_path</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span>
-            <span class="n">module_name</span> <span class="o">=</span> <span class="n">module_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>  <span class="c1"># Remove .py extension</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_path</span>
+        <span class="n">module_name</span> <span class="o">=</span> <span class="n">project_module_name</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_path</span>
 
-            <span class="c1"># Track local imports and their line numbers</span>
-            <span class="n">local_imports</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Module functions are its module-level defs, not methods, nested or imported names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">body</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AsyncFunctionDef</span><span class="p">)))</span>
 
-            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Import</span><span class="p">):</span>
-                    <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
-                        <span class="n">import_name</span> <span class="o">=</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span>
-                        <span class="n">local_imports</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">import_name</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">))</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">import_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_imports</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">candidates</span> <span class="k">for</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">iter_imports</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">module_name</span><span class="p">)]</span>
 
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">:</span>
-                        <span class="c1"># Handle relative imports</span>
-                        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># This is a relative import</span>
-                            <span class="n">current_package</span> <span class="o">=</span> <span class="n">module_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
-                            <span class="c1"># Go up by node.level</span>
-                            <span class="n">parent_package</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_package</span><span class="p">[:</span><span class="o">-</span><span class="n">node</span><span class="o">.</span><span class="n">level</span><span class="p">])</span>
-                            <span class="k">if</span> <span class="n">parent_package</span><span class="p">:</span>
-                                <span class="n">import_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parent_package</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="si">}</span><span class="s2">&quot;</span>
-                            <span class="k">else</span><span class="p">:</span>
-                                <span class="n">import_name</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span>
-                        <span class="k">else</span><span class="p">:</span>
-                            <span class="n">import_name</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span>
-
-                        <span class="n">local_imports</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">import_name</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">))</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">import_name</span><span class="p">)</span>
-
-                        <span class="c1"># Track imported names for more detailed dependency analysis</span>
-                        <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
-                            <span class="k">if</span> <span class="n">alias</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span><span class="p">[</span><span class="n">import_name</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">alias</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">api_usage</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
-
-                        <span class="c1"># Track function calls between modules</span>
-                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
-                            <span class="c1"># Check if this is a call to an imported module</span>
-                            <span class="n">module_called</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span>
-                            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">module_called</span> <span class="o">==</span> <span class="n">imp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">imp</span> <span class="ow">in</span> <span class="n">local_imports</span><span class="p">):</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">function_calls</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-                                    <span class="p">(</span><span class="n">module_called</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">attr</span><span class="p">))</span>
-
-        <span class="k">except</span> <span class="ne">SyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error in file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error analyzing file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Call</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">api_usage</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.resolve_external_dependencies">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.resolve_external_dependencies">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve_external_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Resolve external dependencies while preserving intra-project dependencies.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Get all project modules</span>
-        <span class="n">project_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span>
-        <span class="n">all_modules</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
-        <span class="n">standard_lib_modules</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdlib_module_names</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">()):</span>
-            <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="n">module</span><span class="p">)):</span>
-                <span class="c1"># Check if it&#39;s a project module by looking for the file</span>
-                <span class="n">possible_paths</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_root</span><span class="p">,</span> <span class="o">*</span><span class="n">dependency</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;.py&#39;</span><span class="p">,</span>
-                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_root</span><span class="p">,</span> <span class="n">dependency</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;__init__.py&#39;</span><span class="p">)</span>
-                <span class="p">]</span>
-
-                <span class="n">is_project_module</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">dependency</span> <span class="ow">in</span> <span class="n">all_modules</span> <span class="ow">or</span>
-                    <span class="nb">any</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">possible_paths</span><span class="p">)</span>
-                <span class="p">)</span>
-
-                <span class="c1"># Keep project dependencies, handle external ones</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_project_module</span><span class="p">:</span>
-                    <span class="n">is_stdlib</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">dependency</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">std_lib</span><span class="p">)</span>
-                                    <span class="k">for</span> <span class="n">std_lib</span> <span class="ow">in</span> <span class="n">standard_lib_modules</span><span class="p">)</span>
-
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="n">dependency</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-                        <span class="n">is_third_party</span> <span class="o">=</span> <span class="n">spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_stdlib</span>
-                    <span class="k">except</span> <span class="p">(</span><span class="ne">ModuleNotFoundError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-                        <span class="n">is_third_party</span> <span class="o">=</span> <span class="kc">False</span>
-
-                    <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">remove_edge</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">dependency</span><span class="p">)</span>
-
-                    <span class="k">if</span> <span class="n">is_stdlib</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">external_dependencies</span><span class="p">[</span><span class="n">module</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s1">&#39;stdlib&#39;</span><span class="p">,</span> <span class="n">dependency</span><span class="p">))</span>
-                    <span class="k">elif</span> <span class="n">is_third_party</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">external_dependencies</span><span class="p">[</span><span class="n">module</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s1">&#39;third_party&#39;</span><span class="p">,</span> <span class="n">dependency</span><span class="p">))</span>
-
-                    <span class="c1"># Remove isolated external nodes</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_edges</span><span class="p">(</span><span class="n">dependency</span><span class="p">)</span> <span class="ow">and</span> \
-                       <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_edges</span><span class="p">(</span><span class="n">dependency</span><span class="p">):</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">remove_node</span><span class="p">(</span><span class="n">dependency</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Turn the recorded imports into edges between project modules; everything</span>
+<span class="sd">        that is not a project module is kept in ``external_dependencies`` instead.</span>
+<span class="sd">        """</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">ModuleIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">module</span><span class="p">,</span> <span class="n">imports</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imports</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">candidates</span> <span class="ow">in</span> <span class="n">imports</span><span class="p">:</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">external_dependencies</span><span class="p">[</span><span class="n">module</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">external_kind</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">name</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">target</span> <span class="o">!=</span> <span class="n">module</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.add_smell">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.add_smell">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">add_smell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">module_class</span><span class="p">,</span>
-                  <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+                  <span class="n">line_number</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s1">'medium'</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Add a detected architectural smell to the list.</span>
 
 <span class="sd">        Args:</span>
@@ -367,8 +286,8 @@
 <span class="sd">            file_path (str): Path to the file containing the smell</span>
 <span class="sd">            module_class (str): The module or class containing the smell</span>
 <span class="sd">            line_number (int, optional): The line number where the smell was detected</span>
-<span class="sd">            severity (str, optional): The severity level of the smell (default: &#39;medium&#39;)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            severity (str, optional): The severity level of the smell (default: 'medium')</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ArchitecturalSmell</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
@@ -379,79 +298,92 @@
         <span class="p">))</span></div>
 
 
+<div class="viewcode-block" id="ArchitecturalSmellDetector._core_graph">
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector._core_graph">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_core_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        The module graph without package __init__ modules: a package importing its</span>
+<span class="sd">        own submodules to build its API is neither a real dependency nor a cycle.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">subgraph</span><span class="p">(</span>
+            <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">n</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">'__init__'</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ArchitecturalSmellDetector._has_part">
+<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector._has_part">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_part</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        True if one of the dotted parts of module is in names (pkg.utils, not database).</span>
+<span class="sd">        The name of the analyzed package itself is not a part: analyzing a package</span>
+<span class="sd">        called utils must not exclude all of it.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">part</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">module_parts</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_package</span><span class="p">))</span></div>
+
+
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_hub_like_dependency">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_hub_like_dependency">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_hub_like_dependency</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Detect hub-like dependencies in the project with improved accuracy.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">total_modules</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Detect hub-like dependencies: modules that many modules depend on and that</span>
+<span class="sd">        themselves depend on many modules, so changes ripple through them both ways.</span>
+<span class="sd">        """</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_core_graph</span><span class="p">()</span>
+        <span class="n">total_modules</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">total_modules</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># Skip analysis for very small projects</span>
             <span class="k">return</span>
 
-        <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HUB_LIKE_DEPENDENCY_THRESHOLD&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
-        <span class="n">min_connections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MIN_HUB_CONNECTIONS&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'HUB_LIKE_DEPENDENCY_RATIO'</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">min_connections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'MIN_HUB_CONNECTIONS'</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
-            <span class="c1"># Count both internal and external dependencies</span>
-            <span class="n">in_degree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="n">out_degree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="n">external_deps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">external_dependencies</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
-            <span class="n">total_connections</span> <span class="o">=</span> <span class="n">in_degree</span> <span class="o">+</span> <span class="n">out_degree</span> <span class="o">+</span> <span class="n">external_deps</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
+            <span class="c1"># Shared infrastructure modules are meant to be widely connected</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_part</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">{</span><span class="s1">'util'</span><span class="p">,</span> <span class="s1">'utils'</span><span class="p">,</span> <span class="s1">'common'</span><span class="p">,</span> <span class="s1">'base'</span><span class="p">,</span> <span class="s1">'core'</span><span class="p">}):</span>
+                <span class="k">continue</span>
 
-            <span class="c1"># Calculate fan-in and fan-out ratios</span>
-            <span class="n">fan_in_ratio</span> <span class="o">=</span> <span class="n">in_degree</span> <span class="o">/</span> <span class="n">total_modules</span> <span class="k">if</span> <span class="n">total_modules</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-            <span class="n">fan_out_ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">out_degree</span> <span class="o">+</span> <span class="n">external_deps</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_modules</span> <span class="k">if</span> <span class="n">total_modules</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">in_degree</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="n">out_degree</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="n">total_connections</span> <span class="o">=</span> <span class="n">in_degree</span> <span class="o">+</span> <span class="n">out_degree</span>
 
-            <span class="c1"># Check for hub-like characteristics</span>
-            <span class="n">is_hub</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_connections</span> <span class="o">&gt;=</span> <span class="n">min_connections</span> <span class="ow">and</span>
-                      <span class="p">(</span><span class="n">total_connections</span> <span class="o">/</span> <span class="n">total_modules</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span>
-
-            <span class="c1"># Additional checks to reduce false positives</span>
-            <span class="k">if</span> <span class="n">is_hub</span><span class="p">:</span>
-                <span class="c1"># Exclude common infrastructure modules</span>
-                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">pattern</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;util&#39;</span><span class="p">,</span> <span class="s1">&#39;common&#39;</span><span class="p">,</span> <span class="s1">&#39;base&#39;</span><span class="p">,</span> <span class="s1">&#39;core&#39;</span><span class="p">]):</span>
-                    <span class="k">continue</span>
-
-                <span class="c1"># Check if the module has balanced dependencies</span>
-                <span class="n">is_balanced</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="o">&lt;=</span> <span class="n">fan_in_ratio</span> <span class="o">/</span> <span class="p">(</span><span class="n">fan_out_ratio</span> <span class="o">+</span> <span class="mf">0.0001</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">5</span>
-
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_balanced</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                        <span class="s2">&quot;Hub-like Dependency&quot;</span><span class="p">,</span>
-                        <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; is a potential hub with </span><span class="si">{</span><span class="n">total_connections</span><span class="si">}</span><span class="s2"> connections &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;(in: </span><span class="si">{</span><span class="n">in_degree</span><span class="si">}</span><span class="s2">, out: </span><span class="si">{</span><span class="n">out_degree</span><span class="si">}</span><span class="s2">, external: </span><span class="si">{</span><span class="n">external_deps</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
-                        <span class="n">node</span><span class="p">,</span>
-                        <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;high&#39;</span> <span class="k">if</span> <span class="n">total_connections</span> <span class="o">&gt;</span> <span class="n">min_connections</span> <span class="o">*</span> <span class="mi">2</span> <span class="k">else</span> <span class="s1">&#39;medium&#39;</span>
-                    <span class="p">)</span></div>
+            <span class="c1"># A hub has both incoming and outgoing dependencies in proportion; a module</span>
+            <span class="c1"># that is only imported (a library) or only imports (an entry point) is not one</span>
+            <span class="n">is_balanced</span> <span class="o">=</span> <span class="n">in_degree</span> <span class="ow">and</span> <span class="n">out_degree</span> <span class="ow">and</span> <span class="mf">0.2</span> <span class="o">&lt;=</span> <span class="n">in_degree</span> <span class="o">/</span> <span class="n">out_degree</span> <span class="o">&lt;=</span> <span class="mi">5</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">is_balanced</span> <span class="ow">and</span> <span class="n">total_connections</span> <span class="o">&gt;=</span> <span class="n">min_connections</span> <span class="ow">and</span>
+                    <span class="n">total_connections</span> <span class="o">/</span> <span class="n">total_modules</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">"Hub-like Dependency"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Module '</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">' is a potential hub with </span><span class="si">{</span><span class="n">total_connections</span><span class="si">}</span><span class="s2"> project connections "</span>
+                    <span class="sa">f</span><span class="s2">"(in: </span><span class="si">{</span><span class="n">in_degree</span><span class="si">}</span><span class="s2">, out: </span><span class="si">{</span><span class="n">out_degree</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">"Unknown"</span><span class="p">),</span>
+                    <span class="n">node</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="s1">'high'</span> <span class="k">if</span> <span class="n">total_connections</span> <span class="o">&gt;</span> <span class="n">min_connections</span> <span class="o">*</span> <span class="mi">2</span> <span class="k">else</span> <span class="s1">'medium'</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_scattered_functionality">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_scattered_functionality">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_scattered_functionality</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Detect scattered functionality in the project.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">function_modules</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="n">min_function_length</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># Ignore very short function names</span>
-        <span class="n">excluded_names</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">,</span> <span class="s1">&#39;init&#39;</span><span class="p">,</span> <span class="s1">&#39;setup&#39;</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">}</span>  <span class="c1"># Common function names to exclude</span>
+        <span class="n">excluded_names</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'main'</span><span class="p">,</span> <span class="s1">'init'</span><span class="p">,</span> <span class="s1">'setup'</span><span class="p">,</span> <span class="s1">'test'</span><span class="p">}</span>  <span class="c1"># Common function names to exclude</span>
 
         <span class="k">for</span> <span class="n">module</span><span class="p">,</span> <span class="n">functions</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">functions</span><span class="p">:</span>
                 <span class="c1"># Skip common/utility functions and short names</span>
                 <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">func</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_function_length</span> <span class="ow">and</span>
                     <span class="n">func</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">excluded_names</span> <span class="ow">and</span>
-                        <span class="ow">not</span> <span class="n">func</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)):</span>  <span class="c1"># Skip private functions</span>
+                        <span class="ow">not</span> <span class="n">func</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'_'</span><span class="p">)):</span>  <span class="c1"># Skip private functions</span>
                     <span class="n">function_modules</span><span class="p">[</span><span class="n">func</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
 
-        <span class="n">min_occurrences</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MIN_SCATTERED_OCCURRENCES&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">min_occurrences</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'MIN_SCATTERED_OCCURRENCES'</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">modules</span> <span class="ow">in</span> <span class="n">function_modules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_occurrences</span><span class="p">:</span>  <span class="c1"># Increase minimum occurrences threshold</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                    <span class="s2">&quot;Scattered Functionality&quot;</span><span class="p">,</span>
-                    <span class="sa">f</span><span class="s2">&quot;Function &#39;</span><span class="si">{</span><span class="n">func</span><span class="si">}</span><span class="s2">&#39; appears in </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="si">}</span><span class="s2"> modules: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">modules</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="s2">"Scattered Functionality"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Function '</span><span class="si">{</span><span class="n">func</span><span class="si">}</span><span class="s2">' appears in </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="si">}</span><span class="s2"> modules: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">modules</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"Unknown"</span><span class="p">),</span>
                     <span class="n">modules</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="p">)</span></div>
 
@@ -459,9 +391,9 @@
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_redundant_abstractions">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_redundant_abstractions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_redundant_abstractions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Detect potential redundant abstractions in the project.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">similar_modules</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="n">min_functions</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># Minimum number of functions to consider</span>
 
@@ -470,15 +402,15 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_functions</span><span class="p">:</span>
                 <span class="c1"># Filter out private functions and common utility functions</span>
                 <span class="n">public_functions</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">functions</span>
-                                    <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+                                    <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'_'</span><span class="p">)</span>
                                     <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span>
-                                    <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">,</span> <span class="s1">&#39;init&#39;</span><span class="p">,</span> <span class="s1">&#39;setup&#39;</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">}}</span>
+                                    <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">'main'</span><span class="p">,</span> <span class="s1">'init'</span><span class="p">,</span> <span class="s1">'setup'</span><span class="p">,</span> <span class="s1">'test'</span><span class="p">}}</span>
 
                 <span class="k">if</span> <span class="n">public_functions</span><span class="p">:</span>  <span class="c1"># Only proceed if there are public functions</span>
                     <span class="n">signature</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">public_functions</span><span class="p">)</span>
                     <span class="n">similar_modules</span><span class="p">[</span><span class="n">signature</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
 
-        <span class="n">similarity_threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;REDUNDANT_SIMILARITY_THRESHOLD&#39;</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
+        <span class="n">similarity_threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'REDUNDANT_ABSTRACTION_SIMILARITY'</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">signature</span><span class="p">,</span> <span class="n">modules</span> <span class="ow">in</span> <span class="n">similar_modules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_functions</span><span class="p">:</span>
                 <span class="c1"># Calculate similarity score between modules</span>
@@ -491,9 +423,9 @@
 
                         <span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;=</span> <span class="n">similarity_threshold</span><span class="p">:</span>
                             <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                                <span class="s2">&quot;Potential Redundant Abstractions&quot;</span><span class="p">,</span>
-                                <span class="sa">f</span><span class="s2">&quot;Modules </span><span class="si">{</span><span class="n">modules</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">modules</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="si">}</span><span class="s2"> have </span><span class="si">{</span><span class="n">similarity</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2"> similar functionalities&quot;</span><span class="p">,</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">modules</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                                <span class="s2">"Potential Redundant Abstractions"</span><span class="p">,</span>
+                                <span class="sa">f</span><span class="s2">"Modules </span><span class="si">{</span><span class="n">modules</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">modules</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="si">}</span><span class="s2"> have </span><span class="si">{</span><span class="n">similarity</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2"> similar functionalities"</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">modules</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s2">"Unknown"</span><span class="p">),</span>
                                 <span class="n">modules</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                             <span class="p">)</span></div>
 
@@ -501,24 +433,24 @@
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_god_objects">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_god_objects">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_god_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Detect god objects in the project.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">min_functions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MIN_GOD_OBJECT_FUNCTIONS&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-        <span class="n">excluded_patterns</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;test_&#39;</span><span class="p">,</span> <span class="s1">&#39;setup_&#39;</span><span class="p">,</span> <span class="s1">&#39;config_&#39;</span><span class="p">}</span>  <span class="c1"># Common prefixes to exclude</span>
+<span class="sd">        """</span>
+        <span class="n">min_functions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'MIN_GOD_OBJECT_FUNCTIONS'</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">excluded_patterns</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'test_'</span><span class="p">,</span> <span class="s1">'setup_'</span><span class="p">,</span> <span class="s1">'config_'</span><span class="p">}</span>  <span class="c1"># Common prefixes to exclude</span>
 
         <span class="k">for</span> <span class="n">module</span><span class="p">,</span> <span class="n">functions</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_functions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># Filter out private methods and common test/setup functions</span>
             <span class="n">public_functions</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">functions</span>
-                                <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span>
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'_'</span><span class="p">)</span> <span class="ow">and</span>
                                 <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">excluded_patterns</span><span class="p">)}</span>
 
             <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">public_functions</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_functions</span> <span class="ow">and</span>
-                    <span class="nb">len</span><span class="p">(</span><span class="n">public_functions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;GOD_OBJECT_FUNCTIONS&#39;</span><span class="p">]):</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">public_functions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">'GOD_OBJECT_FUNCTIONS'</span><span class="p">]):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                    <span class="s2">&quot;God Object&quot;</span><span class="p">,</span>
-                    <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">&#39; has too many public functions (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">public_functions</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="s2">"God Object"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Module '</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">' has too many public functions (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">public_functions</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"Unknown"</span><span class="p">),</span>
                     <span class="n">module</span>
                 <span class="p">)</span></div>
 
@@ -526,11 +458,11 @@
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_improper_api_usage">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_improper_api_usage">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_improper_api_usage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Detect potential improper API usage in the project.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">min_calls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MIN_API_CALLS&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># Minimum calls to consider</span>
-        <span class="n">repetition_threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;API_REPETITION_THRESHOLD&#39;</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="n">min_calls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'MIN_API_CALLS'</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># Minimum calls to consider</span>
+        <span class="n">repetition_threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'IMPROPER_API_USAGE_RATIO'</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">module</span><span class="p">,</span> <span class="n">api_calls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_usage</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">api_calls</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_calls</span><span class="p">:</span>
@@ -546,10 +478,10 @@
                 <span class="k">if</span> <span class="p">(</span><span class="n">repetitive_calls</span> <span class="ow">and</span>
                         <span class="nb">sum</span><span class="p">(</span><span class="n">repetitive_calls</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">api_calls</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">repetition_threshold</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                        <span class="s2">&quot;Potential Improper API Usage&quot;</span><span class="p">,</span>
-                        <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">&#39; has repetitive API calls: &quot;</span> <span class="o">+</span>
-                        <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">call</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">x)&quot;</span> <span class="k">for</span> <span class="n">call</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">repetitive_calls</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                        <span class="s2">"Potential Improper API Usage"</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"Module '</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">' has repetitive API calls: "</span> <span class="o">+</span>
+                        <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">call</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">x)"</span> <span class="k">for</span> <span class="n">call</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">repetitive_calls</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"Unknown"</span><span class="p">),</span>
                         <span class="n">module</span>
                     <span class="p">)</span></div>
 
@@ -557,160 +489,104 @@
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_orphan_modules">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_orphan_modules">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_orphan_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Detect orphan modules in the project.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">excluded_modules</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;__init__&#39;</span><span class="p">,</span> <span class="s1">&#39;setup&#39;</span><span class="p">,</span> <span class="s1">&#39;tests&#39;</span><span class="p">,</span> <span class="s1">&#39;utils&#39;</span><span class="p">}</span>  <span class="c1"># Common standalone modules</span>
-        <span class="n">min_project_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MIN_PROJECT_SIZE&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="c1"># Standalone by design: package markers, entry points, test and build scripts</span>
+        <span class="n">excluded_modules</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'__init__'</span><span class="p">,</span> <span class="s1">'__main__'</span><span class="p">,</span> <span class="s1">'conftest'</span><span class="p">,</span> <span class="s1">'setup'</span><span class="p">,</span> <span class="s1">'manage'</span><span class="p">,</span>
+                            <span class="s1">'test'</span><span class="p">,</span> <span class="s1">'tests'</span><span class="p">,</span> <span class="s1">'utils'</span><span class="p">}</span>
+        <span class="n">min_project_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'MIN_PROJECT_SIZE'</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span> <span class="o">&lt;</span> <span class="n">min_project_size</span><span class="p">:</span>
             <span class="k">return</span>
 
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
-            <span class="n">module_name</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="c1"># Fix: Check if any excluded module name is in the full node path</span>
-            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span>
-                <span class="n">module_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">excluded_modules</span> <span class="ow">and</span>
-                    <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">excluded</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">excluded</span> <span class="ow">in</span> <span class="n">excluded_modules</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span>
+                    <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_part</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">excluded_modules</span><span class="p">)</span> <span class="ow">and</span>
+                    <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'test_'</span><span class="p">)):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Orphan Module&quot;</span><span class="p">,</span>
-                    <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; is isolated from other modules&quot;</span><span class="p">,</span>
-                    <span class="n">file_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">"Orphan Module"</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">' is isolated from other modules"</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">"Unknown"</span><span class="p">),</span>
                     <span class="n">module_class</span><span class="o">=</span><span class="n">node</span><span class="p">,</span>
-                    <span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="s1">'medium'</span>
                 <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_cyclic_dependencies">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_cyclic_dependencies">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_cyclic_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Detect cyclic dependencies with improved accuracy and cycle classification.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">min_cycle_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MIN_CYCLE_SIZE&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">max_cycle_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MAX_CYCLE_SIZE&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-        <span class="n">excluded_modules</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;__init__&#39;</span><span class="p">,</span> <span class="s1">&#39;utils&#39;</span><span class="p">,</span> <span class="s1">&#39;common&#39;</span><span class="p">,</span> <span class="s1">&#39;base&#39;</span><span class="p">,</span> <span class="s1">&#39;core&#39;</span><span class="p">}</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Detect cyclic dependencies: one finding per group of modules that import each</span>
+<span class="sd">        other directly or indirectly (a strongly connected component), with one</span>
+<span class="sd">        concrete cycle as evidence. Package __init__ modules are left out.</span>
+<span class="sd">        """</span>
+        <span class="n">max_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'CYCLIC_DEPENDENCY_MAX_LENGTH'</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_core_graph</span><span class="p">()</span>
 
-        <span class="c1"># Find all simple cycles</span>
-        <span class="n">cycles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">simple_cycles</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="p">))</span>
-
-        <span class="c1"># Group cycles by their shared nodes to identify related cycles</span>
-        <span class="n">cycle_groups</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">cycle</span> <span class="ow">in</span> <span class="n">cycles</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">min_cycle_size</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_cycle_size</span><span class="p">:</span>
-                <span class="c1"># Skip cycles containing excluded modules</span>
-                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">excluded</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">excluded</span> <span class="ow">in</span> <span class="n">excluded_modules</span><span class="p">)</span>
-                       <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">cycle</span><span class="p">):</span>
-                    <span class="k">continue</span>
-
-                <span class="c1"># Calculate cycle metrics</span>
-                <span class="n">cycle_strength</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cycle</span><span class="p">)):</span>
-                    <span class="n">node1</span> <span class="o">=</span> <span class="n">cycle</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-                    <span class="n">node2</span> <span class="o">=</span> <span class="n">cycle</span><span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">cycle</span><span class="p">)]</span>
-                    <span class="c1"># Count mutual dependencies</span>
-                    <span class="n">cycle_strength</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">nx</span><span class="o">.</span><span class="n">all_simple_paths</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">))</span>
-
-                <span class="c1"># Group related cycles</span>
-                <span class="n">cycle_key</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span>
-                <span class="n">cycle_groups</span><span class="p">[</span><span class="n">cycle_key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">cycle</span><span class="p">,</span> <span class="n">cycle_strength</span><span class="p">))</span>
-
-        <span class="c1"># Report cycles with additional context</span>
-        <span class="k">for</span> <span class="n">cycle_group</span> <span class="ow">in</span> <span class="n">cycle_groups</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">strongest_cycle</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cycle_group</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">cycle</span><span class="p">,</span> <span class="n">strength</span> <span class="o">=</span> <span class="n">strongest_cycle</span>
-
-            <span class="c1"># Calculate severity based on cycle size and strength</span>
-            <span class="n">severity</span> <span class="o">=</span> <span class="s1">&#39;high&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">strength</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="k">else</span> <span class="s1">&#39;medium&#39;</span>
-
-            <span class="n">cycle_str</span> <span class="o">=</span> <span class="s1">&#39; -&gt; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cycle</span> <span class="o">+</span> <span class="p">[</span><span class="n">cycle</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">nx</span><span class="o">.</span><span class="n">strongly_connected_components</span><span class="p">(</span><span class="n">graph</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">component</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">members</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+            <span class="n">cycle</span> <span class="o">=</span> <span class="p">[</span><span class="n">u</span> <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">nx</span><span class="o">.</span><span class="n">find_cycle</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">subgraph</span><span class="p">(</span><span class="n">component</span><span class="p">),</span> <span class="n">source</span><span class="o">=</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+            <span class="n">cycle_str</span> <span class="o">=</span> <span class="s1">' -&gt; '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cycle</span> <span class="o">+</span> <span class="p">[</span><span class="n">cycle</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                <span class="s2">&quot;Cyclic Dependency&quot;</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;Strong cyclic dependency detected: </span><span class="si">{</span><span class="n">cycle_str</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Cycle strength: </span><span class="si">{</span><span class="n">strength</span><span class="si">}</span><span class="s2"> mutual dependencies&quot;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cycle</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
-                <span class="n">cycle</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span>
+                <span class="s2">"Cyclic Dependency"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span><span class="si">}</span><span class="s2"> modules depend on each other cyclically: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">members</span><span class="p">[:</span><span class="mi">10</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', ...'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="sa">f</span><span class="s2">"Example cycle: </span><span class="si">{</span><span class="n">cycle_str</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"Unknown"</span><span class="p">),</span>
+                <span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s1">'high'</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_length</span> <span class="k">else</span> <span class="s1">'medium'</span>
             <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.detect_unstable_dependencies">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.detect_unstable_dependencies">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_unstable_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Detect unstable dependencies in the project.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">min_dependencies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s1">&#39;MIN_DEPENDENCIES&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># Minimum dependencies to consider</span>
-        <span class="n">excluded_patterns</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;test_&#39;</span><span class="p">,</span> <span class="s1">&#39;setup_&#39;</span><span class="p">,</span> <span class="s1">&#39;__init__&#39;</span><span class="p">}</span>  <span class="c1"># Patterns to exclude</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Detect unstable dependencies (violations of the Stable Dependencies Principle):</span>
+<span class="sd">        a module that depends on a module which is both unstable, with instability</span>
+<span class="sd">        Ce / (Ca + Ce) above UNSTABLE_DEPENDENCY_THRESHOLD, and less stable than itself.</span>
+<span class="sd">        """</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_core_graph</span><span class="p">()</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">'UNSTABLE_DEPENDENCY_THRESHOLD'</span><span class="p">]</span>
 
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">pattern</span> <span class="ow">in</span> <span class="n">node</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">excluded_patterns</span><span class="p">):</span>
-                <span class="k">continue</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">instability</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="n">total</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">graph</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">/</span> <span class="n">total</span> <span class="k">if</span> <span class="n">total</span> <span class="k">else</span> <span class="mi">0</span>
 
-            <span class="n">in_degree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="n">out_degree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_dependencies</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="n">total_dependencies</span> <span class="o">=</span> <span class="n">in_degree</span> <span class="o">+</span> <span class="n">out_degree</span>
-
-            <span class="k">if</span> <span class="n">total_dependencies</span> <span class="o">&gt;=</span> <span class="n">min_dependencies</span><span class="p">:</span>
-                <span class="n">instability</span> <span class="o">=</span> <span class="n">out_degree</span> <span class="o">/</span> <span class="n">total_dependencies</span>
-                <span class="k">if</span> <span class="n">instability</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span><span class="p">[</span><span class="s1">&#39;UNSTABLE_DEPENDENCY_THRESHOLD&#39;</span><span class="p">]:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
-                        <span class="s2">&quot;Unstable Dependency&quot;</span><span class="p">,</span>
-                        <span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39; has high instability (</span><span class="si">{</span><span class="n">instability</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">) &quot;</span> <span class="o">+</span>
-                        <span class="sa">f</span><span class="s2">&quot;with </span><span class="si">{</span><span class="n">out_degree</span><span class="si">}</span><span class="s2"> outgoing and </span><span class="si">{</span><span class="n">in_degree</span><span class="si">}</span><span class="s2"> incoming dependencies&quot;</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">),</span>
-                        <span class="n">node</span>
-                    <span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
+            <span class="n">node_instability</span> <span class="o">=</span> <span class="n">instability</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="n">unstable</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dep</span> <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                              <span class="k">if</span> <span class="n">instability</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="n">node_instability</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">unstable</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_smell</span><span class="p">(</span>
+                    <span class="s2">"Unstable Dependency"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Module '</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">' (instability </span><span class="si">{</span><span class="n">node_instability</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">) depends on less stable "</span>
+                    <span class="s2">"modules: "</span> <span class="o">+</span> <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dep</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">instability</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span> <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">unstable</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">"Unknown"</span><span class="p">),</span>
+                    <span class="n">node</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ArchitecturalSmellDetector.print_report">
 <a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.ArchitecturalSmellDetector.print_report">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">print_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Print a report of all detected architectural smells.</span>
 
 <span class="sd">        If no smells are detected, it prints a message indicating so.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No architectural smells detected.&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No architectural smells detected."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Detected Architectural Smells:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Detected Architectural Smells:"</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">smell</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">architectural_smells</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">smell</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"- </span><span class="si">{</span><span class="n">smell</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 </div>
 
 
-
-<div class="viewcode-block" id="analyze_architecture">
-<a class="viewcode-back" href="../../architectural_smell_detector.html#code_quality_analyzer.architectural_smell_detector.analyze_architecture">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">analyze_architecture</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">config_path</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Analyze the architecture of a Python project and detect architectural smells.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        directory_path (str): The path to the directory containing the Python project to analyze.</span>
-<span class="sd">        config_path (str): The path to the configuration file containing smell detection thresholds.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">detector</span> <span class="o">=</span> <span class="n">ArchitecturalSmellDetector</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
-    <span class="n">detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)</span>
-    <span class="n">detector</span><span class="o">.</span><span class="n">print_report</span><span class="p">()</span></div>
-
-
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Detect architectural smells in Python code.&quot;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;directory&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Directory path to analyze&quot;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--config&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;code_quality_config.yaml&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the configuration file&quot;</span><span class="p">)</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
-
-    <span class="n">analyze_architecture</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 
            </div>

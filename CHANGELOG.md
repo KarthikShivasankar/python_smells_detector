@@ -58,6 +58,22 @@ Merges `fix/detector-precision` and follows it with a full review of the detecto
   longer re-walk every method per field. Cycle detection is linear. django (2,933 files):
   code 76 s, structural 45 s, architectural 4 s.
 
+### CI/CD
+- CI is a reusable workflow and the only definition of "green": `uv lock --check`
+  and ruff; tests on Python 3.10–3.14 (Linux) plus Windows and macOS, installed with
+  `--locked`; coverage gate (85%); tests on the oldest declared dependencies; docs built
+  as Read the Docs builds them with warnings as errors; the tool analyzing its own
+  source; blocking `pip-audit`; `twine check --strict` and a smoke test of the
+  installed wheel (version, bundled config, JSON report, exit codes).
+- Release workflow: verifies the tag against `pyproject.toml` and `CHANGELOG.md`, runs
+  the full CI, publishes the exact tested `dist` to PyPI with Trusted Publishing and
+  attestations, and attaches it to the GitHub Release; a manual run is a dry run.
+- All actions pinned to commit SHAs; read-only default permissions.
+- Read the Docs now installs the package: the hosted API reference was empty because
+  autodoc could not import it (`No module named 'networkx'`); builds fail on warnings.
+- Docs tool floors raised (Dependabot #14–#17): sphinx>=8.1.3, sphinx-rtd-theme>=3.1.0,
+  sphinx-autodoc-typehints>=3.0.1, myst-parser>=4.0.1.
+
 ### Dependencies and CI
 - Dependency floors verified with `--resolution lowest-direct`: astroid>=3.0, networkx>=3.0,
   pyyaml>=6.0.1, tqdm>=4.60 (the old >=2.0 floors could not even be installed). Lockfile

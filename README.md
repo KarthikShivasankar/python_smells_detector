@@ -769,25 +769,30 @@ What to update when you change docs:
 
 ### Continuous integration (CI/CD)
 
-Workflows live in `.github/workflows/`:
+Workflows live in `.github/workflows/`. Every action is pinned to a commit SHA
+(Dependabot keeps the pins current) and jobs get read-only permissions unless
+they need more.
 
 | Workflow | File | Trigger | What it does |
 |----------|------|---------|--------------|
-| **CI** | `ci.yml` | push / PR to `main`/`dev` | Lints with ruff, runs the test suite on Python 3.10–3.13, audits dependencies (`pip-audit`), then builds and `twine check`s the distribution. |
+| **CI** | `ci.yml` | push / PR to `main`/`dev`, manual, and called by Release | `uv lock --check` + ruff; tests on Python 3.10–3.14 (Linux) and 3.13 (Windows, macOS) from the exact lockfile, with coverage (gate: 85%) on one leg; tests on the **oldest** declared dependency versions; the docs built exactly as Read the Docs builds them, warnings as errors; the tool analyzing its own `src/` (no file may fail to parse); `pip-audit`; then builds the sdist and wheel, `twine check --strict`s them and smoke-tests the installed wheel on its own (version, bundled config, JSON report, exit codes). |
+| **Release** | `publish.yml` | GitHub Release published (or manual dry run) | Checks the tag matches `pyproject.toml` and that `CHANGELOG.md` has an entry, runs the whole CI workflow, publishes the very `dist` CI built and tested to PyPI via Trusted Publishing (OIDC, PEP 740 attestations), and attaches the same files to the GitHub Release. A manual run stops before publishing. |
 | **CodeQL** | `codeql.yml` | push / PR + weekly | GitHub static security analysis of the Python source. |
-| **Publish** | `publish.yml` | GitHub Release published | Builds, validates, and uploads to PyPI via Trusted Publishing (OIDC). |
 
 [Dependabot](https://docs.github.com/code-security/dependabot) (`.github/dependabot.yml`)
 opens weekly PRs for outdated Python deps and GitHub Actions. `.github/CODEOWNERS`
 auto-requests review from the maintainer.
 
-A change is "green" when **CI passes on all four Python versions**. Run the same
-checks locally before pushing:
+A change is "green" when **every CI job passes**. The main checks locally:
 
 ```bash
-uv run ruff check src/ tests/
-uv run python -m pytest tests/
-uv build && uv run --with twine python -m twine check dist/*
+uv lock --check && uv run ruff check src/ tests/
+uv run python -m pytest tests/ --cov=code_quality_analyzer --cov-fail-under=85
+uv run --isolated --no-project --python 3.10 --resolution lowest-direct \
+    --with-editable . --with "pytest>=8" python -m pytest tests/ -q -p no:cacheprovider
+uv run --isolated --no-project --with . --with-requirements docs/requirements.txt \
+    sphinx-build -W -b html docs/source docs/_build/html
+uv build && uvx twine check --strict dist/*
 ```
 
 ### Maintaining & releasing the package
@@ -798,7 +803,8 @@ API token is stored anywhere.
 
 **One-time setup** — add a trusted publisher at
 PyPI → Project → Settings → Publishing
-([docs](https://docs.pypi.org/trusted-publishers/)):
+([docs](https://docs.pypi.org/trusted-publishers/)), and create a GitHub
+environment named `pypi` (optionally with required reviewers):
 
 | Field | Value |
 |-------|-------|
@@ -809,20 +815,21 @@ PyPI → Project → Settings → Publishing
 
 **Release checklist:**
 
-1. Make sure `main` is green (CI passing).
-2. Bump the version in **both** `pyproject.toml` (`version`) and
-   `docs/source/conf.py` (`release`). This project uses
+1. Bump the version in **both** `pyproject.toml` (`version`) and
+   `docs/source/conf.py` (`release`), and run `uv lock`. This project uses
    [semantic versioning](https://semver.org/).
+2. Add a `## X.Y.Z` section to `CHANGELOG.md` (the release workflow refuses to
+   publish without one).
 3. Rebuild the docs (`uv run --extra dev sphinx-build docs/source docs/build/html`).
-4. Commit and push: `git commit -am "chore: bump version to X.Y.Z" && git push`.
-5. Tag and publish a GitHub Release — this triggers `publish.yml`:
+4. Commit, push, and wait for CI on `main` to be green.
+5. Optional dry run: **Actions → Release → Run workflow** runs the version check
+   and the full CI without publishing.
+6. Publish a GitHub Release; the tag is created from `main`:
    ```bash
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
-   gh release create vX.Y.Z --title "vX.Y.Z" --notes "..."
+   gh release create vX.Y.Z --target main --title "vX.Y.Z" --notes-file notes.md
    ```
-6. Watch the **Publish** workflow; confirm the new version appears at
-   <https://pypi.org/project/code-quality-analyzer/>.
+7. Watch the **Release** workflow; confirm the version on
+   <https://pypi.org/project/code-quality-analyzer/> and the files on the GitHub Release.
 
 > **Note:** PyPI versions are immutable — you cannot re-upload an existing
 > version. If a release is broken, bump to the next patch version and

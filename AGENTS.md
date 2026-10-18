@@ -110,6 +110,17 @@ tests/fixtures/sample_project/   # deliberately smelly project for the end-to-en
 docs/source/                     # Sphinx docs
 ```
 
+## CI and releases
+
+- `ci.yml` is the single definition of "green" (lint + `uv lock --check`, tests on
+  3.10–3.14 Linux and 3.13 Windows/macOS, oldest deps, docs as RTD builds them,
+  self-analysis, pip-audit, built-wheel smoke test). `publish.yml` calls it.
+- Actions are pinned to commit SHAs with a `# vX.Y.Z` comment; keep that format.
+- If you change dependencies, run `uv lock` (CI fails on a stale lockfile).
+- Releasing: bump `pyproject.toml` + `docs/source/conf.py`, add `## X.Y.Z` to
+  `CHANGELOG.md`, push, then `gh release create vX.Y.Z --target main`. Only do
+  this when explicitly asked.
+
 ## Conventions
 
 - Add or update tests for any behavior change; the full suite must pass on 3.10–3.14.

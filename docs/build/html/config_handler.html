@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Configuration Handler &mdash; Code Quality Analyzer 0.2.2 documentation</title>
+  <title>Configuration Handler &mdash; Code Quality Analyzer 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=000c92bf"></script>
+      <script src="_static/documentation_options.js?v=e259d695"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -101,12 +101,12 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">code_quality_analyzer.config_handler.</span></span><span class="sig-name descname"><span class="pre">ConfigHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/config_handler.html#ConfigHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A class to handle configuration loading and management for code quality analysis.</p>
 <p>Initialize the ConfigHandler with a given configuration file path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The path to the YAML configuration file.</p>
+<dd class="field-odd"><p><strong>config_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The path to the YAML configuration file.</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -115,7 +115,7 @@
 <dd><p>Initialize the ConfigHandler with a given configuration file path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The path to the YAML configuration file.</p>
+<dd class="field-odd"><p><strong>config_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – The path to the YAML configuration file.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -123,13 +123,16 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler.load_thresholds">
 <span class="sig-name descname"><span class="pre">load_thresholds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/config_handler.html#ConfigHandler.load_thresholds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler.load_thresholds" title="Link to this definition"></a></dt>
-<dd><p>Load threshold values from the YAML configuration file.</p>
+<dd><p>Load threshold values from the YAML configuration file. Thresholds it does not
+set keep the defaults from the configuration bundled with the package, so a
+partial config only needs the values it changes.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="code_quality_analyzer.config_handler.ConfigHandler._validate_thresholds">
 <span class="sig-name descname"><span class="pre">_validate_thresholds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/code_quality_analyzer/config_handler.html#ConfigHandler._validate_thresholds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#code_quality_analyzer.config_handler.ConfigHandler._validate_thresholds" title="Link to this definition"></a></dt>
-<dd><p>Validate that all required thresholds are present and have valid values.</p>
+<dd><p>Warn about threshold values that are not positive numbers. Missing thresholds
+cannot occur: they fall back to the bundled defaults.</p>
 </dd></dl>
 
 <dl class="py method">

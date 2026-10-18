@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Testing &mdash; Code Quality Analyzer 0.2.2 documentation</title>
+  <title>Testing &mdash; Code Quality Analyzer 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=000c92bf"></script>
+      <script src="_static/documentation_options.js?v=e259d695"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -98,7 +98,7 @@ uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </sp
 </pre></div>
 </div>
 <p>Using pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev]"</span>
 pytest<span class="w"> </span>tests/
 </pre></div>
 </div>
@@ -126,18 +126,18 @@ uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </sp
 <section id="example-tests">
 <h2>Example Tests<a class="headerlink" href="#example-tests" title="Link to this heading"></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_detect_long_method</span><span class="p">(</span><span class="n">code_smell_detector</span><span class="p">,</span> <span class="n">tmp_path</span><span class="p">):</span>
-    <span class="n">test_file</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">&quot;long_method.py&quot;</span>
-    <span class="n">test_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;    x = </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">)]))</span>
+    <span class="n">test_file</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"long_method.py"</span>
+    <span class="n">test_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">"    x = </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">)]))</span>
 
     <span class="n">code_smell_detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">test_file</span><span class="p">))</span>
-    <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span><span class="s2">&quot;Long Method&quot;</span> <span class="ow">in</span> <span class="n">smell</span><span class="o">.</span><span class="n">smell_type</span> <span class="k">for</span> <span class="n">smell</span> <span class="ow">in</span> <span class="n">code_smell_detector</span><span class="o">.</span><span class="n">code_smells</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span><span class="s2">"Long Method"</span> <span class="ow">in</span> <span class="n">smell</span><span class="o">.</span><span class="n">smell_type</span> <span class="k">for</span> <span class="n">smell</span> <span class="ow">in</span> <span class="n">code_smell_detector</span><span class="o">.</span><span class="n">code_smells</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">test_detect_god_object</span><span class="p">(</span><span class="n">architectural_smell_detector</span><span class="p">,</span> <span class="n">tmp_path</span><span class="p">):</span>
-    <span class="n">test_file</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">&quot;god_object.py&quot;</span>
-    <span class="n">test_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;def func</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">(): pass&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">26</span><span class="p">)]))</span>
+    <span class="n">test_file</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"god_object.py"</span>
+    <span class="n">test_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">"def func</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">(): pass"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">26</span><span class="p">)]))</span>
 
     <span class="n">architectural_smell_detector</span><span class="o">.</span><span class="n">detect_smells</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">))</span>
-    <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span><span class="s2">&quot;God Object&quot;</span> <span class="ow">in</span> <span class="n">smell</span><span class="o">.</span><span class="n">smell_type</span> <span class="k">for</span> <span class="n">smell</span> <span class="ow">in</span> <span class="n">architectural_smell_detector</span><span class="o">.</span><span class="n">architectural_smells</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span><span class="s2">"God Object"</span> <span class="ow">in</span> <span class="n">smell</span><span class="o">.</span><span class="n">smell_type</span> <span class="k">for</span> <span class="n">smell</span> <span class="ow">in</span> <span class="n">architectural_smell_detector</span><span class="o">.</span><span class="n">architectural_smells</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

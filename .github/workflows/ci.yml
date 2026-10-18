@@ -1,79 +1,157 @@
 name: CI
 
+# Every gate a change (and a release, which calls this workflow) must pass:
+# lint + lockfile, tests on all supported Pythons and OSes, the oldest supported
+# dependency versions, the docs build exactly as Read the Docs runs it, the tool
+# analyzing its own source, and a built wheel that works when installed on its own.
+#
+# Actions are pinned to commit SHAs (Dependabot keeps them current); setup-uv's
+# default enable-cache "auto" caches except on release/tag events.
+
 on:
   push:
     branches: [main, dev]
   pull_request:
     branches: [main, dev]
   workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test (Python ${{ matrix.python-version }})
+  lint:
+    name: Lint & lockfile
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - name: uv.lock matches pyproject.toml
+        run: uv lock --check
+      - name: Ruff
+        run: uv run --frozen --extra dev ruff check src/ tests/
+      - name: Packaged config matches the repository config
+        run: diff code_quality_config.yaml src/code_quality_analyzer/code_quality_config.yaml
+
+  test:
+    name: Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - os: windows-latest
+            python-version: "3.13"
+          - os: macos-latest
+            python-version: "3.13"
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.0
-        with:
-          enable-cache: true
-
-      - name: Install dependencies
-        run: uv sync --extra dev --python ${{ matrix.python-version }}
-
-      - name: Lint (ruff)
-        run: uv run --python ${{ matrix.python-version }} ruff check src/ tests/
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - name: Install dependencies (exactly as locked)
+        run: uv sync --locked --extra dev --python ${{ matrix.python-version }}
       - name: Run tests
-        run: uv run --python ${{ matrix.python-version }} python -m pytest tests/ -q
+        if: ${{ !(matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13') }}
+        run: uv run --frozen python -m pytest tests/ -q
+      - name: Run tests with coverage
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13' }}
+        run: |
+          uv run --frozen python -m pytest tests/ -q --cov=code_quality_analyzer --cov-report=xml --cov-fail-under=85
+          uv run --frozen coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload coverage report
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: coverage
+          path: coverage.xml
+
+  min-deps:
+    name: Oldest supported dependencies (Python 3.10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - name: Run tests on the dependency floors declared in pyproject.toml
+        run: >-
+          uv run --isolated --no-project --python 3.10 --resolution lowest-direct
+          --with-editable . --with "pytest>=8" python -m pytest tests/ -q -p no:cacheprovider
+
+  docs:
+    name: Docs (as Read the Docs builds them)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - name: Build HTML docs, warnings are errors
+        run: >-
+          uv run --isolated --no-project --python 3.13 --with . --with-requirements docs/requirements.txt
+          sphinx-build -W -b html docs/source docs/_build/html
+
+  self-analysis:
+    name: Analyze own source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - name: Run the analyzer on src/
+        run: uv run --frozen python -m code_quality_analyzer src --format json --output self-report.json
+      - name: Every file analyzed; summary
+        run: |
+          uv run --frozen python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          report = json.load(open("self-report.json"))
+          assert report["errors"] == [], report["errors"]
+          print("### Self-analysis of src/\n")
+          print("| | " + " | ".join(report["summary"]["by_severity"]) + " |")
+          print("|---|" + "---|" * len(report["summary"]["by_severity"]))
+          print("| findings | " + " | ".join(map(str, report["summary"]["by_severity"].values())) + " |")
+          EOF
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: self-report
+          path: self-report.json
 
   audit:
     name: Dependency audit (pip-audit)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.0
-        with:
-          enable-cache: true
-
-      - name: Audit dependencies for known vulnerabilities
-        # Non-blocking: surfaces advisories without failing PRs on new CVEs.
-        continue-on-error: true
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - name: Audit runtime dependencies for known vulnerabilities
         run: |
-          uv export --format requirements-txt --no-emit-project --no-dev -o requirements.txt
+          uv export --frozen --format requirements-txt --no-emit-project --no-dev -o requirements.txt
           uvx pip-audit -r requirements.txt
 
   build:
-    name: Build & verify distribution
+    name: Build & smoke-test distribution
     runs-on: ubuntu-latest
-    needs: test
+    needs: [lint, test, min-deps, docs, self-analysis]
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.0
-        with:
-          enable-cache: true
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
       - name: Build sdist and wheel
         run: uv build
-
       - name: Check distribution metadata
-        run: uv run --with twine python -m twine check dist/*
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v7
+        run: uvx twine check --strict dist/*
+      - name: Installed wheel works on its own (version, bundled config, JSON, exit codes)
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir smoke && cd smoke
+          wheel=$(ls "$GITHUB_WORKSPACE"/dist/*.whl)
+          sample="$GITHUB_WORKSPACE/tests/fixtures/sample_project"
+          expected=$(grep -m1 '^version = ' "$GITHUB_WORKSPACE/pyproject.toml" | cut -d'"' -f2)
+          run() { uv run --isolated --no-project --with "$wheel" "$@"; }
+          test "$(run analyze_code_quality --version)" = "analyze_code_quality $expected"
+          set +e; run python -m code_quality_analyzer "$sample" --format json --fail-on high > report.json; code=$?; set -e
+          test "$code" = 1
+          run python -c "import json; r = json.load(open('report.json')); assert r['tool']['version'] == '$expected'; assert r['summary']['total'] > 0; assert {e['file'].rsplit('/', 1)[-1] for e in r['errors']} == {'broken.py'}, r['errors']"
+          test -z "$(ls -A | grep -v report.json)"  # JSON mode wrote no other files
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: dist
           path: dist/*

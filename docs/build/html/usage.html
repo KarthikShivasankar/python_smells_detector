@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage Guide &mdash; Code Quality Analyzer 0.2.2 documentation</title>
+  <title>Usage Guide &mdash; Code Quality Analyzer 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=000c92bf"></script>
+      <script src="_static/documentation_options.js?v=e259d695"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -53,6 +53,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#using-uv-before-the-entry-point-is-on-path">Using uv (before the entry-point is on PATH)</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#machine-readable-output-agents-scripts-ci">Machine-readable output (agents, scripts, CI)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#output-formats">Output Formats</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#example-output">Example Output</a></li>
 </ul>
@@ -127,6 +128,9 @@ analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </s
 <span class="c1"># Specify output file</span>
 analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--output<span class="w"> </span>report.txt
 
+<span class="c1"># Analyze a single file, report only medium and high severity findings</span>
+analyze_code_quality<span class="w"> </span>src/app.py<span class="w"> </span>--min-severity<span class="w"> </span>medium
+
 <span class="c1"># Enable debug logging</span>
 analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </span>--debug
 
@@ -145,13 +149,38 @@ analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </s
 </div>
 </section>
 </section>
+<section id="machine-readable-output-agents-scripts-ci">
+<h2>Machine-readable output (agents, scripts, CI)<a class="headerlink" href="#machine-readable-output-agents-scripts-ci" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">--format</span> <span class="pre">json</span></code> prints one JSON report to stdout (or to <code class="docutils literal notranslate"><span class="pre">--output</span></code>) and
+writes no other files. The library function returns the same report:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>code_quality_analyzer<span class="w"> </span>/path/to/project<span class="w"> </span>--format<span class="w"> </span>json
+analyze_code_quality<span class="w"> </span>src/<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--min-severity<span class="w"> </span>medium<span class="w"> </span>--fail-on<span class="w"> </span>high
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">code_quality_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">analyze</span>
+
+<span class="n">report</span> <span class="o">=</span> <span class="n">analyze</span><span class="p">(</span><span class="s2">"/path/to/project"</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s2">"code"</span><span class="p">],</span> <span class="n">ignore</span><span class="o">=</span><span class="p">[</span><span class="s2">"tests"</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">finding</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s2">"findings"</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">finding</span><span class="p">[</span><span class="s2">"severity"</span><span class="p">],</span> <span class="n">finding</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span> <span class="n">finding</span><span class="p">[</span><span class="s2">"file_path"</span><span class="p">],</span> <span class="n">finding</span><span class="p">[</span><span class="s2">"line_number"</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The report has the keys <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> (1), <code class="docutils literal notranslate"><span class="pre">tool</span></code>, <code class="docutils literal notranslate"><span class="pre">target</span></code>,
+<code class="docutils literal notranslate"><span class="pre">summary</span></code> (count per type, <code class="docutils literal notranslate"><span class="pre">total</span></code> and <code class="docutils literal notranslate"><span class="pre">by_severity</span></code>), <code class="docutils literal notranslate"><span class="pre">findings</span></code> and
+<code class="docutils literal notranslate"><span class="pre">errors</span></code>. Each finding has <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">description</span></code>, <code class="docutils literal notranslate"><span class="pre">file_path</span></code>,
+<code class="docutils literal notranslate"><span class="pre">module_class</span></code>, <code class="docutils literal notranslate"><span class="pre">line_number</span></code> and <code class="docutils literal notranslate"><span class="pre">severity</span></code> (<code class="docutils literal notranslate"><span class="pre">low</span></code>, <code class="docutils literal notranslate"><span class="pre">medium</span></code> or
+<code class="docutils literal notranslate"><span class="pre">high</span></code>); findings are sorted by file and line. <code class="docutils literal notranslate"><span class="pre">errors</span></code> lists files that
+could not be parsed; the rest of the project is still analyzed.</p>
+<p>Exit codes: <code class="docutils literal notranslate"><span class="pre">0</span></code> the analysis completed, <code class="docutils literal notranslate"><span class="pre">1</span></code> a finding reached
+<code class="docutils literal notranslate"><span class="pre">--fail-on</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code> usage error (bad arguments, missing path or config file).</p>
+</section>
 <section id="output-formats">
 <h2>Output Formats<a class="headerlink" href="#output-formats" title="Link to this heading"></a></h2>
 <p>The tool generates reports in multiple formats:</p>
 <ul class="simple">
 <li><p>Text report (default): Detailed human-readable analysis</p></li>
 <li><p>CSV report: Structured data for further processing</p></li>
-<li><p>Log file (<code class="docutils literal notranslate"><span class="pre">code_analysis.log</span></code>): Detailed analysis process and any errors encountered</p></li>
+<li><p>JSON report (<code class="docutils literal notranslate"><span class="pre">--format</span> <span class="pre">json</span></code>): see above</p></li>
+<li><p>Log file (<code class="docutils literal notranslate"><span class="pre">code_analysis.log</span></code>, text mode only): Detailed analysis process and any errors encountered</p></li>
 </ul>
 </section>
 <section id="example-output">
@@ -161,15 +190,15 @@ analyze_code_quality<span class="w"> </span>/path/to/project<span class="w"> </s
 
 Structural Smells:
 -------------------
-- High Cyclomatic Complexity: Method &#39;process_data&#39; has complexity of 15
+- High Cyclomatic Complexity: Method 'process_data' has complexity of 15
   Line: 45
   File: src/processor.py
   Severity: high
 
 Code Smells:
 ------------
-- Large Class: Class &#39;DataManager&#39; has 20 methods
-- Feature Envy: Method &#39;calculate_metrics&#39; makes 5 calls to &#39;Statistics&#39; class
+- Large Class: Class 'DataManager' has 20 methods
+- Feature Envy: Method 'calculate_metrics' makes 5 calls to 'Statistics' class
 
 Architectural Smells:
 ---------------------
