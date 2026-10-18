@@ -5,7 +5,7 @@ Each test class targets one of the eight architectural smell detectors.
 Tests write real Python files into tmp_path directories so the detector
 exercises its actual file-parsing and graph-building logic.
 """
-
+from code_quality_analyzer.architectural_smell_detector import ArchitecturalSmellDetector
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -239,14 +239,27 @@ class TestCyclicDependency:
 # ---------------------------------------------------------------------------
 
 class TestUnstableDependency:
-    def test_detects_unstable_module(self, architectural_smell_detector, tmp_path):
-        # Module with many outgoing imports and no incoming → instability = 1.0 > 0.8
-        imports = "\n".join(f"import external_dep_{i}" for i in range(10))
-        f = tmp_path / "unstable_mod.py"
-        f.write_text(f"{imports}\ndef func():\n    pass\n")
+    def test_detects_dependency_on_less_stable_module(self, architectural_smell_detector, tmp_path):
+        # core is imported by 3 modules (instability 0.25) yet imports volatile,
+        # which imports 5 modules and is imported only by core (instability 5/6 > 0.8)
+        for i in range(3):
+            (tmp_path / f"user_{i}.py").write_text("import core\n")
+        (tmp_path / "core.py").write_text("import volatile\n")
+        leaves = "\n".join(f"import leaf_{i}" for i in range(5))
+        (tmp_path / "volatile.py").write_text(leaves + "\n")
+        for i in range(5):
+            (tmp_path / f"leaf_{i}.py").write_text("X = 1\n")
         architectural_smell_detector.detect_smells(str(tmp_path))
-        assert smells_named(architectural_smell_detector, "Unstable Dependency"), \
-            "Expected Unstable Dependency for leaf module with no in-degree"
+        assert [s.module_class for s in smells_named(
+            architectural_smell_detector, "Unstable Dependency")] == ["core"]
+
+    def test_entry_point_with_many_imports_not_flagged(self, architectural_smell_detector, tmp_path):
+        # Regression: a top-level module that only imports others has instability 1.0,
+        # which is expected for an entry point and is not an unstable dependency
+        imports = "\n".join(f"import external_dep_{i}" for i in range(10))
+        (tmp_path / "unstable_mod.py").write_text(f"{imports}\ndef func():\n    pass\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(architectural_smell_detector, "Unstable Dependency")
 
     def test_stable_module_not_flagged(self, architectural_smell_detector, tmp_path):
         # Module depended upon by many others → low instability
@@ -255,12 +268,7 @@ class TestUnstableDependency:
             m = tmp_path / f"consumer_{i}.py"
             m.write_text(f"import stable\ndef func_{i}(): stable.utility()\n")
         architectural_smell_detector.detect_smells(str(tmp_path))
-        stable_unstable = [
-            s for s in architectural_smell_detector.architectural_smells
-            if "Unstable" in s.name and "stable" in (s.module_class or "")
-        ]
-        assert not stable_unstable, \
-            "A module that others depend on should not be flagged as unstable"
+        assert not smells_named(architectural_smell_detector, "Unstable Dependency")
 
 
 # ---------------------------------------------------------------------------
@@ -269,19 +277,89 @@ class TestUnstableDependency:
 
 class TestHubLikeDependency:
     def test_detects_hub_module(self, architectural_smell_detector, tmp_path):
-        # Hub module with high fan-in (12 modules import it) and no fan-out.
-        # fan_in_ratio >> fan_out_ratio → unbalanced → triggers Hub-like Dependency.
-        (tmp_path / "hub_lib.py").write_text(
-            "def utility():\n    return 42\n"
-        )
-        for i in range(12):
-            m = tmp_path / f"consumer_{i}.py"
-            m.write_text(
-                f"import hub_lib\n\ndef work_{i}():\n    return hub_lib.utility()\n"
-            )
+        # hub is imported by 4 modules and imports 4 others: 8 connections in a
+        # 9-module project, balanced in and out
+        (tmp_path / "hub.py").write_text("".join(f"import dep_{i}\n" for i in range(4)))
+        for i in range(4):
+            (tmp_path / f"dep_{i}.py").write_text("X = 1\n")
+            (tmp_path / f"client_{i}.py").write_text("import hub\n")
         architectural_smell_detector.detect_smells(str(tmp_path))
-        assert smells_named(architectural_smell_detector, "Hub-like Dependency"), \
-            "Expected Hub-like Dependency for module imported by 12 others with no out-deps"
+        assert [s.module_class for s in smells_named(
+            architectural_smell_detector, "Hub-like Dependency")] == ["hub"]
+
+    def test_widely_imported_library_not_hub(self, architectural_smell_detector, tmp_path):
+        # Regression: a module that is only imported (fan-in, no fan-out) is a
+        # stable library, not a hub
+        (tmp_path / "hub_lib.py").write_text("def utility():\n    return 42\n")
+        for i in range(12):
+            (tmp_path / f"consumer_{i}.py").write_text(
+                f"import hub_lib\n\ndef work_{i}():\n    return hub_lib.utility()\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(architectural_smell_detector, "Hub-like Dependency")
+
+
+# ---------------------------------------------------------------------------
+# Import resolution
+# ---------------------------------------------------------------------------
+
+class TestImportResolution:
+    def test_external_imports_are_not_project_modules(self, architectural_smell_detector, tmp_path):
+        # Regression: every import target used to stay in the module graph, and any
+        # name starting with a stdlib module name (requests -> re) counted as stdlib
+        (tmp_path / "app.py").write_text("import os\nimport requests\nimport helper\n")
+        (tmp_path / "helper.py").write_text("X = 1\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        graph = architectural_smell_detector.module_dependencies
+        assert sorted(graph.nodes()) == ["app", "helper"]
+        assert list(graph.edges()) == [("app", "helper")]
+        assert architectural_smell_detector.external_dependencies["app"] == {
+            ("stdlib", "os"), ("third_party", "requests")}
+
+    def test_relative_and_package_imports_resolve(self, architectural_smell_detector, tmp_path):
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text("from . import a\n")
+        (pkg / "a.py").write_text("from .b import thing\n")
+        (pkg / "b.py").write_text("from pkg import c\nthing = 1\n")
+        (pkg / "c.py").write_text("X = 1\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert set(architectural_smell_detector.module_dependencies.edges()) == {
+            ("pkg.__init__", "pkg.a"), ("pkg.a", "pkg.b"), ("pkg.b", "pkg.c")}
+
+    def test_analyzing_a_package_dir_resolves_its_absolute_imports(
+            self, architectural_smell_detector, tmp_path):
+        # Regression: pointing the tool at a package dir made `from pkg import mod`
+        # look like a third-party import, leaving the module graph without edges
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text("")
+        (pkg / "a.py").write_text("from pkg import b\n")
+        (pkg / "b.py").write_text("import pkg.a\n")
+        architectural_smell_detector.detect_smells(str(pkg))
+        assert set(architectural_smell_detector.module_dependencies.edges()) == {
+            ("pkg.a", "pkg.b"), ("pkg.b", "pkg.a")}
+        assert smells_named(architectural_smell_detector, "Cyclic Dependency")
+
+    def test_type_checking_imports_ignored(self, architectural_smell_detector, tmp_path):
+        (tmp_path / "a.py").write_text("import b\n")
+        (tmp_path / "b.py").write_text(
+            "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    import a\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(architectural_smell_detector, "Cyclic Dependency")
+
+    def test_name_containing_excluded_word_still_checked(self, architectural_smell_detector, tmp_path):
+        # Regression: 'base' in 'database' excluded the module from cycle detection
+        (tmp_path / "database.py").write_text("import models\n")
+        (tmp_path / "models.py").write_text("import database\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert smells_named(architectural_smell_detector, "Cyclic Dependency")
+
+    def test_unparsable_file_recorded_as_error(self, architectural_smell_detector, tmp_path):
+        (tmp_path / "broken.py").write_text("def broken(:\n")
+        (tmp_path / "ok.py").write_text("X = 1\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert [e["file"] for e in architectural_smell_detector.errors] == [
+            str(tmp_path / "broken.py")]
 
 
 # ---------------------------------------------------------------------------
@@ -292,3 +370,42 @@ class TestEdgeCases:
     def test_empty_directory_no_crash(self, architectural_smell_detector, tmp_path):
         architectural_smell_detector.detect_smells(str(tmp_path))
         assert architectural_smell_detector.architectural_smells == []
+
+
+class TestReviewRegressions:
+    def test_root_package_name_does_not_exclude_everything(self, architectural_smell_detector, tmp_path):
+        # Regression: analyzing a package named utils/core made every module look like
+        # an excluded utility module (its own name is the first dotted part)
+        for root_name in ("mylib", "utils"):
+            pkg = tmp_path / root_name
+            pkg.mkdir()
+            (pkg / "__init__.py").write_text("")
+            (pkg / "a.py").write_text("X = 1\n")
+            (pkg / "b.py").write_text("Y = 1\n")
+            (pkg / "c.py").write_text(f"from {root_name} import a\n")
+        found = {}
+        for root_name in ("mylib", "utils"):
+            detector = ArchitecturalSmellDetector(architectural_smell_detector.thresholds)
+            detector.detect_smells(str(tmp_path / root_name))
+            found[root_name] = sorted(s.module_class.split(".", 1)[1]
+                                      for s in smells_named(detector, "Orphan Module"))
+        assert found["mylib"] == found["utils"] == ["b"]
+
+    def test_src_layout_package_import_resolves(self, architectural_smell_detector, tmp_path):
+        pkg = tmp_path / "src" / "pkg"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text("api = 1\n")
+        (pkg / "core.py").write_text("x = 1\n")
+        tests = tmp_path / "tests"
+        tests.mkdir()
+        (tests / "test_a.py").write_text("from pkg import api\nfrom pkg.core import x\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert set(architectural_smell_detector.module_dependencies.successors("tests.test_a")) == {
+            "src.pkg.__init__", "src.pkg.core"}
+        assert not architectural_smell_detector.external_dependencies["tests.test_a"]
+
+    def test_relative_import_above_root_ignored(self, architectural_smell_detector, tmp_path):
+        (tmp_path / "way.py").write_text("X = 1\n")
+        (tmp_path / "a.py").write_text("from ...way import x\n")
+        architectural_smell_detector.detect_smells(str(tmp_path))
+        assert not architectural_smell_detector.module_dependencies.edges()

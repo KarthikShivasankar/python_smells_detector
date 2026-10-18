@@ -305,13 +305,18 @@ class TestMachineReadable:
         assert parser.parse_args(["/tmp"]).format == "text"
         assert parser.parse_args(["/tmp", "--format", "json"]).format == "json"
 
-    def test_analyze_returns_plain_dicts(self, tmp_path, capsys):
+    def test_analyze_returns_report(self, tmp_path, capsys):
         (tmp_path / "bad.py").write_text(BAD_CODE)
-        findings = analyze(str(tmp_path), types=["code"])
+        report = analyze(str(tmp_path), types=["code"])
         assert capsys.readouterr().out == "", "library call must not print to stdout"
+        assert set(report) == {"schema_version", "tool", "target", "summary", "findings", "errors"}
+        findings = report["findings"]
         assert any(f["name"] == "Long Parameter List" for f in findings)
         assert all(set(f) == FINDING_KEYS and f["type"] == "Code" for f in findings)
-        json.dumps(findings)
+        assert all(f["severity"] in ("low", "medium", "high") for f in findings)
+        assert report["summary"]["total"] == len(findings) == report["summary"]["Code"]
+        assert report["errors"] == []
+        json.dumps(report)
 
     def test_analyze_rejects_unknown_type(self, tmp_path):
         with pytest.raises(ValueError):
@@ -327,3 +332,97 @@ class TestMachineReadable:
         report = json.loads(capsys.readouterr().out)
         assert report["summary"]["Code"] == sum(f["type"] == "Code" for f in report["findings"])
         assert any(f["name"] == "Long Parameter List" for f in report["findings"])
+
+
+class TestAgentContract:
+    """The CLI contract that agents and CI harnesses rely on."""
+
+    def _run(self, argv, monkeypatch, tmp_path):
+        monkeypatch.chdir(tmp_path)
+        return analyze_project(argv)
+
+    def test_fail_on_sets_exit_code(self, tmp_path, monkeypatch, capsys):
+        (tmp_path / "bad.py").write_text(BAD_CODE)
+        target = str(tmp_path / "bad.py")
+        assert self._run([target, "--format", "json"], monkeypatch, tmp_path) == 0
+        assert self._run([target, "--format", "json", "--fail-on", "low"],
+                         monkeypatch, tmp_path) == 1
+        capsys.readouterr()
+
+    def test_clean_code_passes_fail_on(self, tmp_path, monkeypatch, capsys):
+        (tmp_path / "ok.py").write_text("def add(a, b):\n    return a + b\n")
+        assert self._run([str(tmp_path / "ok.py"), "--format", "json", "--fail-on", "low"],
+                         monkeypatch, tmp_path) == 0
+        assert json.loads(capsys.readouterr().out)["findings"] == []
+
+    def test_min_severity_filters(self, tmp_path, monkeypatch, capsys):
+        (tmp_path / "bad.py").write_text(BAD_CODE)
+        self._run([str(tmp_path), "--format", "json", "--min-severity", "high"], monkeypatch, tmp_path)
+        report = json.loads(capsys.readouterr().out)
+        assert all(f["severity"] == "high" for f in report["findings"])
+
+    def test_missing_path_is_usage_error(self, tmp_path, monkeypatch, capsys):
+        with pytest.raises(SystemExit) as exc:
+            self._run([str(tmp_path / "nope"), "--format", "json"], monkeypatch, tmp_path)
+        assert exc.value.code == 2
+        assert "no such file or directory" in capsys.readouterr().err
+
+    def test_missing_config_is_usage_error(self, tmp_path, monkeypatch, capsys):
+        with pytest.raises(SystemExit) as exc:
+            self._run([str(tmp_path), "--format", "json", "--config", "missing.yaml"],
+                      monkeypatch, tmp_path)
+        assert exc.value.code == 2
+
+    def test_json_mode_writes_no_files(self, tmp_path, monkeypatch, capsys):
+        (tmp_path / "bad.py").write_text(BAD_CODE)
+        self._run([str(tmp_path), "--format", "json"], monkeypatch, tmp_path)
+        assert sorted(p.name for p in tmp_path.iterdir()) == ["bad.py"]
+        capsys.readouterr()
+
+    def test_unparsable_file_reported_in_errors(self, tmp_path, monkeypatch, capsys):
+        (tmp_path / "broken.py").write_text("def broken(:\n")
+        (tmp_path / "bad.py").write_text(BAD_CODE)
+        self._run([str(tmp_path), "--format", "json"], monkeypatch, tmp_path)
+        report = json.loads(capsys.readouterr().out)
+        broken = str(tmp_path / "broken.py")
+        assert {e["detector"] for e in report["errors"] if e["file"] == broken} == {
+            "CodeSmellDetector", "ArchitecturalSmellDetector", "StructuralSmellDetector"}
+        assert report["findings"], "other files are still analyzed"
+
+    def test_findings_are_sorted(self, tmp_path):
+        for name in ("b.py", "a.py"):
+            (tmp_path / name).write_text(BAD_CODE)
+        findings = analyze(str(tmp_path))["findings"]
+        keys = [(f["file_path"], f["line_number"] or 0, f["type"], f["name"]) for f in findings]
+        assert keys == sorted(keys)
+
+    def test_partial_config_keeps_defaults(self, tmp_path):
+        # Regression: a config missing any threshold made every file fail with KeyError
+        cfg = tmp_path / "partial.yaml"
+        cfg.write_text("code_smells:\n  LONG_PARAMETER_LIST:\n    value: 1\n")
+        (tmp_path / "f.py").write_text("def f(a, b):\n    return a + b\n")
+        report = analyze(str(tmp_path / "f.py"), types=["code"], config=str(cfg))
+        assert report["errors"] == []
+        assert [f["name"] for f in report["findings"]] == ["Long Parameter List"]
+
+
+class TestDeterminism:
+    def test_reports_identical_across_hash_seeds(self, tmp_path):
+        # Regression: descriptions joined sets, so output changed with PYTHONHASHSEED
+        import subprocess
+        sample = os.path.join(os.path.dirname(__file__), "fixtures", "sample_project")
+        src = os.path.join(os.path.dirname(__file__), "..", "src")
+        outputs = set()
+        for seed in ("1", "2", "3"):
+            env = {**os.environ, "PYTHONHASHSEED": seed, "PYTHONPATH": os.path.abspath(src)}
+            result = subprocess.run([sys.executable, "-m", "code_quality_analyzer", sample,
+                                     "--format", "json"], capture_output=True, text=True,
+                                    env=env, cwd=tmp_path, check=True)
+            outputs.add(result.stdout)
+        assert len(outputs) == 1
+
+    def test_non_python_file_rejected(self, tmp_path):
+        target = tmp_path / "notes.txt"
+        target.write_text("hello")
+        with pytest.raises(ValueError):
+            analyze(str(target))

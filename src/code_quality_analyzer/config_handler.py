@@ -1,8 +1,12 @@
 import logging
+from importlib import resources
 
 import yaml
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_CONFIG_NAME = "code_quality_config.yaml"
+SECTIONS = ('code_smells', 'architectural_smells', 'structural_smells')
 
 
 class ConfigHandler:
@@ -23,19 +27,25 @@ class ConfigHandler:
 
     def load_thresholds(self):
         """
-        Load threshold values from the YAML configuration file.
+        Load threshold values from the YAML configuration file. Thresholds it does not
+        set keep the defaults from the configuration bundled with the package, so a
+        partial config only needs the values it changes.
         """
         try:
-            with open(self.config_path, 'r') as file:
-                config = yaml.safe_load(file)
+            config = self._read(self.config_path)
+            defaults = self._read(resources.files(__package__).joinpath(DEFAULT_CONFIG_NAME))
 
             logger.info(f"Loading configuration from: {self.config_path}")
 
-            thresholds = {
-                'code_smells': {k: v['value'] for k, v in config.get('code_smells', {}).items()},
-                'architectural_smells': {k: v['value'] for k, v in config.get('architectural_smells', {}).items()},
-                'structural_smells': {k: v['value'] for k, v in config.get('structural_smells', {}).items()}
-            }
+            thresholds = {}
+            for section in SECTIONS:
+                user = config.get(section) or {}
+                unknown = set(user) - set(defaults.get(section, {}))
+                if unknown:
+                    logger.warning(f"Unknown {section} thresholds in {self.config_path}: {sorted(unknown)}")
+                merged = {**defaults.get(section, {}), **user}
+                thresholds[section] = {k: v['value'] if isinstance(v, dict) else v
+                                       for k, v in merged.items()}
 
             logger.info(f"Loaded thresholds: {thresholds}")
             return thresholds
@@ -50,32 +60,20 @@ class ConfigHandler:
             logger.error(f"Unexpected error loading configuration: {str(e)}")
             raise
 
+    @staticmethod
+    def _read(path):
+        with open(path, 'r', encoding='utf-8') as file:
+            return yaml.safe_load(file) or {}
+
     def _validate_thresholds(self):
         """
-        Validate that all required thresholds are present and have valid values.
+        Warn about threshold values that are not positive numbers. Missing thresholds
+        cannot occur: they fall back to the bundled defaults.
         """
-        required_structural_thresholds = [
-            'NOM_THRESHOLD', 'WMPC1_THRESHOLD', 'WMPC2_THRESHOLD',
-            'SIZE2_THRESHOLD', 'WAC_THRESHOLD', 'LCOM_THRESHOLD',
-            'RFC_THRESHOLD', 'NOCC_THRESHOLD', 'DIT_THRESHOLD',
-            'LOC_THRESHOLD', 'CBO_THRESHOLD'
-        ]
-
-        structural_thresholds = self.thresholds.get('structural_smells', {})
-
-        missing_thresholds = [
-            threshold for threshold in required_structural_thresholds
-            if threshold not in structural_thresholds
-        ]
-
-        if missing_thresholds:
-            logger.warning(
-                f"Missing required structural thresholds: {missing_thresholds}")
-
-        for threshold, value in structural_thresholds.items():
-            if not isinstance(value, (int, float)) or value <= 0:
-                logger.warning(
-                    f"Invalid threshold value for {threshold}: {value}")
+        for section in SECTIONS:
+            for threshold, value in self.thresholds[section].items():
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+                    logger.warning(f"Invalid threshold value for {threshold}: {value}")
 
     def get_thresholds(self, smell_type):
         """

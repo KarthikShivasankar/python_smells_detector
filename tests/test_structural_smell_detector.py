@@ -35,6 +35,15 @@ class TestLOC:
         structural_smell_detector.detect_smells(str(tmp_path))
         assert not smells_named(structural_smell_detector, "High Lines of Code")
 
+    def test_one_line_docstring_does_not_hide_code(self, structural_smell_detector, tmp_path):
+        # Regression: a one-line docstring flipped the "inside docstring" state, so
+        # every line after it was counted as documentation
+        lines = "\n".join(f"x{i} = {i}" for i in range(200))
+        (tmp_path / "documented.py").write_text(f'"""Module docstring."""\n{lines}\n')
+        structural_smell_detector.detect_smells(str(tmp_path))
+        smells = smells_named(structural_smell_detector, "High Lines of Code")
+        assert smells and "200 effective code lines" in smells[0].description
+
 
 # ---------------------------------------------------------------------------
 # High Number of Classes — project-level (NOC)
@@ -164,7 +173,8 @@ class TestCyclomaticComplexity:
         structural_smell_detector.detect_smells(str(tmp_path))
         method = structural_smell_detector.class_info["elif.Router"]["methods"][0]
         assert structural_smell_detector.calculate_cyclomatic_complexity(method) == 8
-        assert structural_smell_detector._analyze_branches(method) == {'count': 7, 'max_nesting': 1}
+        assert structural_smell_detector._count_branches(method) == 7
+        assert structural_smell_detector._max_nesting(method) == 1
         assert not smells_named(structural_smell_detector, "High Cyclomatic Complexity")
         assert not smells_named(structural_smell_detector, "Too Many Branches")
 
@@ -205,20 +215,66 @@ class TestTooManyBranches:
         assert not smells_named(structural_smell_detector, "Too Many Branches")
 
     def test_deep_nesting_detected(self, structural_smell_detector, tmp_path):
+        # for > if > while > try > with: 5 levels > MAX_NESTING_DEPTH 4
         body = (
             "        for a in x:\n"
             "            if a:\n"
             "                while a:\n"
             "                    try:\n"
-            "                        a -= 1\n"
+            "                        with open(a) as fh:\n"
+            "                            a -= 1\n"
             "                    except ValueError:\n"
             "                        pass\n"
         )
         f = tmp_path / "deep.py"
         f.write_text(f"class C:\n    def deep(self, x):\n{body}")
         structural_smell_detector.detect_smells(str(tmp_path))
-        smells = smells_named(structural_smell_detector, "Too Many Branches")
-        assert smells and "max nesting of 4" in smells[0].description
+        smells = smells_named(structural_smell_detector, "Deep Nesting")
+        assert smells and "5 levels" in smells[0].description
+        assert not smells_named(structural_smell_detector, "Too Many Branches")
+
+    def test_nesting_at_limit_not_flagged(self, structural_smell_detector, tmp_path):
+        body = ("        for a in x:\n            if a:\n                while a:\n"
+                "                    try:\n                        a -= 1\n"
+                "                    except ValueError:\n                        pass\n")
+        (tmp_path / "four.py").write_text(f"class C:\n    def four(self, x):\n{body}")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(structural_smell_detector, "Deep Nesting")
+
+
+# ---------------------------------------------------------------------------
+# Functions outside classes, async code, modern syntax
+# ---------------------------------------------------------------------------
+
+class TestFunctionCoverage:
+    def test_module_level_function_complexity_checked(self, structural_smell_detector, tmp_path):
+        # Regression: only methods were measured, module-level functions never
+        branches = "".join(f"    if x == {i}:\n        return {i}\n" for i in range(12))
+        (tmp_path / "funcs.py").write_text(f"def dispatch(x):\n{branches}    return 0\n")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        smells = smells_named(structural_smell_detector, "High Cyclomatic Complexity")
+        assert [(s.module_class, s.line_number) for s in smells] == [("funcs", 1)]
+        assert smells_named(structural_smell_detector, "Too Many Branches")
+
+    def test_async_methods_counted(self, structural_smell_detector, tmp_path):
+        methods = "".join(f"    async def m{i}(self):\n        return {i}\n" for i in range(12))
+        (tmp_path / "aio.py").write_text(f"class Client:\n{methods}")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert smells_named(structural_smell_detector, "High Number of Methods")
+
+    def test_complexity_counts_expressions_and_match(self, structural_smell_detector, tmp_path):
+        (tmp_path / "expr.py").write_text(
+            "def f(x, items):\n"
+            "    y = 1 if x else 2\n"                          # +1
+            "    z = [i for i in items if i if i > 1]\n"       # +1 for, +2 ifs
+            "    match x:\n"
+            "        case 1:\n            pass\n"             # +1
+            "        case 2:\n            pass\n"             # +1
+            "        case _:\n            pass\n"             # wildcard: +0
+            "    return y, z\n")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        function = structural_smell_detector.module_info["expr"]["functions"][0]
+        assert structural_smell_detector.calculate_cyclomatic_complexity(function) == 7
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +320,25 @@ class TestDIT:
         assert smells_named(detector, "Deep Inheritance Tree"), \
             "Expected DIT smell when threshold is 1 and chain path-length is 2"
 
+    def test_depth_follows_the_real_chain(self, structural_smell_detector, tmp_path):
+        # Regression: bases were never linked to their class definitions, so every
+        # class got DIT 2 whatever the chain; A <- B <- C <- D <- E is depth 5
+        (tmp_path / "chain.py").write_text(
+            "class A: pass\nclass B(A): pass\nclass C(B): pass\n"
+            "class D(C): pass\nclass E(D): pass\n")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        smells = smells_named(structural_smell_detector, "Deep Inheritance Tree")
+        assert [s.module_class for s in smells] == ["chain.D", "chain.E"]
+        assert "object->chain.A->chain.B->chain.C->chain.D->chain.E" in smells[1].description
+        assert smells[1].line_number == 5
+
+    def test_bases_resolved_across_modules(self, structural_smell_detector, tmp_path):
+        (tmp_path / "base.py").write_text("class A: pass\nclass B(A): pass\nclass C(B): pass\n")
+        (tmp_path / "child.py").write_text("from base import C\nclass D(C): pass\n")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert [s.module_class for s in smells_named(
+            structural_smell_detector, "Deep Inheritance Tree")] == ["child.D"]
+
     def test_shallow_hierarchy_not_flagged(self, structural_smell_detector, tmp_path):
         f = tmp_path / "shallow.py"
         f.write_text("class Base: pass\nclass Child(Base): pass\n")
@@ -276,8 +351,12 @@ class TestDIT:
 # ---------------------------------------------------------------------------
 
 class TestWAC:
-    # Note: detect_wac() is implemented but not wired into detect_smells() pipeline.
-    # We test it by calling analyze_directory then detect_wac directly.
+    def test_instance_attributes_count_as_fields(self, structural_smell_detector, tmp_path):
+        # Regression: only class-level assignments were fields, so self.x = ... never counted
+        init = "".join(f"        self.field{i} = {i}\n" for i in range(12))
+        (tmp_path / "inst.py").write_text(f"class Wide:\n    def __init__(self):\n{init}")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert smells_named(structural_smell_detector, "High Weight of a Class (WAC)")
 
     def test_detects_class_with_many_fields(self, structural_smell_detector, tmp_path):
         # 12 public class-level fields > WAC_THRESHOLD 10
@@ -305,9 +384,6 @@ class TestWAC:
 # ---------------------------------------------------------------------------
 
 class TestSIZE2:
-    # Note: detect_size2() is implemented but not wired into detect_smells() pipeline.
-    # We test it by calling analyze_directory then detect_size2 directly.
-
     def test_detects_large_class_by_size2(self, structural_smell_detector, tmp_path):
         # 12 methods + 6 fields = 18 significant members > SIZE2_THRESHOLD 15
         methods = "\n".join(
@@ -393,6 +469,24 @@ class TestFanIn:
         assert smells_named(structural_smell_detector, "High Fan-in"), \
             "Expected High Fan-in for module imported by 18 others"
 
+    def test_external_packages_not_reported(self, structural_smell_detector, tmp_path):
+        # Regression: imported third-party names were graph nodes and got Fan-in findings
+        for i in range(18):
+            (tmp_path / f"consumer{i}.py").write_text("import numpy\n")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(structural_smell_detector, "High Fan-in")
+
+    def test_relative_imports_count(self, structural_smell_detector, tmp_path):
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text("")
+        (pkg / "shared.py").write_text("X = 1\n")
+        for i in range(18):
+            (pkg / f"consumer{i}.py").write_text("from . import shared\n")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert [s.module_class for s in smells_named(
+            structural_smell_detector, "High Fan-in")] == ["pkg.shared"]
+
 
 # ---------------------------------------------------------------------------
 # High Lack of Cohesion (LCOM)
@@ -434,3 +528,47 @@ class TestEdgeCases:
     def test_empty_directory_no_crash(self, structural_smell_detector, tmp_path):
         structural_smell_detector.detect_smells(str(tmp_path))
         assert structural_smell_detector.structural_smells == []
+
+
+class TestCBO:
+    def test_counts_imported_and_project_classes(self, structural_smell_detector, tmp_path):
+        imports = "".join(f"from lib{i} import Dep{i}\n" for i in range(9))
+        uses = "".join(f"        Dep{i}()\n" for i in range(9))
+        (tmp_path / "coupled.py").write_text(
+            f"{imports}import os\nclass Hub:\n    def run(self, a, b, c):\n{uses}"
+            "        os.getcwd()\n        return a.x + b.y + c.z\n")
+        structural_smell_detector.thresholds['CBO_THRESHOLD'] = 8
+        structural_smell_detector.detect_smells(str(tmp_path))
+        smells = smells_named(structural_smell_detector, "Coupling Between Object Classes")
+        assert smells and "coupled to 9" in smells[0].description
+
+    def test_locals_and_parameters_are_not_coupling(self, structural_smell_detector, tmp_path):
+        # Regression: every name with an attribute access (parameters, locals) counted
+        attrs = "".join(f"        v{i}.do()\n" for i in range(12))
+        params = ", ".join(f"v{i}" for i in range(12))
+        (tmp_path / "loose.py").write_text(f"class Loose:\n    def run(self, {params}):\n{attrs}")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert not smells_named(structural_smell_detector, "Coupling Between Object Classes")
+
+
+class TestReviewRegressions:
+    def test_huge_expression_does_not_disable_nesting(self, structural_smell_detector, tmp_path):
+        # Regression: recursion overflow on generated code silently dropped detect_branches
+        (tmp_path / "a_gen.py").write_text("X = " + " + ".join(["1"] * 3000) + "\n")
+        body = "".join("    " * (i + 1) + f"if x > {i}:\n" for i in range(6)) + "    " * 7 + "pass\n"
+        (tmp_path / "deepnest.py").write_text(f"def g(x):\n{body}")
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert [s.module_class for s in smells_named(structural_smell_detector, "Deep Nesting")] == [
+            "deepnest"]
+
+    def test_relative_sibling_named_like_stdlib_counts_for_cbo(self, structural_smell_detector, tmp_path):
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text("")
+        names = ", ".join(f"f{i}" for i in range(10))
+        calls = "".join(f"        f{i}()\n" for i in range(10))
+        (pkg / "a.py").write_text(f"from .types import {names}\nclass User:\n    def run(self):\n{calls}")
+        structural_smell_detector.thresholds['CBO_THRESHOLD'] = 8
+        structural_smell_detector.detect_smells(str(tmp_path))
+        assert [s.module_class for s in smells_named(
+            structural_smell_detector, "Coupling Between Object Classes")] == ["pkg.a.User"]

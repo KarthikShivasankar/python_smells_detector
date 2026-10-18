@@ -1,16 +1,22 @@
 import ast
-import importlib.util
 import logging
-import os
-import sys
 from collections import defaultdict
 from dataclasses import dataclass
 
 import networkx as nx
-import yaml
 from tqdm import tqdm
 
 from .exceptions import CodeAnalysisError
+from .project import (
+    ModuleIndex,
+    external_kind,
+    iter_imports,
+    iter_python_files,
+    module_parts,
+    project_root,
+    root_package,
+)
+from .project import module_name as project_module_name
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -41,7 +47,7 @@ class ArchitecturalSmellDetector:
         thresholds (dict): A dictionary of threshold values for various smell detections.
         file_paths (dict): A dictionary to store file paths for each module.
         external_dependencies (dict): A dictionary to store external dependencies for each module.
-        function_calls (defaultdict): A dictionary to track inter-module function calls.
+        errors (list): Files that could not be read or parsed.
     """
 
     def __init__(self, thresholds):
@@ -58,22 +64,10 @@ class ArchitecturalSmellDetector:
         self.thresholds = thresholds
         self.file_paths = {}  # New attribute to store file paths
         self.external_dependencies = defaultdict(set)
-        self.function_calls = defaultdict(set)  # Track inter-module function calls
         self.project_root = None  # Set once in analyze_directory for consistent module naming
-
-    def load_thresholds(self, config_path):
-        """
-        Load threshold values from a YAML configuration file.
-
-        Args:
-            config_path (str): Path to the YAML configuration file.
-
-        Returns:
-            dict: A dictionary of threshold values for architectural smells.
-        """
-        with open(config_path, 'r') as file:
-            config = yaml.safe_load(file)
-        return {k: v['value'] for k, v in config['architectural_smells'].items()}
+        self.root_package = None  # name of project_root when it is itself a package
+        self._imports = {}  # module -> candidate-name lists, resolved once all files are known
+        self.errors = []  # files that could not be read or parsed
 
     def detect_smells(self, directory_path, ignore_dirs=None):
         """
@@ -98,7 +92,8 @@ class ArchitecturalSmellDetector:
             logger.info(f"Analyzing directory structure: {directory_path}")
             self.analyze_directory(directory_path, ignore_dirs=ignore_dirs)
 
-            for detect_method, method_name in tqdm(detection_methods, desc="Architectural checks"):
+            for detect_method, method_name in tqdm(detection_methods, desc="Architectural checks",
+                                                   disable=None):
                 try:
                     logger.debug(f"Running {method_name}")
                     detect_method()
@@ -119,131 +114,62 @@ class ArchitecturalSmellDetector:
 
     def analyze_directory(self, directory_path, ignore_dirs=None):
         """
-        Analyze all Python files in the given directory and its subdirectories.
+        Analyze all Python files in the given directory (or the single given file).
 
         Args:
             directory_path (str): The path to the directory to be analyzed.
             ignore_dirs (iterable): Directory names to skip.
         """
-        self.project_root = os.path.abspath(directory_path)
-        ignore_dirs = set(ignore_dirs or [])
-        for root, dirs, files in os.walk(directory_path):
-            dirs[:] = [d for d in dirs if d not in ignore_dirs]
-            for file in files:
-                if file.endswith('.py'):
-                    file_path = os.path.join(root, file)
-                    self.analyze_file(file_path)
+        self.project_root = project_root(directory_path)
+        self.root_package = root_package(self.project_root)
+        for file_path in iter_python_files(directory_path, ignore_dirs):
+            self.analyze_file(file_path)
 
-        # After analyzing all files, resolve external dependencies
+        # After analyzing all files, resolve imports to project modules or external ones
         self.resolve_external_dependencies()
 
     def analyze_file(self, file_path):
         """
-        Analyze a single Python file for architectural information with improved
-        intra-project dependency detection.
+        Analyze a single Python file for architectural information. Files that cannot
+        be read or parsed are recorded in ``errors`` and skipped.
         """
         try:
-            with open(file_path, 'r') as file:
+            with open(file_path, 'r', encoding='utf-8') as file:
                 tree = ast.parse(file.read())
+        except (SyntaxError, ValueError, UnicodeDecodeError, OSError, RecursionError) as e:
+            logger.warning(f"Skipping {file_path}: {e}")
+            self.errors.append({'file': file_path, 'detector': 'ArchitecturalSmellDetector',
+                                'error': f"{type(e).__name__}: {e}"})
+            return
 
-            # Get relative module path from consistent project root
-            module_name = os.path.relpath(os.path.abspath(file_path), self.project_root)
-            module_name = module_name.replace(os.path.sep, '.')[:-3]  # Remove .py extension
-            self.module_dependencies.add_node(module_name)
-            self.file_paths[module_name] = file_path
+        module_name = project_module_name(file_path, self.project_root)
+        self.module_dependencies.add_node(module_name)
+        self.file_paths[module_name] = file_path
 
-            # Module functions are its module-level defs, not methods, nested or imported names
-            self.module_functions[module_name].update(
-                n.name for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))
+        # Module functions are its module-level defs, not methods, nested or imported names
+        self.module_functions[module_name].update(
+            n.name for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))
 
-            # Track local imports and their line numbers
-            local_imports = []
+        self._imports[module_name] = [candidates for candidates, _ in iter_imports(tree, module_name)]
 
-            for node in ast.walk(tree):
-                if isinstance(node, ast.Import):
-                    for alias in node.names:
-                        import_name = alias.name
-                        local_imports.append((import_name, node.lineno))
-                        self.module_dependencies.add_edge(module_name, import_name)
-
-                elif isinstance(node, ast.ImportFrom):
-                    if node.module:
-                        # Handle relative imports
-                        if node.level > 0:  # This is a relative import
-                            current_package = module_name.split('.')
-                            # Go up by node.level
-                            parent_package = '.'.join(current_package[:-node.level])
-                            if parent_package:
-                                import_name = f"{parent_package}.{node.module}"
-                            else:
-                                import_name = node.module
-                        else:
-                            import_name = node.module
-
-                        local_imports.append((import_name, node.lineno))
-                        self.module_dependencies.add_edge(module_name, import_name)
-
-                elif isinstance(node, ast.Call):
-                    if isinstance(node.func, ast.Attribute):
-                        self.api_usage[module_name].append(node.func.attr)
-
-                        # Track function calls between modules
-                        if isinstance(node.func.value, ast.Name):
-                            # Check if this is a call to an imported module
-                            module_called = node.func.value.id
-                            if any(module_called == imp[0].split('.')[-1] for imp in local_imports):
-                                self.function_calls[module_name].add(
-                                    (module_called, node.func.attr))
-
-        except SyntaxError as e:
-            print(f"Parse error in file {file_path}: {str(e)}")
-        except Exception as e:
-            print(f"Error analyzing file {file_path}: {str(e)}")
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                self.api_usage[module_name].append(node.func.attr)
 
     def resolve_external_dependencies(self):
         """
-        Resolve external dependencies while preserving intra-project dependencies.
+        Turn the recorded imports into edges between project modules; everything
+        that is not a project module is kept in ``external_dependencies`` instead.
         """
-        # Get all project modules
-        project_root = self.project_root
-        all_modules = set(self.module_dependencies.nodes())
-        standard_lib_modules = set(sys.stdlib_module_names)
-
-        for module in list(self.module_dependencies.nodes()):
-            for dependency in list(self.module_dependencies.successors(module)):
-                # Check if it's a project module by looking for the file
-                possible_paths = [
-                    os.path.join(project_root, *dependency.split('.')) + '.py',
-                    os.path.join(project_root, dependency.split('.')[0], '__init__.py')
-                ]
-
-                is_project_module = (
-                    dependency in all_modules or
-                    any(os.path.exists(path) for path in possible_paths)
-                )
-
-                # Keep project dependencies, handle external ones
-                if not is_project_module:
-                    is_stdlib = any(dependency.startswith(std_lib)
-                                    for std_lib in standard_lib_modules)
-
-                    try:
-                        spec = importlib.util.find_spec(dependency.split('.')[0])
-                        is_third_party = spec is not None and not is_stdlib
-                    except (ModuleNotFoundError, ValueError):
-                        is_third_party = False
-
-                    self.module_dependencies.remove_edge(module, dependency)
-
-                    if is_stdlib:
-                        self.external_dependencies[module].add(('stdlib', dependency))
-                    elif is_third_party:
-                        self.external_dependencies[module].add(('third_party', dependency))
-
-                    # Remove isolated external nodes
-                    if not self.module_dependencies.in_edges(dependency) and \
-                       not self.module_dependencies.out_edges(dependency):
-                        self.module_dependencies.remove_node(dependency)
+        index = ModuleIndex(self.file_paths)
+        for module, imports in self._imports.items():
+            for candidates in imports:
+                target = index.resolve(candidates)
+                if target is None:
+                    name = candidates[-1]
+                    self.external_dependencies[module].add((external_kind(name), name))
+                elif target != module:
+                    self.module_dependencies.add_edge(module, target)
 
     def add_smell(self, name, description, file_path, module_class,
                   line_number=None, severity='medium'):
@@ -267,50 +193,57 @@ class ArchitecturalSmellDetector:
             severity=severity
         ))
 
+    def _core_graph(self):
+        """
+        The module graph without package __init__ modules: a package importing its
+        own submodules to build its API is neither a real dependency nor a cycle.
+        """
+        return self.module_dependencies.subgraph(
+            n for n in self.module_dependencies if not n.endswith('__init__'))
+
+    def _has_part(self, module, names):
+        """
+        True if one of the dotted parts of module is in names (pkg.utils, not database).
+        The name of the analyzed package itself is not a part: analyzing a package
+        called utils must not exclude all of it.
+        """
+        return any(part in names for part in module_parts(module, self.root_package))
+
     def detect_hub_like_dependency(self):
         """
-        Detect hub-like dependencies in the project with improved accuracy.
+        Detect hub-like dependencies: modules that many modules depend on and that
+        themselves depend on many modules, so changes ripple through them both ways.
         """
-        total_modules = len(self.module_dependencies.nodes())
+        graph = self._core_graph()
+        total_modules = len(graph)
         if total_modules < 3:  # Skip analysis for very small projects
             return
 
         threshold = self.thresholds.get('HUB_LIKE_DEPENDENCY_RATIO', 0.5)
         min_connections = self.thresholds.get('MIN_HUB_CONNECTIONS', 5)
 
-        for node in self.module_dependencies.nodes():
-            # Count both internal and external dependencies
-            in_degree = self.module_dependencies.in_degree(node)
-            out_degree = self.module_dependencies.out_degree(node)
-            external_deps = len(self.external_dependencies[node])
-            total_connections = in_degree + out_degree + external_deps
+        for node in graph.nodes():
+            # Shared infrastructure modules are meant to be widely connected
+            if self._has_part(node, {'util', 'utils', 'common', 'base', 'core'}):
+                continue
 
-            # Calculate fan-in and fan-out ratios
-            fan_in_ratio = in_degree / total_modules if total_modules > 0 else 0
-            fan_out_ratio = (out_degree + external_deps) / total_modules if total_modules > 0 else 0
+            in_degree = graph.in_degree(node)
+            out_degree = graph.out_degree(node)
+            total_connections = in_degree + out_degree
 
-            # Check for hub-like characteristics
-            is_hub = (total_connections >= min_connections and
-                      (total_connections / total_modules) > threshold)
-
-            # Additional checks to reduce false positives
-            if is_hub:
-                # Exclude common infrastructure modules
-                if any(pattern in node.lower() for pattern in ['util', 'common', 'base', 'core']):
-                    continue
-
-                # Check if the module has balanced dependencies
-                is_balanced = 0.2 <= fan_in_ratio / (fan_out_ratio + 0.0001) <= 5
-
-                if not is_balanced:
-                    self.add_smell(
-                        "Hub-like Dependency",
-                        f"Module '{node}' is a potential hub with {total_connections} connections "
-                        f"(in: {in_degree}, out: {out_degree}, external: {external_deps})",
-                        self.file_paths.get(node, "Unknown"),
-                        node,
-                        severity='high' if total_connections > min_connections * 2 else 'medium'
-                    )
+            # A hub has both incoming and outgoing dependencies in proportion; a module
+            # that is only imported (a library) or only imports (an entry point) is not one
+            is_balanced = in_degree and out_degree and 0.2 <= in_degree / out_degree <= 5
+            if (is_balanced and total_connections >= min_connections and
+                    total_connections / total_modules > threshold):
+                self.add_smell(
+                    "Hub-like Dependency",
+                    f"Module '{node}' is a potential hub with {total_connections} project connections "
+                    f"(in: {in_degree}, out: {out_degree})",
+                    self.file_paths.get(node, "Unknown"),
+                    node,
+                    severity='high' if total_connections > min_connections * 2 else 'medium'
+                )
 
     def detect_scattered_functionality(self):
         """
@@ -431,18 +364,18 @@ class ArchitecturalSmellDetector:
         """
         Detect orphan modules in the project.
         """
-        excluded_modules = {'__init__', 'setup', 'tests', 'utils'}  # Common standalone modules
+        # Standalone by design: package markers, entry points, test and build scripts
+        excluded_modules = {'__init__', '__main__', 'conftest', 'setup', 'manage',
+                            'test', 'tests', 'utils'}
         min_project_size = self.thresholds.get('MIN_PROJECT_SIZE', 3)
 
         if len(self.module_dependencies.nodes()) < min_project_size:
             return
 
         for node in self.module_dependencies.nodes():
-            module_name = node.split('.')[-1]
-            # Fix: Check if any excluded module name is in the full node path
-            if (self.module_dependencies.in_degree(node) + self.module_dependencies.out_degree(node) == 0 and
-                module_name not in excluded_modules and
-                    not any(excluded in node.lower() for excluded in excluded_modules)):
+            if (self.module_dependencies.degree(node) == 0 and
+                    not self._has_part(node, excluded_modules) and
+                    not node.split('.')[-1].startswith('test_')):
                 self.add_smell(
                     name="Orphan Module",
                     description=f"'{node}' is isolated from other modules",
@@ -453,82 +386,54 @@ class ArchitecturalSmellDetector:
 
     def detect_cyclic_dependencies(self):
         """
-        Detect cyclic dependencies with improved accuracy and cycle classification.
+        Detect cyclic dependencies: one finding per group of modules that import each
+        other directly or indirectly (a strongly connected component), with one
+        concrete cycle as evidence. Package __init__ modules are left out.
         """
-        min_cycle_size = self.thresholds.get('MIN_CYCLE_SIZE', 2)
-        max_cycle_size = self.thresholds.get('MAX_CYCLE_SIZE', 5)
-        excluded_modules = {'__init__', 'utils', 'common', 'base', 'core'}
+        max_length = self.thresholds.get('CYCLIC_DEPENDENCY_MAX_LENGTH', 3)
+        graph = self._core_graph()
 
-        # Find all simple cycles
-        cycles = list(nx.simple_cycles(self.module_dependencies))
-
-        # Group cycles by their shared nodes to identify related cycles
-        cycle_groups = defaultdict(list)
-
-        for cycle in cycles:
-            if min_cycle_size <= len(cycle) <= max_cycle_size:
-                # Skip cycles containing excluded modules
-                if any(any(excluded in node.lower() for excluded in excluded_modules)
-                       for node in cycle):
-                    continue
-
-                # Calculate cycle metrics
-                cycle_strength = 0
-                for i in range(len(cycle)):
-                    node1 = cycle[i]
-                    node2 = cycle[(i + 1) % len(cycle)]
-                    # Count mutual dependencies
-                    cycle_strength += sum(1 for _ in nx.all_simple_paths(
-                        self.module_dependencies, node1, node2))
-
-                # Group related cycles
-                cycle_key = frozenset(cycle)
-                cycle_groups[cycle_key].append((cycle, cycle_strength))
-
-        # Report cycles with additional context
-        for cycle_group in cycle_groups.values():
-            strongest_cycle = max(cycle_group, key=lambda x: x[1])
-            cycle, strength = strongest_cycle
-
-            # Calculate severity based on cycle size and strength
-            severity = 'high' if len(cycle) >= 3 and strength >= 3 else 'medium'
-
+        for component in nx.strongly_connected_components(graph):
+            if len(component) < 2:
+                continue
+            members = sorted(component)
+            cycle = [u for u, _ in nx.find_cycle(graph.subgraph(component), source=members[0])]
             cycle_str = ' -> '.join(cycle + [cycle[0]])
             self.add_smell(
                 "Cyclic Dependency",
-                f"Strong cyclic dependency detected: {cycle_str}\n"
-                f"Cycle strength: {strength} mutual dependencies",
-                self.file_paths.get(cycle[0], "Unknown"),
-                cycle[0],
-                severity=severity
+                f"{len(members)} modules depend on each other cyclically: {', '.join(members[:10])}"
+                f"{', ...' if len(members) > 10 else ''}. "
+                f"Example cycle: {cycle_str}",
+                self.file_paths.get(members[0], "Unknown"),
+                members[0],
+                severity='high' if len(members) > max_length else 'medium'
             )
 
     def detect_unstable_dependencies(self):
         """
-        Detect unstable dependencies in the project.
+        Detect unstable dependencies (violations of the Stable Dependencies Principle):
+        a module that depends on a module which is both unstable, with instability
+        Ce / (Ca + Ce) above UNSTABLE_DEPENDENCY_THRESHOLD, and less stable than itself.
         """
-        min_dependencies = self.thresholds.get(
-            'MIN_DEPENDENCIES', 5)  # Minimum dependencies to consider
-        excluded_patterns = {'test_', 'setup_', '__init__'}  # Patterns to exclude
+        graph = self._core_graph()
+        threshold = self.thresholds['UNSTABLE_DEPENDENCY_THRESHOLD']
 
-        for node in self.module_dependencies.nodes():
-            if any(pattern in node for pattern in excluded_patterns):
-                continue
+        def instability(node):
+            total = graph.degree(node)
+            return graph.out_degree(node) / total if total else 0
 
-            in_degree = self.module_dependencies.in_degree(node)
-            out_degree = self.module_dependencies.out_degree(node)
-            total_dependencies = in_degree + out_degree
-
-            if total_dependencies >= min_dependencies:
-                instability = out_degree / total_dependencies
-                if instability > self.thresholds['UNSTABLE_DEPENDENCY_THRESHOLD']:
-                    self.add_smell(
-                        "Unstable Dependency",
-                        f"Module '{node}' has high instability ({instability:.2f}) " +
-                        f"with {out_degree} outgoing and {in_degree} incoming dependencies",
-                        self.file_paths.get(node, "Unknown"),
-                        node
-                    )
+        for node in graph.nodes():
+            node_instability = instability(node)
+            unstable = sorted(dep for dep in graph.successors(node)
+                              if instability(dep) > max(threshold, node_instability))
+            if unstable:
+                self.add_smell(
+                    "Unstable Dependency",
+                    f"Module '{node}' (instability {node_instability:.2f}) depends on less stable "
+                    "modules: " + ', '.join(f"{dep} ({instability(dep):.2f})" for dep in unstable),
+                    self.file_paths.get(node, "Unknown"),
+                    node
+                )
 
     def print_report(self):
         """
@@ -543,28 +448,3 @@ class ArchitecturalSmellDetector:
             for smell in self.architectural_smells:
                 print(f"- {smell}")
 
-
-def analyze_architecture(directory_path, config_path):
-    """
-    Analyze the architecture of a Python project and detect architectural smells.
-
-    Args:
-        directory_path (str): The path to the directory containing the Python project to analyze.
-        config_path (str): The path to the configuration file containing smell detection thresholds.
-    """
-    detector = ArchitecturalSmellDetector(config_path)
-    detector.detect_smells(directory_path)
-    detector.print_report()
-
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Detect architectural smells in Python code.")
-    parser.add_argument("directory", help="Directory path to analyze")
-    parser.add_argument(
-        "--config",
-        default="code_quality_config.yaml",
-        help="Path to the configuration file")
-    args = parser.parse_args()
-
-    analyze_architecture(args.directory, args.config)

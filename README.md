@@ -58,63 +58,74 @@ A comprehensive Python static analysis tool that detects **code smells**, **arch
 
 ## Features
 
-### Code Smells — 18 detectors + 5 cross-file detectors
+### Code Smells — 20 per-file detectors + 7 cross-file passes
 
 | Smell | What it flags |
 |-------|--------------|
-| Long Method | Methods exceeding a line count threshold |
-| Large Class | Classes with too many methods |
-| Primitive Obsession | Functions overusing primitive types instead of objects |
-| Long Parameter List | Functions with too many parameters |
-| Switch Statements | Long if/elif chains that should be polymorphism |
-| Divergent Change | Classes that change for many different reasons |
-| Shotgun Surgery | Methods called across too many unrelated contexts |
+| Long Method | Functions with too many lines of code (blank lines, comments and docstrings excluded) |
+| Large Class | Classes with too many non-trivial methods |
+| Primitive Obsession | Functions whose parameters are mostly annotated `int`/`str`/`float`/`bool` |
+| Long Parameter List | Functions with too many parameters (positional-only, regular and keyword-only; `self`/`cls` excluded) |
+| Switch Statements | Long `if`/`elif` chains and `match` statements with many cases |
+| Divergent Change | Classes whose public methods start with many different verbs (snake_case or camelCase) |
+| Shotgun Surgery | Functions called from many different contexts (builtins and raised exceptions excluded) |
 | Excessive Comments | Files where comment density is unusually high |
-| Lazy Class | Classes too small to justify their existence |
-| Feature Envy | Methods that access another object's data more than their own |
-| Message Chains | Long chains of method calls (Law of Demeter violations) |
-| Middle Man | Classes that mostly delegate to another class |
-| Speculative Generality | Abstract classes or unused hooks added "just in case" |
-| Temporary Field | Instance fields set only in some code paths |
-| Dead Code | Functions defined but never called |
-| Unused Parameters | Method signatures more complex than the implementation needs |
-| Data Class | Classes with only fields and no real behaviour |
-| Large Comment Blocks | Oversized comment blocks suggesting code that needs refactoring |
+| Lazy Class | Stand-alone classes (no bases, no decorators) with one small method |
+| Feature Envy | Instance methods that use another object's attributes far more than their own |
+| Message Chains | Long attribute chains such as `a.b.c.d.e` (Law of Demeter); module paths are not chains |
+| Middle Man | Classes whose methods mostly just forward calls to another object |
+| Speculative Generality | Classes with many empty (`pass` / `...`) methods or unused parameters |
+| Temporary Field | Fields set in `__init__` that nothing in the project ever reads |
+| Data Class | Classes made only of one-line `get_*` / `set_*` accessors |
+| *(cross-file)* Dead Code | Private (`_name`) functions and methods never referenced anywhere in the project |
 | *(cross-file)* Data Clumps | Parameter groups that appear together across many functions |
-| *(cross-file)* Duplicate Code | Identical or near-identical code blocks across files |
-| *(cross-file)* Inappropriate Intimacy | Pairs of classes that share too many internals |
-| *(cross-file)* Alternative Classes | Classes with identical public interfaces but different names |
+| *(cross-file)* Duplicate Code | Functions with identical structure (names ignored), within or across files |
+| *(cross-file)* Inappropriate Intimacy | Classes that read or write another class's private (`_x`) fields |
+| *(cross-file)* Alternative Classes | Unrelated classes with identical public interfaces |
 | *(cross-file)* Parallel Inheritance | Parallel class hierarchies that change together |
 
 ### Architectural Smells — 8 detectors
 
+Imports are resolved to project modules (absolute, relative, `from pkg import mod`,
+`src/` layouts and analyzing a package directory itself); standard-library and
+third-party imports are tracked separately and never become graph nodes. Imports
+under `if TYPE_CHECKING:` are ignored.
+
 | Smell | What it flags |
 |-------|--------------|
 | God Object | Modules with an excessive number of public functions |
-| Cyclic Dependency | Circular import chains between modules |
-| Hub-like Dependency | Modules that are overly central (high fan-in + fan-out) |
+| Cyclic Dependency | One finding per group of modules that import each other (strongly connected component), with an example cycle |
+| Hub-like Dependency | Modules with both high fan-in and high fan-out inside the project |
 | Scattered Functionality | The same function name repeated across many modules |
-| Unstable Dependency | Modules that depend far more on others than others depend on them |
-| Orphan Module | Modules with no connections to the rest of the project |
+| Unstable Dependency | Modules depending on a less stable, highly unstable module (Stable Dependencies Principle) |
+| Orphan Module | Modules with no import connections to the rest of the project |
 | Improper API Usage | Modules that repeat the same API call patterns excessively |
 | Redundant Abstractions | Module pairs with nearly identical public function sets |
 
-### Structural Smells — 12 metric-based detectors
+### Structural Smells — 18 metric-based detectors
+
+Function-level metrics cover module-level functions as well as methods, and `async` code.
 
 | Smell | Metric | What it flags |
 |-------|--------|--------------|
-| Too Many Methods | NOM | Classes with more methods than the threshold |
+| High Number of Methods | NOM | Classes with more methods than the threshold |
+| High Weighted Methods per Class | WMPC1 / WMPC2 | Classes whose methods are, in sum, too complex or take too many parameters |
+| Large Class | SIZE2 | Classes with too many methods plus fields |
+| High Weight of a Class | WAC | Classes with too many fields (class attributes and `self.x` assignments) |
 | Low Cohesion | LCOM | Classes whose methods don't share fields |
 | High Response | RFC | Classes that trigger too many responses to a message |
+| High Message Passing Coupling | MPC | Classes sending too many messages to other objects |
+| High Coupling Between Object Classes | CBO | Classes using too many distinct imported or project classes/modules |
 | Too Many Classes in Module | NOCC | Modules with an excessive number of classes |
-| Deep Inheritance | DIT | Classes with deep inheritance chains |
-| Large Module | LOC | Modules exceeding a line count |
+| Deep Inheritance | DIT | Classes with deep inheritance chains, followed across modules |
+| Large Module | LOC | Modules with too many lines of code |
 | Too Many Classes in Project | NOC | Projects with an excessive class count |
-| High Cyclomatic Complexity | CC | Methods with too many decision branches |
-| High Fan-out | Fan-out | Modules depending on too many others |
-| High Fan-in | Fan-in | Modules depended upon by too many others |
-| Large File | File length | Files exceeding a line count |
-| Too Many Branches | Branches | Methods with too many conditional branches |
+| High Cyclomatic Complexity | CC | Functions with too many decision points (McCabe, incl. comprehensions, `match`, conditional expressions) |
+| High Fan-out | Fan-out | Modules depending on too many non-stdlib modules |
+| High Fan-in | Fan-in | Project modules imported by too many others |
+| Long File | File length | Files with too many lines of code |
+| Too Many Branches | Branches | Functions with too many branches |
+| Deep Nesting | Nesting | Functions nesting `if`/`for`/`while`/`try`/`with`/`match` blocks too deeply |
 
 ---
 
@@ -134,7 +145,15 @@ Open `reports/initial_audit.csv` in Excel or a BI tool to sort smells by severit
 
 ### Enforcing quality gates in CI
 
-Fail a pull request if new smells are introduced. Add the tool to your CI pipeline (see [GitHub Actions](#github-actions) and [GitLab CI](#gitlab-ci) below) and compare reports between the base and head commits.
+Fail a build when findings of a given severity appear:
+
+```bash
+analyze_code_quality src/ --format json --output quality.json --fail-on high
+```
+
+The exit code is `1` when any reported finding is at least `--fail-on`, so the
+step fails without any scripting. See [GitHub Actions](#github-actions) and
+[GitLab CI](#gitlab-ci) below.
 
 ### Focused structural review
 
@@ -250,11 +269,13 @@ Skip directories you don't want analyzed — useful for vendored code, test fixt
 analyze_code_quality /path/to/project --ignore tests docs venv build
 ```
 
-Multiple names are space-separated. The names are matched against directory basenames (not full paths), so `--ignore tests` skips any folder named `tests` anywhere in the tree.
+Multiple names are space-separated. The names are matched against directory basenames (not full paths), so `--ignore tests` skips any folder named `tests` anywhere in the tree. Hidden folders (`.git`, `.venv`, `.tox`, ...), `__pycache__`, `venv`, `node_modules` and `site-packages` are always skipped.
+
+The target can also be a single `.py` file.
 
 ### Save a report
 
-By default the report is printed to stdout. Use `--output` to write files instead:
+A text run writes `code_quality_report.txt` and `code_quality_report.csv` to the current directory. Use `--output` to choose the base name:
 
 ```bash
 # Creates report.txt (human-readable) and report.csv (structured)
@@ -278,13 +299,21 @@ analyze_code_quality /path/to/project \
 
 | Argument | Type | Description | Default |
 |----------|------|-------------|---------|
-| `directory` | positional | Path to the project directory to analyze | *(required)* |
+| `directory` | positional | Project directory, or a single `.py` file, to analyze | *(required)* |
 | `--type` | option | Limit analysis to `code`, `architectural`, or `structural` | all three |
 | `--config` | option | Path to a YAML threshold configuration file. If omitted and no `code_quality_config.yaml` exists in the current directory, the config bundled with the package is used. | `code_quality_config.yaml` |
-| `--output` | option | Base name for output files — generates `<name>.txt` + `<name>.csv` | print to stdout |
+| `--output` | option | Base name for output files — generates `<name>.txt` + `<name>.csv` (with `--format json`: the JSON file to write) | `code_quality_report` |
 | `--ignore` | option (repeatable) | Directory names to skip during traversal | none |
-| `--format` | option | `text` (txt/csv reports) or `json` (one JSON document on stdout, or in the `--output` file; progress goes to stderr) | `text` |
-| `--debug` | flag | Enable verbose debug logging to console and `code_analysis.log` | off |
+| `--format` | option | `text` (txt/csv reports) or `json` (one JSON document on stdout, or in the `--output` file; writes no other files, only warnings on stderr) | `text` |
+| `--min-severity` | option | Only report findings of at least `low`, `medium` or `high` | `low` |
+| `--fail-on` | option | Exit with code 1 if any reported finding is at least `low`, `medium` or `high` | never |
+| `--debug` | flag | Enable verbose debug logging (and, in text mode, to `code_analysis.log`) | off |
+| `--version` | flag | Print the version and exit | |
+
+**Exit codes:** `0` the analysis completed (and `--fail-on`, if given, was not
+reached); `1` `--fail-on` was reached; `2` usage error — bad arguments, or the
+path or config file does not exist. A file that cannot be parsed does not change
+the exit code; it is listed under `errors` in the JSON report.
 
 ---
 
@@ -304,32 +333,58 @@ analyze_code_quality /path/to/project --type structural --output report
 If the entry point is not on your `PATH` (e.g., after `uv sync` from source), invoke the module directly:
 
 ```bash
-python -m code_quality_analyzer.main /path/to/project
+python -m code_quality_analyzer /path/to/project
 # or via uv
-uv run python -m code_quality_analyzer.main /path/to/project
+uv run python -m code_quality_analyzer /path/to/project
 ```
 
 ### Agents, scripts and test harnesses
 
-Two machine-readable entry points return the same finding records
-(`type`, `name`, `description`, `file_path`, `module_class`, `line_number`, `severity`):
+The CLI with `--format json` and the `analyze()` function return the same report:
 
 ```bash
-# One JSON document on stdout: {"findings": [...], "summary": {"Code": n, "Architectural": n, "Structural": n}}
-analyze_code_quality /path/to/project --format json 2>/dev/null
-analyze_code_quality /path/to/project --type code --format json --output findings.json
+analyze_code_quality /path/to/project --format json            # report on stdout
+analyze_code_quality src/app.py --format json --min-severity medium
+analyze_code_quality /path/to/project --format json --output report.json --fail-on high
 ```
 
 ```python
 from code_quality_analyzer import analyze
 
-findings = analyze("/path/to/project", types=["code", "structural"], ignore=["tests"])
-for f in findings:
-    print(f["type"], f["name"], f["file_path"], f["line_number"])
+report = analyze("/path/to/project", types=["code", "structural"], ignore=["tests"])
+for f in report["findings"]:
+    print(f["severity"], f["name"], f["file_path"], f["line_number"])
+assert not report["errors"], report["errors"]  # files that could not be parsed
 ```
 
-`analyze()` prints nothing to stdout, writes no files and does not configure logging;
-importing the package no longer creates `code_analysis.log` (only the CLI does).
+Report schema (`schema_version` 1):
+
+```json
+{
+  "schema_version": 1,
+  "tool": {"name": "code-quality-analyzer", "version": "0.3.0"},
+  "target": "/path/to/project",
+  "summary": {"Code": 3, "Architectural": 1, "Structural": 2, "total": 6,
+              "by_severity": {"low": 1, "medium": 4, "high": 1}},
+  "findings": [
+    {"type": "Code", "name": "Long Parameter List",
+     "description": "'create_order' has 7 parameters in shop/orders.py",
+     "file_path": "shop/orders.py", "module_class": "create_order",
+     "line_number": 4, "severity": "medium"}
+  ],
+  "errors": [{"file": "shop/broken.py", "detector": "CodeSmellDetector",
+              "error": "SyntaxError: invalid syntax (line 1)"}]
+}
+```
+
+- `type` is `Code`, `Architectural` or `Structural`; `severity` is `low`, `medium` or `high`.
+- `line_number` and `module_class` may be `null` (project-level findings); `file_path` lists several files, comma-separated, for cross-file findings.
+- Findings are sorted by file, line, type and name, so two runs on the same code produce identical output.
+- `errors` lists files that could not be read or parsed; the rest of the project is still analyzed.
+- JSON mode writes nothing to disk except `--output`, and `analyze()` prints nothing to stdout and never configures logging.
+
+`tests/fixtures/sample_project/` is a deliberately smelly project with known
+findings (used by `tests/test_e2e.py`); point the CLI at it to see every field in use.
 
 ### Python API
 
@@ -425,14 +480,17 @@ jobs:
       - name: Install code-quality-analyzer
         run: uv tool install code-quality-analyzer
 
-      - name: Run analysis
+      - name: Run analysis (fails the job on high-severity findings)
         run: |
+          mkdir -p reports
           analyze_code_quality src/ \
-            --output reports/quality \
-            --ignore tests venv build dist \
-            --type code
+            --format json \
+            --output reports/quality.json \
+            --ignore tests build dist \
+            --fail-on high
 
       - name: Upload report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: code-quality-report
@@ -468,7 +526,7 @@ code-quality:
 
 All detection thresholds are defined in `code_quality_config.yaml`. The tool looks for this file in the current working directory by default, and if it isn't found there it falls back to the configuration bundled with the installed package — so a fresh `pip install code-quality-analyzer` works out of the box with no config file present. Use `--config` to point to a different file.
 
-Copy the file and edit the `value` fields to tune sensitivity for your project:
+A config only needs the thresholds it changes: anything it leaves out keeps the bundled default (unknown keys are reported as warnings). Copy the file and edit the `value` fields to tune sensitivity for your project:
 
 ```bash
 cp code_quality_config.yaml my_project_thresholds.yaml
@@ -491,17 +549,19 @@ analyze_code_quality /path/to/project --config my_project_thresholds.yaml
 | `SHOTGUN_SURGERY_CONTEXTS` | `3` | Methods called in more different contexts than this are flagged |
 | `EXCESSIVE_COMMENTS_RATIO` | `0.3` | Files where comment lines exceed this fraction of total lines are flagged |
 | `LARGE_COMMENT_BLOCKS` | `5` | Consecutive comment blocks larger than this are flagged |
-| `LAZY_CLASS_METHODS` | `4` | Classes with this few methods or fewer are flagged as lazy |
+| `LAZY_CLASS_METHODS` | `1` | Stand-alone classes with this many methods or fewer (besides dunder methods)... |
+| `LAZY_CLASS_LINES` | `10` | ...spanning this many lines or fewer are flagged as lazy |
+| `DATA_CLASS_METHODS` | `4` | Classes made only of at least this many one-line `get_`/`set_` accessors are data classes |
 | `FEATURE_ENVY_CALLS` | `3` | Methods making more calls to another object than this are flagged |
-| `INAPPROPRIATE_INTIMACY_SHARED` | `3` | Class pairs sharing more internals than this are flagged |
+| `INAPPROPRIATE_INTIMACY_SHARED` | `2` | Classes accessing more than this many private fields of another class are flagged |
 | `MESSAGE_CHAIN_LENGTH` | `3` | Call chains longer than this are flagged |
 | `MIDDLE_MAN_RATIO` | `0.5` | Classes where more than this fraction of methods only delegate are flagged |
 | `DATA_CLUMPS_THRESHOLD` | `6` | Minimum number of parameters two or more functions must share to be flagged. Only the maximal shared group is reported (not every subset), and a cross-file finding replaces the per-file finding for the same group |
-| `TEMPORARY_FIELD_THRESHOLD` | `3` | Fields used in fewer methods than this are flagged as temporary |
+| `TEMPORARY_FIELD_THRESHOLD` | `3` | Classes with at least this many `__init__` fields that nothing reads are flagged |
 | `ALTERNATIVE_CLASSES_THRESHOLD` | `3` | Minimum number of classes with an identical public method set to be flagged |
-| `DUPLICATE_CODE_THRESHOLD` | `15` | Minimum number of functions with identical normalized bodies to be flagged |
-| `DUPLICATE_CODE_MIN_LINES` | `5` | Minimum block length (lines) to consider when detecting duplicate code |
-| `DEAD_CODE_THRESHOLD` | `3` | Functions not called more than this many times are flagged as dead code |
+| `DUPLICATE_CODE_THRESHOLD` | `2` | Minimum number of functions with identical normalized bodies to be flagged |
+| `DUPLICATE_CODE_MIN_LINES` | `5` | Minimum function length (statements) to consider when detecting duplicate code |
+| `DEAD_CODE_THRESHOLD` | `1` | Unreferenced private functions are reported for files with at least this many |
 | `SPECULATIVE_GENERALITY_THRESHOLD` | `4` | Abstract classes with fewer concrete subclasses than this are flagged |
 | `UNUSED_PARAMETERS_THRESHOLD` | `6` | Accumulation of unused parameters across methods above this is flagged |
 
@@ -510,11 +570,11 @@ analyze_code_quality /path/to/project --config my_project_thresholds.yaml
 | Key | Default | Description |
 |-----|---------|-------------|
 | `GOD_OBJECT_FUNCTIONS` | `20` | Modules with more public functions than this are flagged as god objects |
-| `UNSTABLE_DEPENDENCY_THRESHOLD` | `0.8` | Modules with instability (out / total) above this ratio are flagged |
-| `HUB_LIKE_DEPENDENCY_RATIO` | `0.3` | Modules connected to more than this fraction of all modules are flagged as hubs |
+| `UNSTABLE_DEPENDENCY_THRESHOLD` | `0.8` | Depending on a less stable module whose instability Ce/(Ca+Ce) is above this is flagged |
+| `HUB_LIKE_DEPENDENCY_RATIO` | `0.3` | Modules with balanced fan-in/fan-out connected to more than this fraction of all modules are hubs |
 | `REDUNDANT_ABSTRACTION_SIMILARITY` | `0.7` | Module pairs sharing more than this fraction of functions are flagged as redundant |
 | `IMPROPER_API_USAGE_RATIO` | `0.7` | Modules where repetitive API calls exceed this fraction of total calls are flagged |
-| `CYCLIC_DEPENDENCY_MAX_LENGTH` | `3` | Cyclic dependency chains longer than this are flagged |
+| `CYCLIC_DEPENDENCY_MAX_LENGTH` | `3` | Every cycle is reported; cycles with more modules than this get high severity |
 
 ### Structural smell thresholds
 
@@ -524,34 +584,35 @@ analyze_code_quality /path/to/project --config my_project_thresholds.yaml
 | `WMPC1_THRESHOLD` | `20` | WMPC1 | Weighted Methods per Class (complexity-based) above this |
 | `WMPC2_THRESHOLD` | `20` | WMPC2 | Weighted Methods per Class (parameter-based) above this |
 | `SIZE2_THRESHOLD` | `15` | SIZE2 | Classes with more total members (methods + fields) than this |
-| `WAC_THRESHOLD` | `10` | WAC | Classes with more fields than this are flagged |
+| `WAC_THRESHOLD` | `10` | WAC | Classes with more fields (class attributes and `self.x`) than this are flagged |
 | `LCOM_THRESHOLD` | `10` | LCOM | Lack of Cohesion in Methods above this threshold |
 | `RFC_THRESHOLD` | `20` | RFC | Response for a Class above this threshold |
 | `NOCC_THRESHOLD` | `10` | NOCC | Modules with more classes than this are flagged |
 | `DIT_THRESHOLD` | `3` | DIT | Classes with inheritance depth greater than this are flagged |
 | `LOC_THRESHOLD` | `150` | LOC | Modules with more lines than this are flagged |
 | `MPC_THRESHOLD` | `25` | MPC | Message Passing Coupling above this threshold |
-| `CBO_THRESHOLD` | `5` | CBO | Coupling Between Object classes above this threshold |
+| `CBO_THRESHOLD` | `8` | CBO | Classes using more distinct imported (non-stdlib) or project classes/modules than this |
 | `NOC_THRESHOLD` | `7` | NOC | Projects with more distinct classes than this are flagged |
 | `CYCLOMATIC_COMPLEXITY_THRESHOLD` | `10` | CC | Methods with cyclomatic complexity above this are flagged |
 | `MAX_FANOUT` | `15` | Fan-out | Modules depending on more than this many others are flagged |
 | `MAX_FANIN` | `15` | Fan-in | Modules depended upon by more than this many others are flagged |
 | `MAX_FILE_LENGTH` | `250` | — | Files with more lines than this are flagged |
 | `MAX_BRANCHES` | `10` | — | Methods with more conditional branches than this are flagged |
-| `MAX_NESTING_DEPTH` | `4` | — | Code nested deeper than this is flagged |
+| `MAX_NESTING_DEPTH` | `4` | — | Functions nesting blocks deeper than this are flagged as Deep Nesting |
 
 ---
 
 ## Output formats
 
-The tool produces three output types:
+The tool produces these output types:
 
 | Format | How to get it | Contents |
 |--------|--------------|----------|
 | **Console** | Default (no `--output`) | Human-readable report printed to stdout |
 | **Text file** (`*.txt`) | `--output <name>` | Same human-readable report, saved to `<name>.txt` |
 | **CSV file** (`*.csv`) | `--output <name>` | One row per smell: Type, Name, Description, File, Module/Class, Line Number, Severity |
-| **Log file** (`code_analysis.log`) | Always written | Detailed analysis trace, warnings, and parse errors |
+| **JSON** | `--format json` | One report document (see [Agents, scripts and test harnesses](#agents-scripts-and-test-harnesses)) |
+| **Log file** (`code_analysis.log`) | Text mode only | Detailed analysis trace, warnings, and parse errors |
 
 The CSV is useful for importing into spreadsheets, dashboards, or CI tools for trend tracking.
 
@@ -616,7 +677,7 @@ The test suite covers all three detectors (code, structural, architectural), the
 # Install dev dependencies first (includes pytest)
 uv sync --extra dev
 
-# Run the full test suite (157 tests)
+# Run the full test suite (216 tests)
 uv run python -m pytest tests/
 
 # Run a specific test file
@@ -639,7 +700,7 @@ uv run python -m pytest tests/ -v
 # Run with coverage report
 uv run python -m pytest tests/ --cov=src/code_quality_analyzer --cov-report=term-missing
 
-# Verify all 157 tests pass (exit 0 = success)
+# Verify all tests pass (exit 0 = success)
 uv run python -m pytest tests/ -q && echo "All tests passed"
 ```
 
@@ -647,11 +708,12 @@ uv run python -m pytest tests/ -q && echo "All tests passed"
 
 | File | What it covers |
 |------|---------------|
-| `tests/test_code_smell_detector.py` | 18 per-file detectors + cross-file smells (data clumps, duplicate code, alternative classes, parallel inheritance). Positive and negative cases for each. |
-| `tests/test_structural_smell_detector.py` | 12 metric-based detectors: NOM, LOC, NOC, NOCC, DIT, LCOM, RFC, WAC, SIZE2, cyclomatic complexity, fan-in/out, branches, file length. |
+| `tests/test_code_smell_detector.py` | 20 per-file detectors + cross-file smells (data clumps, duplicate code, alternative classes, parallel inheritance). Positive and negative cases for each. |
+| `tests/test_structural_smell_detector.py` | 18 metric-based detectors: NOM, WMPC, SIZE2, WAC, LCOM, RFC, MPC, CBO, NOCC, DIT, LOC, NOC, cyclomatic complexity, fan-in/out, branches, nesting, file length. |
 | `tests/test_architectural_smell_detector.py` | All 8 architectural smell detectors: God Object, Scattered Functionality, Redundant Abstraction, Improper API Usage, Orphan Module, Cyclic Dependency, Unstable Dependency, Hub-like Dependency. |
 | `tests/test_config_handler.py` | Config file loading, threshold validation, unknown-key handling, malformed YAML error handling. |
 | `tests/test_main.py` | CLI parser flags, `analyze_*` functions, `generate_report`, `generate_csv_report` (field names, row contents, empty input). |
+| `tests/test_e2e.py` | Runs `python -m code_quality_analyzer` in a subprocess on `tests/fixtures/sample_project/` and checks the JSON schema, the expected findings, the `errors` list and exit codes. |
 
 > **Note:** `pytest` is blocked by an application control policy on some Windows setups — use `python -m pytest` instead of the bare `pytest` command.
 
@@ -670,7 +732,7 @@ uv run ruff check src/ tests/ --fix   # auto-fix
 
 ### Verifying across Python versions
 
-The package supports Python 3.10–3.13. To run the suite against a specific
+The package supports Python 3.10–3.14. To run the suite against a specific
 interpreter without touching your project venv:
 
 ```bash

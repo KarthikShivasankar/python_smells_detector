@@ -64,3 +64,4 @@ sponge/
 analysis/
 cloned_repositories/
 visualizations/
+!tests/fixtures/sample_project/

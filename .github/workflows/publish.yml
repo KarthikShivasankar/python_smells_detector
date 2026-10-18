@@ -19,12 +19,11 @@ jobs:
     name: Build distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
+        # No cache: a release build must not restore state written by other workflows
+        uses: astral-sh/setup-uv@v10.3.0
 
       - name: Build sdist and wheel
         run: uv build
@@ -33,7 +32,7 @@ jobs:
         run: uv run --with twine python -m twine check dist/*
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/*
@@ -49,7 +48,7 @@ jobs:
       id-token: write  # required for Trusted Publishing (OIDC)
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/

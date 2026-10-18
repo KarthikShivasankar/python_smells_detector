@@ -933,3 +933,167 @@ class TestErrorHandling:
         f.write_text("def func(:\n    pass\n")
         with pytest.raises(CodeAnalysisError):
             code_smell_detector.detect_smells(str(f))
+
+
+# ---------------------------------------------------------------------------
+# Detection gaps closed in 0.3.0
+# ---------------------------------------------------------------------------
+
+def run_project(detector, tmp_path, files):
+    """Write files, run the per-file and cross-file passes like the CLI does."""
+    for name, code in files.items():
+        (tmp_path / name).write_text(code)
+        detector.detect_smells(str(tmp_path / name))
+    detector.detect_cross_file_smells()
+
+
+class TestParameterKinds:
+    def test_keyword_only_params_counted(self, code_smell_detector, tmp_path):
+        # Regression: only regular positional parameters were counted
+        f = tmp_path / "kwonly.py"
+        f.write_text("def configure(host, *, port, user, password, timeout, retries):\n    pass\n")
+        code_smell_detector.detect_smells(str(f))
+        assert smells_named(code_smell_detector, "Long Parameter List")
+
+
+class TestMatchStatement:
+    def test_match_with_many_cases_is_switch(self, code_smell_detector, tmp_path):
+        cases = "".join(f"        case {i}:\n            return {i}\n" for i in range(5))
+        f = tmp_path / "match.py"
+        f.write_text(f"def route(x):\n    match x:\n{cases}")
+        code_smell_detector.detect_smells(str(f))
+        assert [s.line_number for s in smells_named(code_smell_detector, "Switch Statements")] == [2]
+
+    def test_small_match_not_flagged(self, code_smell_detector, tmp_path):
+        f = tmp_path / "small_match.py"
+        f.write_text("def route(x):\n    match x:\n        case 1:\n            return 1\n"
+                     "        case _:\n            return 0\n")
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Switch Statements")
+
+
+class TestPrecisionRegressions:
+    def test_module_function_is_not_feature_envy(self, code_smell_detector, tmp_path):
+        # Feature envy compares with the method's own class; plain functions have none
+        f = tmp_path / "fn.py"
+        f.write_text("def describe(node):\n    a = node.a\n    b = node.b\n"
+                     "    c = node.c\n    return node.d, a, b, c\n")
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Feature Envy")
+
+    def test_raising_custom_errors_is_not_shotgun_surgery(self, code_smell_detector, tmp_path):
+        funcs = "".join(f"def f{i}(x):\n    if x:\n        raise ParseError(x)\n" for i in range(7))
+        f = tmp_path / "raises.py"
+        f.write_text("class ParseError(Exception):\n    pass\n" + funcs)
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Shotgun Surgery")
+
+    def test_public_attribute_access_is_not_intimacy(self, code_smell_detector, tmp_path):
+        f = tmp_path / "public.py"
+        f.write_text(
+            "class Point:\n    def __init__(self):\n"
+            "        self.x = 0\n        self.y = 0\n        self.z = 0\n        self.w = 0\n"
+            "class Renderer:\n    def draw(self, p):\n        return p.x, p.y, p.z, p.w\n")
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Inappropriate Intimacy")
+
+    def test_cls_and_underscore_params_are_not_unused(self, code_smell_detector, tmp_path):
+        methods = "".join(f"    @classmethod\n    def make{i}(cls, _unused):\n        return {i}\n"
+                          for i in range(6))
+        f = tmp_path / "factory.py"
+        f.write_text(f"class Factory:\n{methods}")
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Speculative Generality")
+
+    def test_subclass_overrides_keep_unused_params(self, code_smell_detector, tmp_path):
+        methods = "".join(f"    def on_{i}(self, event, context):\n        return {i}\n"
+                          for i in range(4))
+        f = tmp_path / "handler.py"
+        f.write_text(f"class Handler(BaseHandler):\n{methods}")
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Speculative Generality")
+
+    def test_chain_through_module_path_not_flagged(self, code_smell_detector, tmp_path):
+        f = tmp_path / "paths.py"
+        f.write_text("import xml.etree.ElementTree\n"
+                     "def parse(p):\n    return xml.etree.ElementTree.parse.__name__\n")
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Message Chains")
+
+    def test_camel_case_methods_share_prefix(self, code_smell_detector, tmp_path):
+        methods = "".join(f"    def load{n}(self):\n        return 1\n"
+                          for n in ("User", "Order", "Item", "Cart", "Price", "Tax"))
+        f = tmp_path / "camel.py"
+        f.write_text(f"class Loader:\n{methods}")
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Divergent Change")
+
+    def test_temporary_field_read_in_another_file_dropped(self, code_smell_detector, tmp_path):
+        run_project(code_smell_detector, tmp_path, {
+            "model.py": "class C:\n    def __init__(self):\n        self.alpha = 1\n"
+                        "        self.beta = 2\n        self.gamma = 3\n"
+                        "    def m(self):\n        return 1\n",
+            "view.py": "def show(c):\n    return c.alpha\n",
+        })
+        assert not smells_named(code_smell_detector, "Temporary Field")
+
+
+class TestNewlyWiredDetectors:
+    def test_dead_private_function(self, code_smell_detector, tmp_path):
+        run_project(code_smell_detector, tmp_path, {
+            "mod.py": "def _used():\n    return 1\n"
+                      "def _unused():\n    return 2\n"
+                      "def _by_name():\n    return 3\n"
+                      "HANDLERS = {'x': _used}\n"
+                      "def api():\n    return getattr(mod, '_by_name')\n",
+        })
+        smells = smells_named(code_smell_detector, "Dead Code")
+        assert [(s.module_class, s.line_number) for s in smells] == [("_unused", 3)]
+
+    def test_private_function_imported_elsewhere_is_not_dead(self, code_smell_detector, tmp_path):
+        run_project(code_smell_detector, tmp_path, {
+            "lib.py": "def _helper():\n    return 1\n",
+            "test_lib.py": "from lib import _helper\n",
+        })
+        assert not smells_named(code_smell_detector, "Dead Code")
+
+    def test_lazy_class(self, code_smell_detector, tmp_path):
+        f = tmp_path / "lazy.py"
+        f.write_text("class Wrapper:\n    def __init__(self, v):\n        self.v = v\n"
+                     "    def run(self):\n        if self.v:\n            print(self.v)\n"
+                     "class Record:\n    def __init__(self, v):\n        self.v = v\n"
+                     "class Plugin(Base):\n    def run(self):\n        if 1:\n            pass\n")
+        code_smell_detector.detect_smells(str(f))
+        assert [s.module_class for s in smells_named(code_smell_detector, "Lazy Class")] == ["Wrapper"]
+
+    def test_data_class(self, code_smell_detector, tmp_path):
+        accessors = "".join(f"    def get_{n}(self):\n        return self._{n}\n"
+                            f"    def set_{n}(self, v):\n        self._{n} = v\n" for n in "ab")
+        f = tmp_path / "bean.py"
+        f.write_text(f"@register\nclass Bean:\n{accessors}")
+        code_smell_detector.detect_smells(str(f))
+        assert smells_named(code_smell_detector, "Data Class")
+
+    def test_all_smells_carry_a_severity(self, code_smell_detector, tmp_path):
+        f = tmp_path / "many.py"
+        f.write_text("def f(a, b, c, d, e, g, h):\n" + "".join(f"    x{i} = {i}\n" for i in range(50)))
+        code_smell_detector.detect_smells(str(f))
+        assert code_smell_detector.code_smells
+        assert all(s.severity in ("low", "medium", "high") for s in code_smell_detector.code_smells)
+
+
+class TestReviewRegressions:
+    def test_private_hook_override_is_not_dead(self, code_smell_detector, tmp_path):
+        run_project(code_smell_detector, tmp_path, {
+            "fmt.py": "import argparse\nclass F(argparse.HelpFormatter):\n"
+                      "    def _format_usage(self, *a):\n        return ''\n",
+        })
+        assert not smells_named(code_smell_detector, "Dead Code")
+
+    def test_dunder_protocol_params_not_unused(self, code_smell_detector, tmp_path):
+        f = tmp_path / "ctx.py"
+        f.write_text("class Ctx:\n    def __exit__(self, exc_type, exc, tb):\n        return False\n"
+                     "    def __get__(self, obj, objtype=None):\n        return 1\n"
+                     "    def __set_name__(self, owner, name):\n        pass\n")
+        code_smell_detector.detect_smells(str(f))
+        assert not smells_named(code_smell_detector, "Speculative Generality")

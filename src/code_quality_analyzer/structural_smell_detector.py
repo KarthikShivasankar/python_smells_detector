@@ -1,16 +1,29 @@
 import ast
 import logging
-import os
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 
 import networkx as nx
 import yaml
 
 from .exceptions import CodeAnalysisError
+from .project import (
+    STDLIB_MODULES,
+    ModuleIndex,
+    iter_imports,
+    iter_python_files,
+    module_parts,
+    project_root,
+    root_package,
+)
+from .project import module_name as project_module_name
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+TRY_NODES = (ast.Try, ast.TryStar) if hasattr(ast, 'TryStar') else (ast.Try,)
+NESTING_NODES = (ast.If, ast.For, ast.AsyncFor, ast.While, ast.With, ast.AsyncWith,
+                 ast.Match, *TRY_NODES)
 
 
 @dataclass
@@ -62,10 +75,13 @@ class StructuralSmellDetector:
         self.class_info = defaultdict(dict)
         self.module_info = defaultdict(dict)
         self.dependency_graph = nx.DiGraph()
-        self.module_dependencies = nx.DiGraph()
         self.thresholds = self.load_thresholds(config)
         self.project_root = None
+        self.root_package = None  # name of project_root when it is itself a package
         self.file_paths = {}
+        self._imports = {}  # module -> candidate-name lists, resolved once all files are known
+        self.errors = []  # files that could not be read or parsed
+        self._complexity = {}  # function node -> cyclomatic complexity, shared by several metrics
 
     def load_thresholds(self, config):
         """
@@ -99,17 +115,22 @@ class StructuralSmellDetector:
         """
         detection_methods = [
             (self.detect_nom, "detect_nom"),
+            (self.detect_wmpc, "detect_wmpc"),
+            (self.detect_size2, "detect_size2"),
+            (self.detect_wac, "detect_wac"),
             (self.detect_lcom, "detect_lcom"),
             (self.detect_rfc, "detect_rfc"),
             (self.detect_nocc, "detect_nocc"),
             (self.detect_dit, "detect_dit"),
             (self.detect_loc, "detect_loc"),
+            (self.detect_mpc, "detect_mpc"),
+            (self.detect_cbo, "detect_cbo"),
             (self.detect_noc, "detect_noc"),
             (self.detect_cyclomatic_complexity, "detect_cyclomatic_complexity"),
             (self.detect_fanout, "detect_fanout"),
             (self.detect_fanin, "detect_fanin"),
             (self.detect_file_length, "detect_file_length"),
-            (self.detect_branches, "detect_branches")
+            (self.detect_branches, "detect_branches"),
         ]
 
         try:
@@ -129,9 +150,10 @@ class StructuralSmellDetector:
                     logger.debug(
                         f"Completed {method_name}. Total smells so far: {len(self.structural_smells)}")
                 except Exception as e:
-                    logger.error(f"Error in {method_name}: {str(e)}", exc_info=True)
                     # Continue with next detection method instead of stopping
-                    continue
+                    logger.error(f"Error in {method_name}: {str(e)}", exc_info=True)
+                    self.errors.append({'file': directory_path, 'detector': 'StructuralSmellDetector',
+                                        'error': f"{method_name} failed: {type(e).__name__}: {e}"})
 
         except Exception as e:
             logger.error(f"Error analyzing directory {directory_path}: {str(e)}", exc_info=True)
@@ -145,51 +167,32 @@ class StructuralSmellDetector:
 
     def analyze_directory(self, directory_path, ignore_dirs=None):
         """
-        Analyze all Python files in the given directory and its subdirectories.
+        Analyze all Python files in the given directory (or the single given file).
 
         Args:
             directory_path (str): The path to the directory to be analyzed.
             ignore_dirs (iterable): Directory names to skip.
         """
-        ignore_dirs = set(ignore_dirs or [])
-        self.project_root = os.path.abspath(directory_path)
+        self.project_root = project_root(directory_path)
+        self.root_package = root_package(self.project_root)
         files_analyzed = 0
-        files_with_errors = 0
 
         logger.info(f"Starting analysis of directory: {directory_path}")
 
-        for root, dirs, files in os.walk(directory_path):
-            dirs[:] = [d for d in dirs if d not in ignore_dirs]
-            for file in files:
-                if file.endswith('.py'):
-                    file_path = os.path.join(root, file)
-                    try:
-                        self.analyze_file(file_path)
-                        files_analyzed += 1
-                        logger.debug(f"Successfully analyzed: {file_path}")
-                    except CodeAnalysisError as e:
-                        files_with_errors += 1
-                        logger.warning(f"Error analyzing {file_path}: {str(e)}")
-                        # Continue with next file instead of stopping
-                        continue
-                    except Exception as e:
-                        files_with_errors += 1
-                        logger.error(f"Unexpected error analyzing {file_path}: {str(e)}")
-                        continue
+        for file_path in iter_python_files(directory_path, ignore_dirs):
+            try:
+                self.analyze_file(file_path)
+                files_analyzed += 1
+                logger.debug(f"Successfully analyzed: {file_path}")
+            except CodeAnalysisError as e:
+                # Continue with next file instead of stopping
+                logger.warning(f"Error analyzing {file_path}: {str(e)}")
+                self.errors.append({'file': file_path, 'detector': 'StructuralSmellDetector',
+                                    'error': str(e).split('\n')[0]})
 
-        # Log analysis summary
-        logger.info(f"""
-Analysis Summary:
-----------------
-Files analyzed: {files_analyzed}
-Files with errors: {files_with_errors}
-Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 100):.1f}%
-        """)
-
-        if files_analyzed == 0:
-            logger.warning("No Python files were successfully analyzed!")
-        elif files_with_errors > 0:
-            logger.warning(f"{files_with_errors} files could not be analyzed due to errors")
+        self._build_dependency_graph()
+        logger.info(f"Structural analysis read {files_analyzed} files, "
+                    f"{len(self.errors)} could not be analyzed")
 
     def analyze_file(self, file_path):
         """
@@ -201,52 +204,52 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 content = file.read()
-
-            try:
-                tree = ast.parse(content)
-            except SyntaxError as e:
-                logger.error(f"Syntax error in {file_path}: {str(e)}")
-                raise CodeAnalysisError(
-                    message=f"Parse error: {str(e)}",
-                    file_path=file_path,
-                    line_number=getattr(e, 'lineno', None)
-                )
-
-            # Get relative module path
-            rel_path = os.path.relpath(file_path, self.project_root)
-            module_name = os.path.splitext(rel_path)[0].replace(os.path.sep, '.')
-
-            self.module_info[module_name]['loc'] = len(content.splitlines())
-            self.file_paths[module_name] = file_path
-
-            # Add node to dependency graph
-            self.module_dependencies.add_node(module_name)
-            self.dependency_graph.add_node(module_name)
-
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef):
-                    self.analyze_class(node, module_name)
-                elif isinstance(node, ast.Import):
-                    for alias in node.names:
-                        self.dependency_graph.add_edge(module_name, alias.name)
-                        self.module_dependencies.add_edge(module_name, alias.name)
-                elif isinstance(node, ast.ImportFrom):
-                    if node.module:
-                        self.dependency_graph.add_edge(module_name, node.module)
-                        self.module_dependencies.add_edge(module_name, node.module)
-
-        except UnicodeDecodeError as e:
-            logger.error(f"Encoding error in {file_path}: {str(e)}")
+            tree = ast.parse(content)
+        except (SyntaxError, ValueError, UnicodeDecodeError, OSError, RecursionError) as e:
             raise CodeAnalysisError(
-                message=f"File encoding error: {str(e)}",
-                file_path=file_path
+                message=f"{type(e).__name__}: {e}",
+                file_path=file_path,
+                line_number=getattr(e, 'lineno', None)
             )
-        except Exception as e:
-            logger.error(f"Error analyzing file {file_path}: {str(e)}")
-            raise CodeAnalysisError(
-                message=f"Analysis error: {str(e)}",
-                file_path=file_path
-            )
+
+        module_name = project_module_name(file_path, self.project_root)
+        lines = content.splitlines()
+        doc_lines = set()
+        imported = {}  # names bound by imports -> module they come from, for coupling metrics
+        self.module_info[module_name] = {
+            'loc': len(lines),
+            'lines': lines,
+            'doc_lines': doc_lines,
+            'imported': imported,
+            'functions': [n for n in tree.body
+                          if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))],
+        }
+        self.file_paths[module_name] = file_path
+        self.dependency_graph.add_node(module_name)
+        self._imports[module_name] = [c for c, _ in iter_imports(tree, module_name)]
+
+        # One pass over the tree for classes, imported names and docstring lines
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                self.analyze_class(node, module_name)
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                for alias in node.names:
+                    source = (alias.name if isinstance(node, ast.Import) else
+                              '.' * node.level + (node.module or ''))
+                    imported[alias.asname or alias.name.split('.')[0]] = source
+            elif (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and
+                    isinstance(node.value.value, str)):
+                # String-literal statements: docstrings and the like
+                doc_lines.update(range(node.lineno, node.end_lineno + 1))
+
+    def _build_dependency_graph(self):
+        """Edges to the project modules each module imports, and to external top-level packages."""
+        index = ModuleIndex(self.file_paths)
+        for module, imports in self._imports.items():
+            for candidates in imports:
+                target = index.resolve(candidates) or candidates[-1].split('.')[0]
+                if target != module:
+                    self.dependency_graph.add_edge(module, target)
 
     def analyze_class(self, node, module_name):
         """
@@ -260,18 +263,22 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
         self.class_info[class_name]['methods'] = []
         self.class_info[class_name]['fields'] = set()
         self.class_info[class_name]['method_calls'] = defaultdict(set)
+        # Attribute names read anywhere in the class, and how often each is read on self
+        self.class_info[class_name]['attr_names'] = set()
+        self.class_info[class_name]['self_reads'] = Counter()
         self.class_info[class_name]['base_classes'] = [
             self.resolve_base_class(base, module_name) for base in node.bases]
         self.class_info[class_name]['loc'] = node.end_lineno - node.lineno + 1
+        self.class_info[class_name]['lineno'] = node.lineno
 
         for child in node.body:
-            if isinstance(child, ast.FunctionDef):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 self.class_info[class_name]['methods'].append(child)
                 self.analyze_method(child, class_name)
-            elif isinstance(child, ast.Assign):
-                for target in child.targets:
-                    if isinstance(target, ast.Name):
-                        self.class_info[class_name]['fields'].add(target.id)
+            elif isinstance(child, (ast.Assign, ast.AnnAssign)):
+                targets = child.targets if isinstance(child, ast.Assign) else [child.target]
+                self.class_info[class_name]['fields'].update(
+                    t.id for t in targets if isinstance(t, ast.Name))
 
     def analyze_method(self, node, class_name):
         """
@@ -281,10 +288,19 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
             node (ast.FunctionDef): The method definition node to analyze.
             class_name (str): The name of the class containing the method.
         """
+        info = self.class_info[class_name]
         for child in ast.walk(node):
             if isinstance(child, ast.Call):
                 if isinstance(child.func, ast.Attribute):
-                    self.class_info[class_name]['method_calls'][node.name].add(child.func.attr)
+                    info['method_calls'][node.name].add(child.func.attr)
+            elif isinstance(child, ast.Attribute):
+                info['attr_names'].add(child.attr)
+                on_self = isinstance(child.value, ast.Name) and child.value.id == 'self'
+                # Instance attributes assigned anywhere in the class are fields too
+                if on_self and isinstance(child.ctx, ast.Store):
+                    info['fields'].add(child.attr)
+                elif on_self:
+                    info['self_reads'][child.attr] += 1
 
     def add_smell(self, name, description, file_path, module_class,
                   line_number=None, severity='medium'):
@@ -299,13 +315,15 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
             line_number (int, optional): The line number where the smell was detected
             severity (str, optional): The severity level of the smell (default: 'medium')
         """
+        if line_number is None and module_class in self.class_info:
+            line_number = self.class_info[module_class]['lineno']
         self.structural_smells.append(StructuralSmell(
             name=name,
             description=description,
             file_path=file_path,
             module_class=module_class,
             line_number=line_number,
-            severity=severity
+            severity=severity.lower()
         ))
 
     def detect_nom(self):
@@ -329,14 +347,13 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
             nom = len(regular_methods)
             if nom > threshold:
                 severity = 'High' if nom > threshold * 1.5 else 'Medium'
-                smell = StructuralSmell(
+                self.add_smell(
                     name="High Number of Methods (NOM)",
                     description=f"Class '{class_name}' has {nom} methods (excluding special methods and properties)",
                     file_path=self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
                     module_class=class_name,
                     severity=severity
                 )
-                self.structural_smells.append(smell)
                 logger.info(f"Detected NOM smell in {class_name}: {nom} methods")
 
     def detect_wmpc(self):
@@ -395,11 +412,7 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
                                        for call in calls if call == m.name)]
 
             significant_fields = {f for f in info['fields']
-                                  if not f.startswith('_') or
-                                  any(node.attr == f
-                                      for method in info['methods']
-                                      for node in ast.walk(method)
-                                      if isinstance(node, ast.Attribute))}
+                                  if not f.startswith('_') or f in info['attr_names']}
 
             size2 = len(significant_methods) + len(significant_fields)
             if size2 > self.thresholds['SIZE2_THRESHOLD']:
@@ -429,12 +442,7 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
                     continue
 
                 # Check field usage in methods
-                field_usage = sum(1 for method in info['methods']
-                                  for node in ast.walk(method)
-                                  if isinstance(node, ast.Attribute) and
-                                  isinstance(node.value, ast.Name) and
-                                  node.value.id == 'self' and
-                                  node.attr == field)
+                field_usage = info['self_reads'][field]
 
                 # Include field if it's public or frequently used
                 if not field.startswith('_') or field_usage > 1:
@@ -598,7 +606,7 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
             module_name = class_name.rsplit('.', 1)[0]
 
             # Skip test classes
-            if 'test' in class_name.lower():
+            if class_name.rsplit('.', 1)[-1].lower().startswith('test'):
                 continue
 
             # Skip exception classes
@@ -638,170 +646,114 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
 
     def detect_dit(self):
         """
-        Detect classes with a Deep Inheritance Tree (DIT).
-        Enhanced to consider:
-        - Framework/library base classes
-        - Mixin classes
-        - Interface-like classes
-        - Abstract base classes
+        Detect classes with a Deep Inheritance Tree (DIT): the longest chain of base
+        classes from a class up to object. A class without bases has DIT 1. Base names
+        are resolved to project classes (same module first, then a unique class of that
+        name elsewhere); unresolved bases count as one level. Builtins, mixins,
+        interfaces and abstract bases are not counted as levels.
         """
-        inheritance_graph = nx.DiGraph()
-        framework_bases = {
-            'object',
-            'Exception',
-            'dict',
-            'list',
-            'set',
-            'tuple',
-            'str',
-            'int',
-            'float'}
+        framework_bases = {'object', 'Exception', 'dict', 'list', 'set', 'tuple',
+                           'str', 'int', 'float'}
+        by_simple_name = defaultdict(list)
+        for class_name in self.class_info:
+            by_simple_name[class_name.rsplit('.', 1)[-1]].append(class_name)
 
-        for class_name, info in self.class_info.items():
-            inheritance_graph.add_node(class_name)
-            significant_bases = []
+        def resolve(base, class_name):
+            local = f"{class_name.rsplit('.', 1)[0]}.{base}"
+            if local in self.class_info:
+                return local
+            if base in self.class_info:
+                return base
+            matches = by_simple_name.get(base.split('.')[-1], [])
+            return matches[0] if len(matches) == 1 else None
 
-            for base in info['base_classes']:
-                # Skip framework/library base classes
-                base_name = base.split('.')[-1]
-                if base_name in framework_bases:
+        def is_counted(base):
+            base_name = base.split('.')[-1]
+            return not (base_name in framework_bases or
+                        any(tag in base_name for tag in ('Mixin', 'Interface', 'ABC', 'Abstract')))
+
+        depths, paths = {}, {}
+
+        def depth(class_name, visiting=()):
+            if class_name in depths:
+                return depths[class_name]
+            best, best_path = 1, [class_name]
+            for base in self.class_info[class_name]['base_classes']:
+                if not is_counted(base):
                     continue
+                target = resolve(base, class_name)
+                if target is None or target in visiting or target == class_name:
+                    d, p = 1, [base]  # external or unresolvable base: one level
+                else:
+                    d, p = depth(target, visiting + (class_name,)), paths[target]
+                if d + 1 > best:
+                    best, best_path = d + 1, p + [class_name]
+            depths[class_name], paths[class_name] = best, best_path
+            return best
 
-                # Skip Mixin classes
-                if 'Mixin' in base_name or 'Interface' in base_name:
-                    continue
+        threshold = self.thresholds['DIT_THRESHOLD']
+        for class_name in self.class_info:
+            # Exception taxonomies are deep by design
+            if class_name.endswith(('Error', 'Exception', 'Warning')):
+                continue
+            dit = depth(class_name)
+            if dit > threshold:
+                self.add_smell(
+                    "Deep Inheritance Tree (DIT)",
+                    f"Class '{class_name}' has DIT of {dit}\nInheritance path: "
+                    f"{'->'.join(['object'] + paths[class_name])}",
+                    self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                    class_name,
+                    severity='High' if dit > threshold * 1.5 else 'Medium'
+                )
 
-                # Skip abstract base classes (if they have ABC in name or are mostly
-                # abstract methods)
-                if 'ABC' in base_name or 'Abstract' in base_name:
-                    continue
-
-                significant_bases.append(base)
-                inheritance_graph.add_edge(base, class_name)
-
-        # Add 'object' as root if needed
-        if 'object' not in inheritance_graph and inheritance_graph.nodes():
-            inheritance_graph.add_node('object')
-            for node in list(inheritance_graph.nodes()):
-                if inheritance_graph.in_degree(node) == 0 and node != 'object':
-                    inheritance_graph.add_edge('object', node)
-
-        for class_name in inheritance_graph.nodes():
-            if class_name != 'object':
-                try:
-                    dit = nx.shortest_path_length(inheritance_graph, 'object', class_name)
-                    if dit > self.thresholds['DIT_THRESHOLD']:
-                        severity = 'High' if dit > self.thresholds['DIT_THRESHOLD'] * \
-                            1.5 else 'Medium'
-                        inheritance_path = '->'.join(nx.shortest_path(
-                            inheritance_graph, 'object', class_name))
-                        self.add_smell(
-                            "Deep Inheritance Tree (DIT)",
-                            f"Class '{class_name}' has DIT of {dit}\nInheritance path: {inheritance_path}",
-                            self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
-                            class_name,
-                            severity=severity
-                        )
-                except nx.NetworkXNoPath:
-                    # Only report if it's not a framework/library class
-                    if not any(base in class_name for base in framework_bases):
-                        self.add_smell(
-                            "Isolated Class in Inheritance Tree",
-                            f"Class '{class_name}' is isolated from the main inheritance hierarchy",
-                            self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
-                            class_name,
-                            severity='Low'
-                        )
+    def _line_counts(self, info):
+        """(code, doc, import, blank) line counts of a module; comment lines count as none."""
+        code = doc = imports = blank = 0
+        for number, line in enumerate(info['lines'], start=1):
+            stripped = line.strip()
+            if not stripped:
+                blank += 1
+            elif number in info['doc_lines']:
+                doc += 1
+            elif stripped.startswith(('import ', 'from ')):
+                imports += 1
+            elif not stripped.startswith('#'):
+                code += 1
+        return code, doc, imports, blank
 
     def detect_loc(self):
         """
         Detect modules with high Lines of Code (LOC).
         """
         for module_name, info in self.module_info.items():
-            try:
-                file_path = self.file_paths.get(module_name, "")
-                if not file_path or not os.path.exists(file_path):
-                    continue
+            file_path = self.file_paths[module_name]
+            lines = info['lines']
+            code_lines, doc_lines, import_lines, blank_lines = self._line_counts(info)
 
-                # Try different encodings
-                encodings = ['utf-8', 'utf-8-sig', 'latin1', 'cp1252']
-                content = None
+            # Calculate effective LOC and complexity ratio
+            effective_loc = code_lines
+            non_blank = len(lines) - blank_lines
+            complexity_ratio = effective_loc / non_blank if non_blank > 0 else 1
 
-                for encoding in encodings:
-                    try:
-                        with open(file_path, 'r', encoding=encoding) as file:
-                            content = file.read()
-                        break
-                    except UnicodeDecodeError:
-                        continue
+            # Adjust threshold based on module type
+            adjusted_threshold = self.thresholds['LOC_THRESHOLD']
+            if module_name.rsplit('.', 1)[-1].startswith('test'):
+                adjusted_threshold *= 1.5  # Allow test files to be longer
+            if complexity_ratio < 0.5:
+                adjusted_threshold *= 1.3  # Allow more lines if much of it is documentation
 
-                if content is None:
-                    logger.warning(f"Could not read file {file_path} with any supported encoding")
-                    continue
-
-                # Count different types of lines
-                lines = content.splitlines()
-                code_lines = 0
-                doc_lines = 0
-                import_lines = 0
-                blank_lines = 0
-
-                in_docstring = False
-                for line in lines:
-                    stripped = line.strip()
-
-                    # Skip blank lines
-                    if not stripped:
-                        blank_lines += 1
-                        continue
-
-                    # Handle docstrings
-                    if stripped.startswith('"""') or stripped.startswith("'''"):
-                        in_docstring = not in_docstring
-                        doc_lines += 1
-                        continue
-
-                    if in_docstring:
-                        doc_lines += 1
-                        continue
-
-                    # Handle imports
-                    if stripped.startswith('import ') or stripped.startswith('from '):
-                        import_lines += 1
-                        continue
-
-                    # Handle comments
-                    if stripped.startswith('#'):
-                        continue
-
-                    code_lines += 1
-
-                # Calculate effective LOC and complexity ratio
-                effective_loc = code_lines
-                complexity_ratio = effective_loc / \
-                    (len(lines) - blank_lines) if len(lines) - blank_lines > 0 else 1
-
-                # Adjust threshold based on module type
-                adjusted_threshold = self.thresholds['LOC_THRESHOLD']
-                if 'test' in module_name.lower():
-                    adjusted_threshold *= 1.5  # Allow test files to be longer
-                if complexity_ratio < 0.5:
-                    adjusted_threshold *= 1.3  # Allow more lines if much of it is documentation
-
-                if effective_loc > adjusted_threshold:
-                    severity = 'High' if effective_loc > adjusted_threshold * 1.5 else 'Medium'
-                    self.add_smell(
-                        name="High Lines of Code (LOC)",
-                        description=f"Module '{module_name}' has {effective_loc} effective code lines\n"
-                        f"(Total: {len(lines)}, Code: {code_lines}, Doc: {doc_lines}, "
-                        f"Import: {import_lines}, Blank: {blank_lines})",
-                        file_path=file_path,
-                        module_class=module_name,
-                        severity=severity
-                    )
-            except Exception as e:
-                logger.error(f"Error analyzing LOC for {module_name}: {str(e)}")
-                continue
+            if effective_loc > adjusted_threshold:
+                severity = 'High' if effective_loc > adjusted_threshold * 1.5 else 'Medium'
+                self.add_smell(
+                    name="High Lines of Code (LOC)",
+                    description=f"Module '{module_name}' has {effective_loc} effective code lines\n"
+                    f"(Total: {len(lines)}, Code: {code_lines}, Doc: {doc_lines}, "
+                    f"Import: {import_lines}, Blank: {blank_lines})",
+                    file_path=file_path,
+                    module_class=module_name,
+                    severity=severity
+                )
 
     def detect_mpc(self):
         """
@@ -849,7 +801,7 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
                     "High Message Passing Coupling (MPC)",
                     f"Class '{class_name}' has weighted MPC of {weighted_mpc:.1f}\n"
                     f"(External calls: {external_mpc}, Internal calls: {internal_mpc})\n"
-                    f"Most frequent external calls: {dict(sorted(method_calls.items(),key=lambda x: x[1],reverse=True)[:3])}",
+                    f"Most frequent external calls: {dict(sorted(method_calls.items(), key=lambda x: (-x[1], x[0]))[:3])}",
                     self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
                     class_name,
                     severity=severity
@@ -857,110 +809,36 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
 
     def detect_cbo(self):
         """
-        Detect modules with high Coupling Between Object Classes (CBO).
-        Enhanced to consider:
-        - Direct vs indirect coupling
-        - Framework/library dependencies
-        - Test dependencies
-        - Internal vs external coupling
-        - Strength of coupling
+        Detect classes with high Coupling Between Object Classes (CBO): the number of
+        distinct other classes and modules a class uses. Without type inference a
+        coupling target is a name that is either imported into the module (from
+        outside the standard library) or the name of a class defined in the project;
+        local variables, parameters and builtins are not coupling targets.
         """
-        standard_libs = {'os', 'sys', 'datetime', 'collections', 'json', 'logging', 're', 'math'}
-        framework_patterns = {'test_', 'mock_', 'stub_', 'fake_'}
+        project_classes = {name.rsplit('.', 1)[-1] for name in self.class_info}
+        threshold = self.thresholds['CBO_THRESHOLD']
 
         for class_name, info in self.class_info.items():
-            # Track different types of coupling
-            direct_coupling = set()
-            indirect_coupling = set()
+            module_name, own_name = class_name.rsplit('.', 1)
+            imported = {name for name, source in
+                        self.module_info.get(module_name, {}).get('imported', {}).items()
+                        if source.split('.')[0] not in STDLIB_MODULES}
+            used = {node.id for method in info['methods'] for node in ast.walk(method)
+                    if isinstance(node, ast.Name)}
+            used.update(base.split('.')[0] for base in info['base_classes'])
+            coupled = sorted(name for name in used
+                             if name != own_name and (name in imported or name in project_classes))
 
-            # Analyze method calls and attribute access
-            for method in info['methods']:
-                for node in ast.walk(method):
-                    if isinstance(node, ast.Call):
-                        if isinstance(node.func, ast.Attribute):
-                            # Get the base object being called
-                            base_obj = self._get_base_object(node.func)
-                            if base_obj and not self._is_excluded_dependency(
-                                    base_obj, standard_libs, framework_patterns):
-                                direct_coupling.add(base_obj)
-
-                    elif isinstance(node, ast.Attribute):
-                        base_obj = self._get_base_object(node)
-                        if base_obj and not self._is_excluded_dependency(
-                                base_obj, standard_libs, framework_patterns):
-                            indirect_coupling.add(base_obj)
-
-            # Analyze inheritance and composition
-            for base in info['base_classes']:
-                if not self._is_excluded_dependency(base, standard_libs, framework_patterns):
-                    direct_coupling.add(base)
-
-            # Calculate weighted CBO
-            direct_cbo = len(direct_coupling)
-            indirect_cbo = len(indirect_coupling)
-            weighted_cbo = direct_cbo * 1.5 + indirect_cbo * 0.5
-
-            if weighted_cbo > self.thresholds['CBO_THRESHOLD']:
-                severity = self._calculate_cbo_severity(
-                    weighted_cbo, self.thresholds['CBO_THRESHOLD'])
+            cbo = len(coupled)
+            if cbo > threshold:
                 self.add_smell(
                     "High Coupling Between Object Classes (CBO)",
-                    f"Class '{class_name}' has weighted CBO of {weighted_cbo:.1f}\n"
-                    f"Direct coupling: {direct_cbo} classes\n"
-                    f"Indirect coupling: {indirect_cbo} classes\n"
-                    f"Most significant dependencies: {sorted(direct_coupling)[:3]}",
-                    self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
+                    f"Class '{class_name}' is coupled to {cbo} classes or modules: "
+                    f"{', '.join(coupled[:10])}{', ...' if cbo > 10 else ''}",
+                    self.file_paths.get(module_name, "Unknown"),
                     class_name,
-                    severity=severity
+                    severity=self._calculate_cbo_severity(cbo, threshold)
                 )
-
-    def _get_base_object(self, node):
-        """
-        Get the base object name from an attribute node.
-
-        Args:
-            node (ast.AST): The AST node to analyze.
-
-        Returns:
-            str: The base object name, or None if it cannot be determined.
-        """
-        if isinstance(node, ast.Attribute):
-            if isinstance(node.value, ast.Name):
-                if node.value.id != 'self':
-                    return node.value.id
-            elif isinstance(node.value, ast.Attribute):
-                return self._get_base_object(node.value)
-        return None
-
-    def _is_excluded_dependency(self, name, standard_libs, framework_patterns):
-        """
-        Check if a dependency should be excluded from coupling calculations.
-
-        Args:
-            name (str): The name to check.
-            standard_libs (set): Set of standard library names.
-            framework_patterns (set): Set of framework-specific patterns.
-
-        Returns:
-            bool: True if the dependency should be excluded, False otherwise.
-        """
-        # Check standard library
-        if any(name.startswith(lib) for lib in standard_libs):
-            return True
-
-        # Check framework patterns
-        if any(pattern in name.lower() for pattern in framework_patterns):
-            return True
-
-        # Check utility/helper classes
-        if 'utils' in name.lower() or 'helper' in name.lower():
-            return True
-
-        # Check common base classes
-        if name in {'object', 'Exception', 'dict', 'list', 'set'}:
-            return True
-
-        return False
 
     def _calculate_cbo_severity(self, weighted_cbo, threshold):
         """
@@ -1051,10 +929,8 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
         base_threshold = self.thresholds['NOC_THRESHOLD']
 
         # Count total lines of production code
-        total_loc = sum(info['loc'] for info in self.module_info.values()
-                        if not any(pattern in name.lower()
-                                   for pattern in ['test', 'mock']
-                                   for name in info))
+        total_loc = sum(info['loc'] for name, info in self.module_info.items()
+                        if not any(pattern in name.lower() for pattern in ('test', 'mock')))
 
         # Adjust based on project size
         if total_loc > 10000:
@@ -1101,42 +977,51 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
             return self._get_attr_base(node.value)
         return str(node.value)
 
+    def _functions(self):
+        """Yield (owner, function, file_path) for every method and module-level function."""
+        for class_name, info in self.class_info.items():
+            file_path = self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown")
+            for method in info['methods']:
+                yield class_name, method, file_path
+        for module_name, info in self.module_info.items():
+            for function in info['functions']:
+                yield module_name, function, self.file_paths[module_name]
+
     def detect_cyclomatic_complexity(self):
         """
-        Detect methods with high cyclomatic complexity.
-        Uses a simplified calculation based on control flow statements.
+        Detect methods and functions with high cyclomatic complexity.
         """
-        for class_name, info in self.class_info.items():
-            for method in info['methods']:
-                # Skip special methods
-                if method.name.startswith('__') and method.name.endswith('__'):
-                    continue
+        threshold = self.thresholds.get('CYCLOMATIC_COMPLEXITY_THRESHOLD', 10)
+        for owner, function, file_path in self._functions():
+            # Skip special methods
+            if function.name.startswith('__') and function.name.endswith('__'):
+                continue
 
-                complexity = self.calculate_cyclomatic_complexity(method)
-                threshold = self.thresholds.get('CYCLOMATIC_COMPLEXITY_THRESHOLD', 10)
-
-                if complexity > threshold:
-                    severity = 'High' if complexity > threshold * 1.5 else 'Medium'
-                    self.add_smell(
-                        "High Cyclomatic Complexity",
-                        f"Method '{method.name}' has cyclomatic complexity of {complexity}",
-                        self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
-                        class_name,
-                        method.lineno,
-                        severity=severity
-                    )
+            complexity = self.calculate_cyclomatic_complexity(function)
+            if complexity > threshold:
+                severity = 'High' if complexity > threshold * 1.5 else 'Medium'
+                self.add_smell(
+                    "High Cyclomatic Complexity",
+                    f"Function '{function.name}' has cyclomatic complexity of {complexity}",
+                    file_path,
+                    owner,
+                    function.lineno,
+                    severity=severity
+                )
 
     def calculate_cyclomatic_complexity(self, method):
-        """
-        Calculate cyclomatic complexity using a simplified approach.
+        if method not in self._complexity:
+            self._complexity[method] = self._cyclomatic_complexity(method)
+        return self._complexity[method]
 
-        Counts:
-        - if statements
-        - elif branches
-        - for loops
-        - while loops
-        - except blocks
-        - boolean operations (and, or)
+    @staticmethod
+    def _cyclomatic_complexity(method):
+        """
+        Calculate McCabe cyclomatic complexity: 1 plus one per decision point.
+
+        Counts if/elif statements and conditional expressions, for/while loops
+        (async too), except handlers, match cases other than a bare ``case _``,
+        each extra operand of and/or, and each for/if clause of a comprehension.
 
         Args:
             method (ast.FunctionDef): The method to analyze
@@ -1147,186 +1032,148 @@ Success rate: {((files_analyzed - files_with_errors) / max(files_analyzed, 1) * 
         complexity = 1  # Base complexity
 
         for node in ast.walk(method):
-            # Control flow statements (ast.walk visits each elif as its own If node)
-            if isinstance(node, (ast.If, ast.For, ast.While)):
+            # ast.walk visits each elif as its own If node
+            if isinstance(node, (ast.If, ast.IfExp, ast.For, ast.AsyncFor, ast.While,
+                                 ast.ExceptHandler)):
                 complexity += 1
-            elif isinstance(node, ast.ExceptHandler):
-                complexity += 1
-            # Boolean operations
             elif isinstance(node, ast.BoolOp):
                 complexity += len(node.values) - 1
+            elif isinstance(node, ast.comprehension):
+                complexity += 1 + len(node.ifs)
+            elif isinstance(node, ast.match_case):
+                is_wildcard = (isinstance(node.pattern, ast.MatchAs) and
+                               node.pattern.pattern is None and node.guard is None)
+                complexity += not is_wildcard
 
         return complexity
 
     def detect_fanout(self):
         """
         Detect modules with high fan-out (too many outgoing dependencies).
-        Excludes standard library and test dependencies.
+        Excludes standard library dependencies and test modules.
         """
-        standard_libs = {'os', 'sys', 'datetime', 'collections', 'json', 'logging'}
-
-        for module in self.dependency_graph.nodes():
+        threshold = self.thresholds.get('MAX_FANOUT', 15)
+        for module in self.module_info:
             # Skip test modules
-            if 'test' in module.lower():
+            if module.rsplit('.', 1)[-1].startswith('test'):
                 continue
 
             # Count only non-standard library dependencies
             significant_deps = sum(1 for successor in self.dependency_graph.successors(module)
-                                   if not any(successor.startswith(lib) for lib in standard_libs))
+                                   if successor.split('.')[0] not in STDLIB_MODULES)
 
-            threshold = self.thresholds.get('MAX_FANOUT', 15)
             if significant_deps > threshold:
                 severity = 'High' if significant_deps > threshold * 1.5 else 'Medium'
                 self.add_smell(
                     "High Fan-out",
                     f"Module '{module}' has {significant_deps} significant outgoing dependencies",
-                    self.file_paths.get(module, "Unknown"),
+                    self.file_paths[module],
                     module,
                     severity=severity
                 )
 
     def detect_fanin(self):
         """
-        Detect modules with high fan-in (too many incoming dependencies).
-        Excludes utility classes and base classes which are meant to be widely used.
+        Detect project modules with high fan-in (imported by too many project modules).
+        Excludes utility and base modules which are meant to be widely used.
         """
-        for module in self.dependency_graph.nodes():
+        threshold = self.thresholds.get('MAX_FANIN', 15)
+        for module in self.module_info:
             # Skip utility and base modules which are meant to have high fan-in
-            if any(pattern in module.lower()
-                   for pattern in ['util', 'base', 'common', 'interface']):
+            parts = set(module_parts(module, self.root_package))
+            if parts & {'util', 'utils', 'base', 'common', 'interface', 'interfaces'}:
                 continue
 
             fanin = self.dependency_graph.in_degree(module)
-            threshold = self.thresholds.get('MAX_FANIN', 15)
-
             if fanin > threshold:
                 severity = 'High' if fanin > threshold * 1.5 else 'Medium'
                 self.add_smell(
                     "High Fan-in",
                     f"Module '{module}' has {fanin} incoming dependencies",
-                    self.file_paths.get(module, "Unknown"),
+                    self.file_paths[module],
                     module,
                     severity=severity
                 )
 
     def detect_file_length(self):
         """
-        Detect files that are too long.
+        Detect files that are too long, counting code and import lines but not
+        comments, docstrings or blank lines.
         """
+        threshold = self.thresholds.get('MAX_FILE_LENGTH', 250)
         for module_name, info in self.module_info.items():
-            try:
-                file_path = self.file_paths.get(module_name, "")
-                if not file_path or not os.path.exists(file_path):
-                    continue
-
-                # Try different encodings
-                encodings = ['utf-8', 'utf-8-sig', 'latin1', 'cp1252']
-                content = None
-
-                for encoding in encodings:
-                    try:
-                        with open(file_path, 'r', encoding=encoding) as file:
-                            content = file.read()
-                        break
-                    except UnicodeDecodeError:
-                        continue
-
-                if content is None:
-                    logger.warning(f"Could not read file {file_path} with any supported encoding")
-                    continue
-
-                # Count meaningful lines
-                lines = content.splitlines()
-                meaningful_lines = 0
-                in_docstring = False
-
-                for line in lines:
-                    stripped = line.strip()
-                    if not stripped or stripped.startswith('#'):
-                        continue
-                    if stripped.startswith('"""') or stripped.startswith("'''"):
-                        in_docstring = not in_docstring
-                        continue
-                    if not in_docstring:
-                        meaningful_lines += 1
-
-                threshold = self.thresholds.get('MAX_FILE_LENGTH', 250)
-                if meaningful_lines > threshold:
-                    severity = 'High' if meaningful_lines > threshold * 1.5 else 'Medium'
-                    self.add_smell(
-                        name="Long File",
-                        description=f"File '{module_name}' has {meaningful_lines} meaningful lines of code",
-                        file_path=file_path,
-                        module_class=module_name,
-                        severity=severity
-                    )
-            except Exception as e:
-                logger.error(f"Error analyzing file length for {module_name}: {str(e)}")
-                continue
+            code_lines, _, import_lines, _ = self._line_counts(info)
+            meaningful_lines = code_lines + import_lines
+            if meaningful_lines > threshold:
+                severity = 'High' if meaningful_lines > threshold * 1.5 else 'Medium'
+                self.add_smell(
+                    name="Long File",
+                    description=f"File '{module_name}' has {meaningful_lines} meaningful lines of code",
+                    file_path=self.file_paths[module_name],
+                    module_class=module_name,
+                    severity=severity
+                )
 
     def detect_branches(self):
         """
-        Detect methods with too many branches (if/else, loops).
-        Excludes certain types of methods and considers nesting level.
+        Detect methods and functions with too many branches (Too Many Branches) or
+        too deeply nested blocks (Deep Nesting, above MAX_NESTING_DEPTH).
         """
-        for class_name, info in self.class_info.items():
-            for method in info['methods']:
-                # Skip property methods and simple getters/setters
-                if (any(isinstance(d, ast.Name) and d.id == 'property'
-                        for d in getattr(method, 'decorator_list', [])) or
-                        method.name.startswith(('get_', 'set_', 'is_'))):
-                    continue
+        threshold = self.thresholds.get('MAX_BRANCHES', 10)
+        max_nesting = self.thresholds.get('MAX_NESTING_DEPTH', 4)
+        for owner, function, file_path in self._functions():
+            # Skip property methods and simple getters/setters
+            if (any(isinstance(d, ast.Name) and d.id == 'property'
+                    for d in function.decorator_list) or
+                    function.name.startswith(('get_', 'set_', 'is_'))):
+                continue
 
-                branch_info = self._analyze_branches(method)
-                threshold = self.thresholds.get('MAX_BRANCHES', 10)
+            branch_count = self._count_branches(function)
+            if branch_count > threshold:
+                self.add_smell(
+                    "Too Many Branches",
+                    f"Function '{function.name}' has {branch_count} branches",
+                    file_path,
+                    owner,
+                    function.lineno,
+                    severity='High' if branch_count > threshold * 1.5 else 'Medium'
+                )
 
-                # Consider both count and nesting
-                if branch_info['count'] > threshold or branch_info['max_nesting'] > 3:
-                    severity = 'High' if branch_info['count'] > threshold * 1.5 else 'Medium'
-                    self.add_smell(
-                        "Too Many Branches",
-                        f"Method '{method.name}' has {branch_info['count']} branches "
-                        f"with max nesting of {branch_info['max_nesting']}",
-                        self.file_paths.get(class_name.rsplit('.', 1)[0], "Unknown"),
-                        class_name,
-                        method.lineno,
-                        severity=severity
-                    )
-
-    def _analyze_branches(self, method):
-        """
-        Analyze branches in a method, considering both count and nesting level.
-
-        Args:
-            method (ast.FunctionDef): The method to analyze
-
-        Returns:
-            dict: Contains branch count and maximum nesting level
-        """
-        branch_count = 0
-
-        # ast.walk visits each elif as its own If node, so it is counted once here
-        for node in ast.walk(method):
-            if isinstance(node, (ast.If, ast.For, ast.While, ast.Try)):
-                branch_count += 1
-                # Add except blocks for try statements
-                if isinstance(node, ast.Try):
-                    branch_count += len(node.handlers)
-
-        return {
-            'count': branch_count,
-            'max_nesting': self._max_nesting(method)
-        }
+            nesting = self._max_nesting(function)
+            if nesting > max_nesting:
+                self.add_smell(
+                    "Deep Nesting",
+                    f"Function '{function.name}' nests blocks {nesting} levels deep",
+                    file_path,
+                    owner,
+                    function.lineno,
+                    severity='High' if nesting > max_nesting + 2 else 'Medium'
+                )
 
     @staticmethod
-    def _max_nesting(node, depth=0):
-        """Deepest nesting of If/For/While/Try below node; an elif does not add a level."""
-        deepest = depth
-        for child in ast.iter_child_nodes(node):
-            is_elif = (isinstance(node, ast.If) and len(node.orelse) == 1
-                       and node.orelse[0] is child and isinstance(child, ast.If))
-            nests = isinstance(child, (ast.If, ast.For, ast.While, ast.Try)) and not is_elif
-            deepest = max(deepest, StructuralSmellDetector._max_nesting(child, depth + nests))
+    def _count_branches(function):
+        """if/elif, loops, try plus each except handler, and match cases."""
+        count = 0
+        # ast.walk visits each elif as its own If node, so it is counted once here
+        for node in ast.walk(function):
+            if isinstance(node, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.match_case)):
+                count += 1
+            elif isinstance(node, TRY_NODES):
+                count += 1 + len(node.handlers)
+        return count
+
+    @staticmethod
+    def _max_nesting(node):
+        """Deepest nesting of block statements below node; an elif does not add a level."""
+        deepest = 0
+        stack = [(node, 0)]  # iterative: generated code nests expressions thousands deep
+        while stack:
+            parent, depth = stack.pop()
+            deepest = max(deepest, depth)
+            for child in ast.iter_child_nodes(parent):
+                is_elif = (isinstance(parent, ast.If) and len(parent.orelse) == 1
+                           and parent.orelse[0] is child and isinstance(child, ast.If))
+                stack.append((child, depth + (isinstance(child, NESTING_NODES) and not is_elif)))
         return deepest
 
 

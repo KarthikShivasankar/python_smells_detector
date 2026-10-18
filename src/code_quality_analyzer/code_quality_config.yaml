@@ -32,16 +32,24 @@ code_smells:
     explanation: "Files with more than this ratio of comment lines to total lines may be over-commented."
 
   LAZY_CLASS_METHODS:
+    value: 1
+    explanation: "Stand-alone classes (no bases, no decorators) with this many non-trivial methods or fewer may not be pulling their weight."
+
+  LAZY_CLASS_LINES:
+    value: 10
+    explanation: "...and whose non-trivial methods span this many lines or fewer in total."
+
+  DATA_CLASS_METHODS:
     value: 4
-    explanation: "Classes with this few methods or fewer may not be pulling their weight."
+    explanation: "Classes whose only methods are this many or more one-line get_/set_ accessors are data classes."
 
   FEATURE_ENVY_CALLS:
     value: 3
     explanation: "Methods that call another object's methods/properties more than this many times may belong to that other object."
 
   INAPPROPRIATE_INTIMACY_SHARED:
-    value: 3
-    explanation: "Classes that share more than this many fields/methods may be too intimate."
+    value: 2
+    explanation: "Classes that access more than this many private fields of another class may be too intimate."
 
   MESSAGE_CHAIN_LENGTH:
     value: 3
@@ -60,12 +68,12 @@ code_smells:
     explanation: "Minimum number of classes with identical public method sets to report alternative classes."
 
   DUPLICATE_CODE_THRESHOLD:
-    value: 15
-    explanation: "Minimum number of functions with identical normalized bodies to report duplicate code."
+    value: 2
+    explanation: "Minimum number of functions with identical normalized bodies (same structure, names ignored) to report duplicate code."
 
   DEAD_CODE_THRESHOLD:
-    value: 3
-    explanation: "Functions defined but never called may be dead code."
+    value: 1
+    explanation: "Report private functions and methods never referenced anywhere in the project once a file has at least this many."
 
   SPECULATIVE_GENERALITY_THRESHOLD:
     value: 4
@@ -102,11 +110,11 @@ architectural_smells:
 
   UNSTABLE_DEPENDENCY_THRESHOLD:
     value: 0.8
-    explanation: "Modules with instability higher than this value may be too dependent on other modules and prone to changes."
+    explanation: "A module depending on a less stable module whose instability Ce/(Ca+Ce) is higher than this violates the Stable Dependencies Principle."
 
   HUB_LIKE_DEPENDENCY_RATIO:
     value: 0.3
-    explanation: "Modules connected to more than this ratio of total modules may be hub-like dependencies."
+    explanation: "Modules with both incoming and outgoing project dependencies, connected to more than this ratio of all modules, may be hub-like dependencies."
 
   REDUNDANT_ABSTRACTION_SIMILARITY:
     value: 0.7
@@ -118,7 +126,7 @@ architectural_smells:
 
   CYCLIC_DEPENDENCY_MAX_LENGTH:
     value: 3
-    explanation: "Cyclic dependencies involving more than this many modules are considered problematic."
+    explanation: "Every import cycle is reported; cycles involving more than this many modules are reported with high severity."
 
 structural_smells:
   NOM_THRESHOLD:
@@ -166,8 +174,8 @@ structural_smells:
     explanation: "Classes with Message Passing Coupling higher than this may be too coupled."
 
   CBO_THRESHOLD:
-    value: 5
-    explanation: "Modules with Coupling Between Object Classes higher than this may be too coupled."
+    value: 8
+    explanation: "Classes using more than this many distinct imported (non-stdlib) or project classes and modules may be too coupled."
 
   NOC_THRESHOLD:
     value: 7
@@ -195,6 +203,6 @@ structural_smells:
 
   MAX_NESTING_DEPTH:
     value: 4
-    explanation: "Code with nesting depth greater than this may be too complex and hard to read."
+    explanation: "Functions nesting if/for/while/try/with/match blocks deeper than this are reported as Deep Nesting."
 
 
